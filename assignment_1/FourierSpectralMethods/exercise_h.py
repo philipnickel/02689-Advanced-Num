@@ -19,7 +19,7 @@ def a(alpha: float, beta: float, n1: Literal[-1] | Literal[0] | Literal[1], n2: 
             )
         case 1:
             return (2 * (n2 + 1) * (n2 + alpha + beta + 1)) / (
-                (2 * n2 + alpha + beta) * (2 * n2 + alpha + beta + 1)
+                (2 * n2 + alpha + beta + 2) * (2 * n2 + alpha + beta + 1)
             )
 
 
