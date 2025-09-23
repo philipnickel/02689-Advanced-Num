@@ -2,6 +2,7 @@
 import numpy as np
 from typing import Literal
 import matplotlib.pyplot as plt
+from scipy.special import gamma
 
 
 def a(alpha: float, beta: float, n1: Literal[-1] | Literal[0] | Literal[1], n2: int):
@@ -38,11 +39,32 @@ def jacobi_poly(xs: np.ndarray, alpha: float, beta: float, n: int):
 
 # %%
 
-for i in range(4):
+plt.figure(figsize=(12, 5))
+for n in range(6):
     xs = np.linspace(-1, 1)
 
-    ys = jacobi_poly(xs, 0, 0, i)
+    ys = jacobi_poly(xs, 0, 0, n)
 
-    plt.plot(xs, ys, label=f"P{i}")
+    plt.plot(xs, ys, label=f"$P_{{{n}}}$")
+plt.title("Legendre polynomials")
+plt.xlabel("x")
 plt.legend()
+plt.savefig("../Plots/PolynomialMethods/exercise_h_legendre.pdf")
+# %%
+
+
+plt.figure(figsize=(12, 5))
+for n in range(6):
+    ws = gamma(n + 1) * gamma(1 / 2) / gamma(n + 1 / 2)
+
+    xs = np.linspace(-1, 1)
+
+    ys = jacobi_poly(xs, -1 / 2, -1 / 2, n) * ws
+
+    plt.plot(xs, ys, label=f"$P_{{{n}}}$")
+plt.title("Chebyshev polynomials")
+plt.xlabel("x")
+plt.legend()
+plt.savefig("../Plots/PolynomialMethods/exercise_h_chebyshev.pdf")
+
 # %%
