@@ -25,12 +25,14 @@ for i in range(0, 50, 5):
     axs[0].semilogy(i, np.max(y_custom - u), "o", label=f"$\hat{{f}}_{{{i}}}$")
     axs[1].semilogy(x_vals, np.abs(y_custom - u))
 
-
+axs[0].set_title("$L_\infty$ error as a function of N")
 axs[0].set_xlabel("N")
 axs[0].set_ylabel("$L_\infty$")
-axs[1].set_xlabel("x")
-axs[1].set_ylabel("Error")
 axs[0].legend()
+axs[0].grid()
+axs[1].set_title("$L_1$ error as a function of x")
+axs[1].set_xlabel("x")
+axs[1].set_ylabel("$abs(f - \hat{f})$")
 axs[1].grid()
 
 plt.tight_layout()
