@@ -17,7 +17,7 @@ x_vals = np.linspace(0, 2, 100, endpoint=False)
 
 u = 1 / (2 - np.cos(np.pi * x_vals))
 
-fig, axs = plt.subplots(1, 2)
+fig, axs = plt.subplots(1, 2, figsize=(12, 5))
 
 for i in range(0, 50, 5):
     y_custom = fourier_series_custom(x_vals, c_n, n_terms=i)
