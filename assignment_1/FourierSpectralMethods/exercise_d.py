@@ -1,7 +1,12 @@
 # %% Imports 
 import numpy as np
 import matplotlib.pyplot as plt
-from numba import njit 
+
+try:
+    from numba import njit
+except ImportError:  # pragma: no cover - fallback when numba is unavailable
+    def njit(func):
+        return func
 
 # %% Fourier differentiation matrix D 
 # using Algorithm 18 from 'Implementing Spectral Methods for Partial Differential Equations' by David A. Kopriva
@@ -46,43 +51,39 @@ def convergence_rate(Ns):
     return errors
 
 
-Ns = np.linspace(4, 10000, 100, dtype=int)
-errors = convergence_rate(Ns)
-plt.figure(figsize=(10, 5))
-plt.loglog(Ns, errors, 'bo-', label='Error')
-# Reference line of O(N**2)
-plt.loglog(Ns, errors[0]*(Ns/Ns[0])**-2, 'r--', label='O(N$^{-2}$)')
-plt.xlabel('N')
-plt.ylabel('Infinity Norm of Error')
-plt.title('Convergence Rate of Fourier Spectral Differentiation')
-plt.legend()
-plt.grid(True)
+if __name__ == "__main__":
+    Ns = np.linspace(4, 10000, 100, dtype=int)
+    errors = convergence_rate(Ns)
+    plt.figure(figsize=(10, 5))
+    plt.loglog(Ns, errors, 'bo-', label='Error')
+    # Reference line of O(N**2)
+    plt.loglog(Ns, errors[0]*(Ns/Ns[0])**-2, 'r--', label='O(N$^{-2}$)')
+    plt.xlabel('N')
+    plt.ylabel('Infinity Norm of Error')
+    plt.title('Convergence Rate of Fourier Spectral Differentiation')
+    plt.legend()
+    plt.grid(True)
 
-# plot solutions 
-"""
-plt.figure(figsize=(10,5))
-Ns = [2, 4, 8, 16, 32]
-x_fine = np.linspace(0, 2, 400, endpoint=False)
-v_exact = np.exp(np.sin(np.pi * x_fine))
-dv_exact = np.pi * np.cos(np.pi * x_fine) * v_exact
-plt.plot(x_fine, dv_exact, 'k-', label='Exact Derivative', linewidth=2)
-for N in Ns:
-    x = np.linspace(0, 2, N, endpoint=False)
-    v = np.exp(np.sin(np.pi * x))
-    D = np.pi * fourier_diff_matrix(N)
-    D_v = D @ v
-    plt.plot(x, D_v, 'o-', label=f'N={N}')
-plt.xlabel('x')
-plt.ylabel("v'(x)")
-plt.title("Fourier Spectral Differentiation")
-plt.legend()
-plt.grid(True)
-"""
-plt.show()
-    
+    # plot solutions 
+    """
+    plt.figure(figsize=(10,5))
+    Ns = [2, 4, 8, 16, 32]
+    x_fine = np.linspace(0, 2, 400, endpoint=False)
+    v_exact = np.exp(np.sin(np.pi * x_fine))
+    dv_exact = np.pi * np.cos(np.pi * x_fine) * v_exact
+    plt.plot(x_fine, dv_exact, 'k-', label='Exact Derivative', linewidth=2)
+    for N in Ns:
+        x = np.linspace(0, 2, N, endpoint=False)
+        v = np.exp(np.sin(np.pi * x))
+        D = np.pi * fourier_diff_matrix(N)
+        D_v = D @ v
+        plt.plot(x, D_v, 'o-', label=f'N={N}')
+    plt.xlabel('x')
+    plt.ylabel("v'(x)")
+    plt.title("Fourier Spectral Differentiation")
+    plt.legend()
+    plt.grid(True)
+    """
+    plt.show()
 
-
-
-#plt.savefig("assignment_1/Plots/FourierSpectralMethods/convRateMatrixD.pdf")
-
-
+    #plt.savefig("assignment_1/Plots/FourierSpectralMethods/convRateMatrixD.pdf")
