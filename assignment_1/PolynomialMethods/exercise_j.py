@@ -22,8 +22,6 @@ def generalized_vandermonde(x: np.ndarray, degree: int | None = None) -> np.ndar
 
 
 def legendre_gauss_lobatto_nodes(num_nodes: int) -> np.ndarray:
-    if num_nodes < 2:
-        raise ValueError("Need at least two nodes for LGL grid")
     degree = num_nodes - 1
     roots = Legendre.basis(degree).deriv().roots()
     nodes = np.concatenate(([-1.0], roots, [1.0]))
