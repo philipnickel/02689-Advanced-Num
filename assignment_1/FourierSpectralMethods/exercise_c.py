@@ -33,7 +33,7 @@ def generate_diff_mat(xjs):
 
 hs = []
 dhs = []
-NN = 10
+NN = 6
 xjs = np.linspace(0, 2 * np.pi, NN, endpoint=False)
 for xj in xjs:
     h = generate_h(xj, NN)
@@ -41,6 +41,7 @@ for xj in xjs:
     hs.append(h)
     dhs.append(dh)
 
+plt.figure(figsize=(12, 5))
 
 xs = np.linspace(0, 2 * np.pi, 100)
 for j, (h, dh) in enumerate(zip(hs, dhs)):
@@ -49,7 +50,13 @@ for j, (h, dh) in enumerate(zip(hs, dhs)):
     plt.plot(xs, ys, label=f"$h_{j}$")
     # plt.plot(xs, dys, label=f"$dh_{j}$")
 
+
 plt.legend()
+plt.xlabel("x")
+plt.title("Lagrange polynomials from 0 to $2 \pi$")
+plt.savefig("../Plots/FourierSpectralMethods/exercise_c.pdf")
+# %%
+
 # %%
 
 NN = 30
