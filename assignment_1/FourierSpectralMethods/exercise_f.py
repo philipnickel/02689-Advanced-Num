@@ -5,6 +5,11 @@ from scipy.fft import fft, ifft, fftfreq
 from numba import njit
 import time
 
+from utils.plotting import save_figure, setup_plotting
+
+
+setup_plotting("FourierSpectralMethods/exercise_f")
+
 # ======================================================
 # Differentiation methods
 # ======================================================
@@ -112,7 +117,7 @@ if __name__ == "__main__":
     plt.title("Spectral Differentiation: FFT vs Matrix vs Exact")
     plt.legend()
     plt.grid(True)
-    plt.show()
+    save_figure("exercise_f_derivative_comparison.pdf")
 
     # --- Convergence study ---
     Ns_conv = [8, 16, 32, 64, 128, 256, 512]
@@ -126,7 +131,7 @@ if __name__ == "__main__":
     plt.title("Convergence of spectral differentiation")
     plt.legend()
     plt.grid(True, which="both")
-    plt.show()
+    save_figure("exercise_f_convergence.pdf")
 
     # --- Performance study ---
     Ns_perf = [16, 32, 64, 128, 256, 512, 1024]
@@ -140,4 +145,4 @@ if __name__ == "__main__":
     plt.title("Performance: FFT vs Differentiation Matrix")
     plt.legend()
     plt.grid(True, which="both")
-    plt.show()
+    save_figure("exercise_f_performance.pdf")

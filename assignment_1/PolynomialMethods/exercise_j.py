@@ -4,42 +4,127 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy.polynomial.legendre import Legendre
 
-from assignment_1.PolynomialMethods.exercise_h import legendre_polynomials
+from assignment_1.PolynomialMethods.exercise_h import legendre_polynomials_with_derivatives
 
 
 BASE_DIR = Path(__file__).resolve().parent
 PLOT_DIR = BASE_DIR.parent / "Plots" / "PolynomialMethods" / "exercise_j"
 PLOT_DIR.mkdir(parents=True, exist_ok=True)
 
-
-
 def generalized_vandermonde(x: np.ndarray, degree: int | None = None) -> np.ndarray:
     if degree is None:
         degree = x.size - 1
-    return legendre_polynomials(x, degree).T
+    values, _ = legendre_polynomials_with_derivatives(x, degree)
+    return values.T
 
 
-def legendre_gauss_lobatto_nodes(num_nodes: int) -> np.ndarray:
-    degree = num_nodes - 1
-    roots = Legendre.basis(degree).deriv().roots()
-    nodes = np.concatenate(([-1.0], roots, [1.0]))
+def jacobi_gauss_quadrature_nodes(alpha: float, beta: float, degree: int) -> np.ndarray:
+    """Return Jacobi-Gauss nodes via the tridiagonal eigenproblem (Lecture 2, Slide 19)."""
+
+    if degree < 0:
+        raise ValueError("degree must be non-negative")
+    if degree == 0:
+        return np.array([-(alpha - beta) / (alpha + beta + 2.0)])
+
+    n = degree
+    k = np.arange(1, n + 1, dtype=float)
+    two_k_ab = 2.0 * np.arange(n + 1, dtype=float) + alpha + beta
+
+    diag = np.zeros(n + 1)
+    if n >= 1:
+        diag[1:] = (
+            -0.5 * (alpha * alpha - beta * beta)
+            / ((two_k_ab[1:] + 2.0) * two_k_ab[1:])
+        )
+
+    off_diag = (
+        2.0
+        / (two_k_ab[:-1] + 2.0)
+        * np.sqrt(
+            k
+            * (k + alpha + beta)
+            * (k + alpha)
+            * (k + beta)
+            / ((two_k_ab[:-1] + 1.0) * (two_k_ab[:-1] + 3.0))
+        )
+    )
+
+    J = np.diag(diag) + np.diag(off_diag, 1)
+    J = J + J.T
+
+    nodes = np.linalg.eigvalsh(J)
     return np.sort(nodes)
 
 
-def lagrange_on_grid(x_nodes: np.ndarray, x_eval: np.ndarray) -> np.ndarray:
+def legendre_gauss_lobatto_nodes(num_nodes: int) -> np.ndarray:
+    """Legendre-Gauss-Lobatto nodes using JacobiGL formulation (Lecture 2, Slide 20)."""
+
+    if num_nodes < 2:
+        raise ValueError("Need at least two nodes for LGL grid")
+    if num_nodes == 2:
+        return np.array([-1.0, 1.0])
+
+    degree = num_nodes - 1
+    interior = jacobi_gauss_quadrature_nodes(1.0, 1.0, degree - 2)
+    nodes = np.empty(num_nodes)
+    nodes[0], nodes[-1] = -1.0, 1.0
+    nodes[1:-1] = interior
+    return nodes
+
+
+def legendre_gauss_lobatto_weights(x_nodes: np.ndarray) -> np.ndarray:
+    """Compute LGL quadrature weights (Lecture 2, Slide 21)."""
+
     degree = x_nodes.size - 1
-    V_nodes = generalized_vandermonde(x_nodes, degree)
-    V_eval = generalized_vandermonde(x_eval, degree)
-    identity = np.eye(degree + 1)
-    return V_eval @ np.linalg.solve(V_nodes, identity)
+    if degree < 1:
+        return np.array([2.0])
+
+    values, _ = legendre_polynomials_with_derivatives(x_nodes, degree)
+    Pn = values[degree]
+    return 2.0 / (degree * (degree + 1) * (Pn * Pn))
 
 
-def discrete_l2_error(f_exact: np.ndarray, f_num: np.ndarray, interval_length: float) -> float:
+def lagrange_on_grid(x_nodes: np.ndarray, x_eval: np.ndarray) -> np.ndarray:
+    """Evaluate cardinal functions using the derivative form from Trefethen §6."""
+
+    degree = x_nodes.size - 1
+    if degree < 0:
+        raise ValueError("Need at least one node")
+    if degree == 0:
+        return np.ones((x_eval.size, 1))
+
+    values_nodes, _ = legendre_polynomials_with_derivatives(x_nodes, degree)
+    Pn_nodes = values_nodes[degree]
+
+    values_eval, derivs_eval = legendre_polynomials_with_derivatives(x_eval, degree)
+    dPn_eval = derivs_eval[degree]
+    # h_j(x) = -((1 - x^2) P'_N(x)) / (N(N+1) P_N(x_j) (x - x_j))
+    prefactor = -(1.0 - x_eval * x_eval) * dPn_eval
+    denom = degree * (degree + 1)
+
+    diff = x_eval[:, None] - x_nodes[None, :]
+    lagrange_vals = np.zeros_like(diff)
+
+    mask = np.isclose(diff, 0.0)
+    np.divide(
+        prefactor[:, None],
+        denom * Pn_nodes[None, :] * diff,
+        out=lagrange_vals,
+        where=~mask,
+    )
+
+    if np.any(mask):
+        rows, cols = np.nonzero(mask)
+        lagrange_vals[rows, :] = 0.0
+        lagrange_vals[rows, cols] = 1.0
+
+    return lagrange_vals
+
+
+def discrete_l2_error(f_exact: np.ndarray, f_num: np.ndarray, weights: np.ndarray) -> float:
     diff = f_num - f_exact
-    h = interval_length / f_exact.size
-    return np.sqrt(h) * np.linalg.norm(diff)
+    return np.sqrt(np.sum(weights * diff * diff))
 
 
 def main() -> None:
@@ -63,10 +148,11 @@ def main() -> None:
 
     ## Convergence analysis 
 
-    eval_points = 4000
+    eval_points = 400
     N_values = np.arange(4, 30, 2)
 
-    x_eval = np.linspace(-1.0, 1.0, eval_points, endpoint=False)
+    x_eval = legendre_gauss_lobatto_nodes(eval_points)
+    weights_eval = legendre_gauss_lobatto_weights(x_eval)
     f_exact = np.sin(np.pi * x_eval)
     errors = []
     for N in N_values:
@@ -77,14 +163,14 @@ def main() -> None:
         modal = np.linalg.solve(V_nodes, nodal_vals)
         V_eval = generalized_vandermonde(x_eval, degree)
         f_approx = V_eval @ modal
-        errors.append(discrete_l2_error(f_exact, f_approx, interval_length=2.0))
+        errors.append(discrete_l2_error(f_exact, f_approx, weights_eval))
 
     # plot
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.loglog(N_values, errors, "o-", label=r"$L_2$ error for $\sin(\pi x)$")
 
-    ref = np.exp(1e-2) * N_values ** 2
-    ax.loglog(N_values, ref, "--", color="0.6", label=rf"Fit $\mathcal{{O}}(N^{-2})$")
+    ref = errors[0] * (N_values[0] / N_values) ** 2
+    ax.loglog(N_values, ref, "--", color="0.6", label=r"Reference $N^{-2}$")
     ax.set_xlabel("Number of LGL nodes")
     ax.set_ylabel(r"$L_2$ error")
     ax.set_title(r"Legendre interpolation of $\sin(\pi x)$")
@@ -93,7 +179,7 @@ def main() -> None:
     fig.tight_layout()
     fig.savefig(PLOT_DIR / "exercise_j_convergence.pdf", dpi=200)
 
-### Approx extrapolation plot
+### Approx extrapolation plot (cf. Lecture 2 discussion on spectral extrapolation)
 
     x_ext = np.linspace(-1.5, 1.5, 400)
     N = 20

@@ -1,6 +1,12 @@
 # %% Imports 
 import numpy as np
 import matplotlib.pyplot as plt
+from utils.plotting import save_figure, setup_plotting
+
+setup_plotting("FourierSpectralMethods/exercise_d")
+
+
+
 
 try:
     from numba import njit
@@ -54,15 +60,17 @@ def convergence_rate(Ns):
 if __name__ == "__main__":
     Ns = np.linspace(4, 10000, 100, dtype=int)
     errors = convergence_rate(Ns)
-    plt.figure(figsize=(10, 5))
-    plt.loglog(Ns, errors, 'bo-', label='Error')
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.loglog(Ns, errors, 'bo-', label='Error')
     # Reference line of O(N**2)
-    plt.loglog(Ns, errors[0]*(Ns/Ns[0])**-2, 'r--', label='O(N$^{-2}$)')
-    plt.xlabel('N')
-    plt.ylabel('Infinity Norm of Error')
-    plt.title('Convergence Rate of Fourier Spectral Differentiation')
-    plt.legend()
-    plt.grid(True)
+    ax.loglog(Ns, errors[0]*(Ns/Ns[0])**-2, 'r--', label='O(N$^{-2}$)')
+    ax.set_xlabel('N')
+    ax.set_ylabel('Infinity Norm of Error')
+    ax.set_title('Convergence Rate of Fourier Spectral Differentiation')
+    ax.legend()
+    ax.grid(True, which='both')
+    fig.tight_layout()
+    save_figure("convergence_rate.pdf", fig=fig)
 
     # plot solutions 
     """
@@ -84,6 +92,5 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True)
     """
-    plt.show()
 
     #plt.savefig("assignment_1/Plots/FourierSpectralMethods/convRateMatrixD.pdf")

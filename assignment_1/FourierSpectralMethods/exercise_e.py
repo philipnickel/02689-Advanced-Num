@@ -4,19 +4,18 @@ The differentiation matrix follows the nodal formulation in Lecture 1 (Fourier M
 where differentiation is effected through a dense matrix with cotangent entries.  We reuse
 `fourier_diff_matrix` from exercise d) and rescale it to the physical interval [-2, 2].
 """
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from exercise_d import fourier_diff_matrix
+from utils.plotting import save_figure, setup_plotting
 
 DOMAIN_A, DOMAIN_B = -2.0, 2.0
 LENGTH = DOMAIN_B - DOMAIN_A
 PI = np.pi
-BASE_DIR = Path(__file__).resolve().parent
-PLOT_DIR = BASE_DIR.parent / "Plots" / "FourierSpectralMethods"
-PLOT_DIR.mkdir(parents=True, exist_ok=True)
+
+setup_plotting("FourierSpectralMethods/exercise_e")
 
 
 def fourier_diff_matrix_on_interval(N, a=DOMAIN_A, b=DOMAIN_B):
@@ -84,7 +83,7 @@ def plot_functions():
     for ax in axes[:, 0]:
         ax.set_ylabel("value")
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-    fig.savefig(PLOT_DIR / "exercise_e_functions.png", dpi=200)
+    save_figure("exercise_e_functions.pdf", fig=fig, dpi=200)
 
 
 def plot_convergence(N_values, errors):
@@ -108,7 +107,7 @@ def plot_convergence(N_values, errors):
     ax.grid(True, which="both", linestyle=":", linewidth=0.5)
     ax.legend()
     fig.tight_layout()
-    fig.savefig(PLOT_DIR / "exercise_e_convergence.png", dpi=200)
+    save_figure("exercise_e_convergence.pdf", fig=fig, dpi=200)
 
 
 def main():
@@ -128,4 +127,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    plt.show()

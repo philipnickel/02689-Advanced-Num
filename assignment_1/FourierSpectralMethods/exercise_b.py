@@ -5,7 +5,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.fft import fft, fftshift
+from utils.plotting import save_figure, setup_plotting
 
+setup_plotting("FourierSpectralMethods/exercise_b")
 #%% Parameters
 N = 4
 x = np.linspace(0, 2, N, endpoint=False)
@@ -35,4 +37,4 @@ plt.title("Comparison of Fourier Coefficients")
 plt.legend()
 plt.grid(True)
 # save figure
-plt.savefig("assignment_1/Plots/FourierSpectralMethods/fourier_coefficients_comparison.pdf")
+save_figure("exercise_b_coefficients.pdf")

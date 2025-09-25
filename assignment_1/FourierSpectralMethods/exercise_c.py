@@ -1,8 +1,11 @@
 # %%
 import numpy as np
 import matplotlib.pyplot as plt
+from utils.plotting import save_figure, setup_plotting
 # %%
 
+
+setup_plotting("FourierSpectralMethods/exercise_c")
 
 def generate_h(xj, N):
     h = lambda x: (1 / N) * np.sin((N / 2) * (x - xj)) * (1 / np.tan(0.5 * (x - xj)))
@@ -53,14 +56,26 @@ for j, (h, dh) in enumerate(zip(hs, dhs)):
 
 plt.legend()
 plt.xlabel("x")
-plt.title("Lagrange polynomials from 0 to $2 \pi$")
-plt.savefig("../Plots/FourierSpectralMethods/exercise_c.pdf")
+plt.title(r"Lagrange polynomials from 0 to $2 \pi$")
+save_figure("exercise_c_lagrange.pdf")
 # %%
 
 # %%
 
 NN = 30
 xjs = np.linspace(0, 2, NN, endpoint=False)
-plt.plot(xjs, np.exp(np.sin(np.pi * xjs)))
-plt.plot(xjs, generate_diff_mat(np.pi * xjs) @ np.exp(np.sin(np.pi * xjs)))
+fig2, ax2 = plt.subplots()
+ax2.plot(xjs, np.exp(np.sin(np.pi * xjs)), label=r"$e^{\sin(\pi x)}$")
+ax2.plot(
+    xjs,
+    generate_diff_mat(np.pi * xjs) @ np.exp(np.sin(np.pi * xjs)),
+    label=r"$D_N e^{\sin(\pi x)}$",
+)
+ax2.set_xlabel("x")
+ax2.set_ylabel("value")
+ax2.set_title(r"Differentiation matrix applied to $e^{\sin(\pi x)}$")
+ax2.grid(True)
+ax2.legend()
+fig2.tight_layout()
+save_figure("exercise_c_diff_matrix.pdf", fig=fig2)
 # %%
