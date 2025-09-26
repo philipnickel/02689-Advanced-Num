@@ -55,13 +55,23 @@ def main() -> None:
     ladder_fine = w_functions(3, x_fine)
 
     fig_funcs, axes = plt.subplots(2, 2, figsize=(10, 6), sharex=True)
-    labels = [r"$w_0$", r"$w_1$", r"$w_2$", r"$w_3$"]
+    titles = {
+        0: r"$w_0$ (jump at $x=0$)",
+        1: r"$w_1$ ($C^0$)",
+        2: r"$w_2$ ($C^1$)",
+        3: r"$w_3$ ($C^2$)",
+    }
     for idx, ax in enumerate(axes.flat):
-        ax.plot(x_fine, ladder_fine[idx], label=labels[idx])
-        ax.axvline(0.0, color="k", linewidth=0.5, linestyle="--")
-    style_axes(list(axes.flat), legend=True, grid={"linestyle": ":", "linewidth": 0.5})
-    style_axes(axes[-1, :], xlabel="x")
-    style_axes(axes[:, 0], ylabel="value")
+        ax.plot(x_fine, ladder_fine[idx])
+        ax.axvline(0.0, color="k", linewidth=0.6, linestyle="--", alpha=0.6)
+        style_axes(
+            ax,
+            title=titles[idx],
+            xlabel="x" if idx // 2 else None,
+            ylabel="value" if idx % 2 == 0 else None,
+            legend=False,
+            grid={"linestyle": ":", "linewidth": 0.5},
+        )
     save_figure("exercise_e_functions", fig=fig_funcs, dpi=200, tight_layout_kwargs={"rect": [0, 0.03, 1, 0.95]})
 
     N_values = 2 ** np.arange(4, 11)

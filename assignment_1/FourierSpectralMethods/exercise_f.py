@@ -109,9 +109,9 @@ if __name__ == "__main__":
 
     # --- Plot solution comparison ---
     fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(x, vprime_exact, 'k-', linewidth=2, label="Exact derivative")
-    ax.plot(x, vprime_fft, 'bo', markersize=4, label="FFT derivative")
-    ax.plot(x, vprime_mat, 'r--', linewidth=1, label="Matrix derivative")
+    ax.plot(x, vprime_exact, linewidth=2, label="Exact derivative")
+    ax.plot(x, vprime_fft, linestyle='', marker='o', label="FFT derivative")
+    ax.plot(x, vprime_mat, linestyle='--', label="Matrix derivative")
     style_axes(
         ax,
         title="Spectral Differentiation: FFT vs Matrix vs Exact",
@@ -126,8 +126,8 @@ if __name__ == "__main__":
     err_fft, err_mat = convergence_test(Ns_conv, L)
 
     fig_conv, ax_conv = plt.subplots(figsize=(8, 5))
-    ax_conv.loglog(Ns_conv, err_fft, 'bo-', label="FFT differentiation")
-    ax_conv.loglog(Ns_conv, err_mat, 'rs-', label="Matrix differentiation")
+    ax_conv.loglog(Ns_conv, err_fft, marker='o', label="FFT differentiation")
+    ax_conv.loglog(Ns_conv, err_mat, marker='s', label="Matrix differentiation")
     style_axes(
         ax_conv,
         title="Convergence of spectral differentiation",
@@ -143,8 +143,8 @@ if __name__ == "__main__":
     t_fft, t_mat = benchmark(Ns_perf, L)
 
     fig_perf, ax_perf = plt.subplots(figsize=(8, 5))
-    ax_perf.loglog(Ns_perf, t_fft, 'bo-', label="FFT differentiation")
-    ax_perf.loglog(Ns_perf, t_mat, 'rs-', label="Matrix differentiation")
+    ax_perf.loglog(Ns_perf, t_fft, marker='o', label="FFT differentiation")
+    ax_perf.loglog(Ns_perf, t_mat, marker='s', label="Matrix differentiation")
     style_axes(
         ax_perf,
         title="Performance: FFT vs Differentiation Matrix",

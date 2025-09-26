@@ -6,9 +6,8 @@ from pathlib import Path
 from typing import Iterable, Optional, Union
 
 import matplotlib.pyplot as plt
-import scienceplots  # noqa: F401  # registers the "science" style family
 from matplotlib.figure import Figure
-
+import scienceplots  # noqa: F401  # registers the "science" style family
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 _DEFAULT_STYLES = ("science", "ieee", "bright")

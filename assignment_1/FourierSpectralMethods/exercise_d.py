@@ -47,9 +47,9 @@ if __name__ == "__main__":
     Ns = np.linspace(4, 1000, 100, dtype=int)
     errors = convergence_rate(Ns)
     fig, ax = plt.subplots(figsize=(10, 5))
-    ax.loglog(Ns, errors, 'bo-', label='Error')
+    ax.loglog(Ns, errors, marker='o', label='Error')
     # Reference line of O(N**2)
-    ax.loglog(Ns, errors[0]*(Ns/Ns[0])**-2, 'r--', label='O(N$^{-2}$)')
+    ax.loglog(Ns, errors[0]*(Ns/Ns[0])**-2, linestyle='--', label='O(N$^{-2}$)')
     style_axes(
         ax,
         title='Convergence Rate of Fourier Spectral Differentiation',
