@@ -1,27 +1,7 @@
 # %%
 import numpy as np
-from typing import Literal
 import matplotlib.pyplot as plt
-from scipy.special import gamma
-
-
-def a(alpha: float, beta: float, n1: Literal[-1] | Literal[0] | Literal[1], n2: int):
-    if n1 == -1 and n2 == 0:
-        return 0
-
-    match n1:
-        case -1:
-            return (2 * (n2 + alpha) * (n2 + beta)) / (
-                (2 * n2 + alpha + beta + 1) * (2 * n2 + alpha + beta)
-            )
-        case 0:
-            return (alpha**2 - beta**2) / (
-                (2 * n2 + alpha + beta + 2) * (2 * n2 + alpha + beta)
-            )
-        case 1:
-            return (2 * (n2 + 1) * (n2 + alpha + beta + 1)) / (
-                (2 * n2 + alpha + beta + 2) * (2 * n2 + alpha + beta + 1)
-            )
+from scipy.special import gammaln, factorial
 
 
 def jacobi_poly(xs: np.ndarray, alpha: float, beta: float, N: int):
@@ -52,6 +32,18 @@ def jacobi_poly(xs: np.ndarray, alpha: float, beta: float, N: int):
     return jpm0
 
 
+def normalized_jacobi_poly(xs: np.ndarray, alpha: float, beta: float, N: int):
+    log_c = -0.5 * (
+        np.log(2) * (alpha + beta + 1)
+        + gammaln(N + alpha + 1)
+        + gammaln(N + beta + 1)
+        - gammaln(N + 1)
+        - np.log(2 * N + alpha + beta + 1)
+        - gammaln(N + alpha + beta + 1)
+    )
+    return np.exp(log_c) * jacobi_poly(xs, alpha, beta, N)
+
+
 # %%
 if __name__ == "__main__":
     plt.figure(figsize=(12, 5))
@@ -61,9 +53,13 @@ if __name__ == "__main__":
         ys = jacobi_poly(xs, 0, 0, n)
 
         plt.plot(xs, ys, label=f"$P_{{{n}}}$")
+
+        # ys_scipy = eval_jacobi(n, 0, 0, xs)
+        # plt.plot(xs, ys_scipy, "--", label=f"scipy $P_{{{n}}}$")
     plt.title("Legendre polynomials")
     plt.xlabel("x")
     plt.legend()
+    plt.grid()
     plt.savefig("./assignment_1/Plots/PolynomialMethods/exercise_h_1.pdf")
     # %%
 
