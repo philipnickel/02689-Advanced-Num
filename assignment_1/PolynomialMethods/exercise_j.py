@@ -142,7 +142,7 @@ def main() -> None:
     save_figure("exercise_j_lagrange", fig=fig, dpi=200)
 
     eval_points = 400
-    N_values = np.arange(4, 30, 2)
+    N_values = np.arange(4, 20, 2)
 
     x_eval = legendre_gauss_lobatto_nodes(eval_points)
     weights_eval = legendre_gauss_lobatto_weights(x_eval)

@@ -7,7 +7,6 @@ from utils.plotting import save_figure, setup_assignment_plotting, style_axes
 
 setup_assignment_plotting("assignment_1/Plots/FourierSpectralMethods/exercise_a")
 
-
 c_n = lambda k: (np.sqrt(3) / 3) * (2 - np.sqrt(3)) ** abs(k)
 
 
@@ -19,31 +18,32 @@ def fourier_series_custom(x_vals, c_n, n_terms=10):
 
 
 x_vals = np.linspace(0, 2, 100, endpoint=False)
+reference = 1 / (2 - np.cos(np.pi * x_vals))
 
-u = 1 / (2 - np.cos(np.pi * x_vals))
+N_values = np.arange(2, 35, 2)
+errors = []
+pointwise_results = {}
 
-fig, axs = plt.subplots(1, 2, figsize=(12, 5))
+for n_terms in N_values:
+    approximation = fourier_series_custom(x_vals, c_n, n_terms=int(n_terms))
+    max_error = np.max(np.abs(approximation - reference))
+    errors.append(max_error)
 
-for i in range(0, 50, 5):
-    y_custom = fourier_series_custom(x_vals, c_n, n_terms=i)
+errors = np.array(errors)
 
-    axs[0].semilogy(i, np.max(y_custom - u), "o", label=rf"$\hat{{f}}_{{{i}}}$")
-    axs[1].semilogy(x_vals, np.abs(y_custom - u))
+fig_sup, ax_sup = plt.subplots(figsize=(6, 4))
+ax_sup.semilogy(N_values, errors, "o", label="Max error")
 
+r = 2 - np.sqrt(3)
+A = np.sqrt(3) / 3
+ref_errors = 2 * A * r ** (N_values + 1) / (1 - r)
+ax_sup.semilogy(N_values, ref_errors, "--", label="Analytic bound")
 style_axes(
-    axs[0],
-    title=r"$L_\infty$ error as a function of N",
+    ax_sup,
+    title="Max error vs N",
     xlabel="N",
-    ylabel=r"$L_\infty$",
+    ylabel="Max error",
     legend=True,
 )
-style_axes(
-    axs[1],
-    title="$L_1$ error as a function of x",
-    xlabel="x",
-    ylabel=r"$abs(f - \hat{f})$",
-)
+save_figure("fourier_series_max_error", fig=fig_sup)
 
-save_figure("fourier_series_convergence")
-
-# %%

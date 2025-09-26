@@ -5,6 +5,7 @@ from utils.plotting import save_figure, setup_assignment_plotting, style_axes
 from numba import njit
 
 setup_assignment_plotting("assignment_1/Plots/FourierSpectralMethods/exercise_d")
+plt.rcParams["text.usetex"] = False
 
 # %% Fourier differentiation matrix D 
 # using Algorithm 18 from 'Implementing Spectral Methods for Partial Differential Equations' by David A. Kopriva
@@ -25,7 +26,7 @@ def fourier_diff_matrix(N):
                 D[i, i] -= D[i, j]
     return D
 
-# %% Discrete derivative of v(x) = exp(sin(pi x)) on x in [0,2)
+# %% Discrete derivative of v(x)
 # exact derivative
 # %% Convergence rate
 
@@ -44,12 +45,12 @@ def convergence_rate(Ns):
 
 
 if __name__ == "__main__":
-    Ns = np.linspace(4, 1000, 100, dtype=int)
+    Ns = 2 ** np.arange(4, 9)
     errors = convergence_rate(Ns)
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.loglog(Ns, errors, marker='o', label='Error')
     # Reference line of O(N**2)
-    ax.loglog(Ns, errors[0]*(Ns/Ns[0])**-2, linestyle='--', label='O(N$^{-2}$)')
+    ax.loglog(Ns, errors[0]*(Ns/Ns[0])**-2, linestyle='--', label='O(N^{-2})')
     style_axes(
         ax,
         title='Convergence Rate of Fourier Spectral Differentiation',
