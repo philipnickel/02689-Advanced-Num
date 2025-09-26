@@ -1,0 +1,6 @@
+-e utils
+numpy>=1.24
+scipy>=1.11
+numba>=0.62
+matplotlib>=3.5
+scienceplots>=2.1

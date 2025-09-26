@@ -1,1 +1,1 @@
-# Assignment package marker
+"""Assignment package marker."""

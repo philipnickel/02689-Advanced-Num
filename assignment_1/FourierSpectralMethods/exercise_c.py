@@ -1,81 +1,90 @@
 # %%
 import numpy as np
 import matplotlib.pyplot as plt
-from utils.plotting import save_figure, setup_plotting
-# %%
+
+from utils.plotting import save_figure, setup_assignment_plotting, style_axes
+
+setup_assignment_plotting("assignment_1/Plots/FourierSpectralMethods/exercise_c")
 
 
-setup_plotting("FourierSpectralMethods/exercise_c")
-
-def generate_h(xj, N):
-    h = lambda x: (1 / N) * np.sin((N / 2) * (x - xj)) * (1 / np.tan(0.5 * (x - xj)))
-
-    return h
+def fourier_nodes(N: int) -> np.ndarray:
+    return np.linspace(0.0, 2.0 * np.pi, N, endpoint=False)
 
 
-def generate_dh(xj, N):
-    h = generate_h(xj, N)
-    dh = (
-        lambda x: (0.5) * np.cos((N / 2) * (x - xj)) * (1 / np.tan(0.5 * (x - xj)))
-        - np.sin((N / 2) * (x - xj)) / (np.sin(0.5 * (x - xj)) ** 2) / 2 * N
-    )
+def lagrange_basis(N: int, x_eval: np.ndarray) -> np.ndarray:
 
-    return dh
+    x_nodes = fourier_nodes(N)
+    dx = x_eval[:, None] - x_nodes[None, :]
+    sin_half = np.sin(0.5 * dx)
+    mask = np.abs(sin_half) > 1e-14
+    cot_half = np.zeros_like(dx)
+    cot_half[mask] = np.cos(0.5 * dx[mask]) / sin_half[mask]
+
+    lag_vals = np.zeros_like(dx)
+    lag_vals[mask] = (1.0 / N) * np.sin(0.5 * N * dx[mask]) * cot_half[mask]
+    coincident = ~mask
+    if np.any(coincident):
+        lag_vals[coincident] = 0.0
+        rows, cols = np.nonzero(coincident)
+        for r, c in zip(rows, cols):
+            if np.isclose(x_eval[r], x_nodes[c]):
+                lag_vals[r, c] = 1.0
+    return lag_vals
 
 
-def generate_diff_mat(xjs):
-    N = len(xjs)
-    D = np.zeros((N, N))
-    for j, xj in enumerate(xjs):
-        dh = generate_dh(xj, N)
-        D[:, j] = dh(xjs)
-        D[j, j] = 0
+def fourier_diff_matrix(N: int) -> np.ndarray:
 
+    indices = np.arange(N)
+    I = indices[:, None]
+    J = indices[None, :]
+    diff = I - J
+    D = np.zeros((N, N), dtype=float)
+    mask = diff != 0
+    angles = 0.5 * (I - J)[mask] * (2.0 * np.pi / N)
+    cot_values = np.cos(angles) / np.sin(angles)
+    parity = (-1.0) ** (I + J)
+    D[mask] = 0.5 * parity[mask] * cot_values
+    D -= np.diag(np.sum(D, axis=1))
     return D
 
 
-hs = []
-dhs = []
-NN = 6
-xjs = np.linspace(0, 2 * np.pi, NN, endpoint=False)
-for xj in xjs:
-    h = generate_h(xj, NN)
-    dh = generate_dh(xj, NN)
-    hs.append(h)
-    dhs.append(dh)
+def main() -> None:
+    N = 6
+    x_plot = np.linspace(0.0, 2.0 * np.pi, 300, endpoint=False)
+    lag_vals = lagrange_basis(N, x_plot)
 
-plt.figure(figsize=(12, 5))
+    fig, ax = plt.subplots(figsize=(10, 5))
+    for j in range(N):
+        ax.plot(x_plot, lag_vals[:, j], label=rf"$h_{{{j}}}(x)$")
+    style_axes(
+        ax,
+        title=r"Fourier Lagrange polynomials on $[0, 2\pi)$ (N=6)",
+        xlabel="x",
+        ylabel="value",
+        legend=True,
+        grid={"linestyle": ":", "linewidth": 0.5},
+    )
+    save_figure("exercise_c_lagrange", fig=fig)
 
-xs = np.linspace(0, 2 * np.pi, 100)
-for j, (h, dh) in enumerate(zip(hs, dhs)):
-    ys = h(xs)
-    dys = dh(xs)
-    plt.plot(xs, ys, label=f"$h_{j}$")
-    # plt.plot(xs, dys, label=f"$dh_{j}$")
+    N_test = 30
+    x_nodes = np.linspace(0.0, 2.0, N_test, endpoint=False)
+    v_vals = np.exp(np.sin(np.pi * x_nodes))
+    D = np.pi * fourier_diff_matrix(N_test)
+    derivative = D @ v_vals
+
+    fig2, ax2 = plt.subplots(figsize=(8, 4))
+    ax2.plot(x_nodes, v_vals, label=r"$e^{\sin(\pi x)}$")
+    ax2.plot(x_nodes, derivative, label=r"$D_N e^{\sin(\pi x)}$")
+    style_axes(
+        ax2,
+        title=r"Differentiation matrix applied to $e^{\sin(\pi x)}$",
+        xlabel="x",
+        ylabel="value",
+        legend=True,
+        grid={"linestyle": ":", "linewidth": 0.5},
+    )
+    save_figure("exercise_c_diff_matrix", fig=fig2)
 
 
-plt.legend()
-plt.xlabel("x")
-plt.title(r"Lagrange polynomials from 0 to $2 \pi$")
-save_figure("exercise_c_lagrange.pdf")
-# %%
-
-# %%
-
-NN = 30
-xjs = np.linspace(0, 2, NN, endpoint=False)
-fig2, ax2 = plt.subplots()
-ax2.plot(xjs, np.exp(np.sin(np.pi * xjs)), label=r"$e^{\sin(\pi x)}$")
-ax2.plot(
-    xjs,
-    generate_diff_mat(np.pi * xjs) @ np.exp(np.sin(np.pi * xjs)),
-    label=r"$D_N e^{\sin(\pi x)}$",
-)
-ax2.set_xlabel("x")
-ax2.set_ylabel("value")
-ax2.set_title(r"Differentiation matrix applied to $e^{\sin(\pi x)}$")
-ax2.grid(True)
-ax2.legend()
-fig2.tight_layout()
-save_figure("exercise_c_diff_matrix.pdf", fig=fig2)
-# %%
+if __name__ == "__main__":
+    main()

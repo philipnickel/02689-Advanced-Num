@@ -11,16 +11,27 @@ from matplotlib.figure import Figure
 
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
-_DEFAULT_BASE_DIR = _REPO_ROOT / "assignment_1" / "Plots"
 _DEFAULT_STYLES = ("science", "ieee", "bright")
 
 _active_save_dir: Optional[Path] = None
 
 
+def _resolve_dir(base_dir: Union[Path, str], subdir: Union[Path, str]) -> Path:
+    base_path = Path(base_dir)
+    if not base_path.is_absolute():
+        base_path = _REPO_ROOT / base_path
+
+    sub_path = Path(subdir)
+    if not sub_path.is_absolute():
+        sub_path = base_path / sub_path
+
+    return sub_path
+
+
 def setup_plotting(
-    subdir: Optional[str] = None,
+    base_dir: Union[Path, str],
+    subdir: Union[Path, str],
     *,
-    base_dir: Optional[Union[Path, str]] = None,
     styles: Optional[Iterable[str]] = None,
 ) -> Path:
     """Configure matplotlib styles and the default directory for figure output."""
@@ -29,12 +40,7 @@ def setup_plotting(
     if style_list:
         plt.style.use(style_list)
 
-    root = _REPO_ROOT
-    base_path = Path(base_dir) if base_dir is not None else _DEFAULT_BASE_DIR
-    if not base_path.is_absolute():
-        base_path = root / base_path
-
-    save_dir = base_path / subdir if subdir else base_path
+    save_dir = _resolve_dir(base_dir, subdir)
     save_dir.mkdir(parents=True, exist_ok=True)
 
     global _active_save_dir
@@ -43,16 +49,80 @@ def setup_plotting(
     return save_dir
 
 
-def save_figure(filename: str, fig: Optional[Figure] = None, **kwargs) -> Path:
+def setup_assignment_plotting(
+    path: Union[Path, str],
+    *,
+    styles: Optional[Iterable[str]] = None,
+) -> Path:
+    """Resolve ``path`` relative to the repo root and prepare the directory."""
+
+    return setup_plotting(_REPO_ROOT, path, styles=styles)
+
+
+def style_axes(
+    axes: Union[plt.Axes, Iterable[plt.Axes]],
+    *,
+    title: Optional[str] = None,
+    xlabel: Optional[str] = None,
+    ylabel: Optional[str] = None,
+    legend: bool | dict = False,
+    grid: bool | dict = True,
+) -> None:
+    """Apply common styling options to one or many matplotlib ``Axes`` objects."""
+
+    def _style_single(ax: plt.Axes) -> None:
+        if title is not None:
+            ax.set_title(title)
+        if xlabel is not None:
+            ax.set_xlabel(xlabel)
+        if ylabel is not None:
+            ax.set_ylabel(ylabel)
+        if legend:
+            if isinstance(legend, dict):
+                ax.legend(**legend)
+            else:
+                ax.legend()
+        if grid:
+            if isinstance(grid, dict):
+                ax.grid(**grid)
+            else:
+                ax.grid()
+
+    if isinstance(axes, plt.Axes):
+        _style_single(axes)
+        return
+
+    for ax in axes:
+        _style_single(ax)
+
+
+def save_figure(
+    filename: Union[str, Path],
+    *,
+    fig: Optional[Figure] = None,
+    tight: bool = True,
+    tight_layout_kwargs: Optional[dict] = None,
+    **kwargs,
+) -> Path:
     """Save a figure to the configured directory and return the path."""
 
     if _active_save_dir is None:
         raise RuntimeError("setup_plotting must be called before save_figure.")
 
-    target = _active_save_dir / filename
+    name = Path(filename)
+    if name.suffix.lower() != ".pdf":
+        name = name.with_suffix(".pdf")
+
+    target = _active_save_dir / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+
     figure = fig if fig is not None else plt.gcf()
+    if tight:
+        kwargs_to_use = tight_layout_kwargs or {}
+        figure.tight_layout(**kwargs_to_use)
+
     figure.savefig(target, **kwargs)
     return target
 
 
-__all__ = ["setup_plotting", "save_figure"]
+__all__ = ["setup_plotting", "setup_assignment_plotting", "style_axes", "save_figure"]

@@ -1,16 +1,12 @@
-"""Legendre Vandermonde transforms and interpolation (exercise j)."""
-
-from pathlib import Path
-
 import matplotlib.pyplot as plt
 import numpy as np
 
+from utils.plotting import save_figure, setup_assignment_plotting, style_axes
+
+setup_assignment_plotting("assignment_1/Plots/PolynomialMethods/exercise_j")
+
 from assignment_1.PolynomialMethods.exercise_h import legendre_polynomials_with_derivatives
 
-
-BASE_DIR = Path(__file__).resolve().parent
-PLOT_DIR = BASE_DIR.parent / "Plots" / "PolynomialMethods" / "exercise_j"
-PLOT_DIR.mkdir(parents=True, exist_ok=True)
 
 def generalized_vandermonde(x: np.ndarray, degree: int | None = None) -> np.ndarray:
     if degree is None:
@@ -20,7 +16,7 @@ def generalized_vandermonde(x: np.ndarray, degree: int | None = None) -> np.ndar
 
 
 def jacobi_gauss_quadrature_nodes(alpha: float, beta: float, degree: int) -> np.ndarray:
-    """Return Jacobi-Gauss nodes via the tridiagonal eigenproblem (Lecture 2, Slide 19)."""
+    """Jacobi-Gauss nodes - eigenproblem from Lecture 2."""
 
     if degree < 0:
         raise ValueError("degree must be non-negative")
@@ -58,7 +54,7 @@ def jacobi_gauss_quadrature_nodes(alpha: float, beta: float, degree: int) -> np.
 
 
 def legendre_gauss_lobatto_nodes(num_nodes: int) -> np.ndarray:
-    """Legendre-Gauss-Lobatto nodes using JacobiGL formulation (Lecture 2, Slide 20)."""
+    """Legendre-Gauss-Lobatto nodes using JacobiGL construction - Lecture 2."""
 
     if num_nodes < 2:
         raise ValueError("Need at least two nodes for LGL grid")
@@ -74,7 +70,7 @@ def legendre_gauss_lobatto_nodes(num_nodes: int) -> np.ndarray:
 
 
 def legendre_gauss_lobatto_weights(x_nodes: np.ndarray) -> np.ndarray:
-    """Compute LGL quadrature weights (Lecture 2, Slide 21)."""
+    """Compute LGL quadrature weights from the Lecture 2 Jacobi GL formula."""
 
     degree = x_nodes.size - 1
     if degree < 1:
@@ -86,7 +82,6 @@ def legendre_gauss_lobatto_weights(x_nodes: np.ndarray) -> np.ndarray:
 
 
 def lagrange_on_grid(x_nodes: np.ndarray, x_eval: np.ndarray) -> np.ndarray:
-    """Evaluate cardinal functions using the derivative form from Trefethen §6."""
 
     degree = x_nodes.size - 1
     if degree < 0:
@@ -99,7 +94,6 @@ def lagrange_on_grid(x_nodes: np.ndarray, x_eval: np.ndarray) -> np.ndarray:
 
     values_eval, derivs_eval = legendre_polynomials_with_derivatives(x_eval, degree)
     dPn_eval = derivs_eval[degree]
-    # h_j(x) = -((1 - x^2) P'_N(x)) / (N(N+1) P_N(x_j) (x - x_j))
     prefactor = -(1.0 - x_eval * x_eval) * dPn_eval
     denom = degree * (degree + 1)
 
@@ -128,7 +122,7 @@ def discrete_l2_error(f_exact: np.ndarray, f_num: np.ndarray, weights: np.ndarra
 
 
 def main() -> None:
-    num_nodes=6
+    num_nodes = 6
     x_nodes = legendre_gauss_lobatto_nodes(num_nodes)
     x_eval = np.linspace(-1.0, 1.0, 1000, endpoint=False)
     lagrange_vals = lagrange_on_grid(x_nodes, x_eval)
@@ -137,16 +131,15 @@ def main() -> None:
     for j in range(num_nodes):
         ax.plot(x_eval, lagrange_vals[:, j], label=rf"$h_{{{j}}}(x)$")
     ax.plot(x_nodes, np.zeros_like(x_nodes), "ko", label="LGL nodes")
-    ax.set_xlabel("x")
-    ax.set_ylabel("value")
-    ax.set_title("Legendre-Gauss-Lobatto Lagrange polynomials (N=6)")
-    ax.grid(True, linestyle=":", linewidth=0.5)
-    ax.legend(ncol=2)
-    fig.tight_layout()
-    fig.savefig(PLOT_DIR / "exercise_j_lagrange.pdf", dpi=200)
-
-
-    ## Convergence analysis 
+    style_axes(
+        ax,
+        title="Legendre-Gauss-Lobatto Lagrange polynomials (N=6)",
+        xlabel="x",
+        ylabel="value",
+        legend={"ncol": 2},
+        grid={"linestyle": ":", "linewidth": 0.5},
+    )
+    save_figure("exercise_j_lagrange", fig=fig, dpi=200)
 
     eval_points = 400
     N_values = np.arange(4, 30, 2)
@@ -165,21 +158,20 @@ def main() -> None:
         f_approx = V_eval @ modal
         errors.append(discrete_l2_error(f_exact, f_approx, weights_eval))
 
-    # plot
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.loglog(N_values, errors, "o-", label=r"$L_2$ error for $\sin(\pi x)$")
 
     ref = errors[0] * (N_values[0] / N_values) ** 2
     ax.loglog(N_values, ref, "--", color="0.6", label=r"Reference $N^{-2}$")
-    ax.set_xlabel("Number of LGL nodes")
-    ax.set_ylabel(r"$L_2$ error")
-    ax.set_title(r"Legendre interpolation of $\sin(\pi x)$")
-    ax.grid(True, which="both", linestyle=":", linewidth=0.5)
-    ax.legend()
-    fig.tight_layout()
-    fig.savefig(PLOT_DIR / "exercise_j_convergence.pdf", dpi=200)
-
-### Approx extrapolation plot (cf. Lecture 2 discussion on spectral extrapolation)
+    style_axes(
+        ax,
+        title=r"Legendre interpolation of $\sin(\pi x)$",
+        xlabel="Number of LGL nodes",
+        ylabel=r"$L_2$ error",
+        legend=True,
+        grid={"which": "both", "linestyle": ":", "linewidth": 0.5},
+    )
+    save_figure("exercise_j_convergence", fig=fig, dpi=200)
 
     x_ext = np.linspace(-1.5, 1.5, 400)
     N = 20
@@ -194,16 +186,18 @@ def main() -> None:
     exact_ext = np.sin(np.pi * x_ext)
 
     fig, ax = plt.subplots(figsize=(8, 5))
-    ax.plot(x_ext, exact_ext, label="Exact sin(πx)")
+    ax.plot(x_ext, exact_ext, label=r"Exact $\sin(\pi x)$")
     ax.plot(x_ext, approx_ext, "--", label=f"Legendre modal degree {degree}")
     ax.axvspan(-1.0, 1.0, color="0.9", alpha=0.5, label="Interpolation domain")
-    ax.set_xlabel("x")
-    ax.set_ylabel("value")
-    ax.set_title("Legendre polynomial extrapolation")
-    ax.grid(True, linestyle=":", linewidth=0.5)
-    ax.legend()
-    fig.tight_layout()
-    fig.savefig(PLOT_DIR / "exercise_j_extrapolation.pdf", dpi=200)
+    style_axes(
+        ax,
+        title="Legendre polynomial extrapolation",
+        xlabel="x",
+        ylabel="value",
+        legend=True,
+        grid={"linestyle": ":", "linewidth": 0.5},
+    )
+    save_figure("exercise_j_extrapolation", fig=fig, dpi=200)
 
     if len(errors) >= 2:
         ratios = np.array(errors[:-1]) / np.array(errors[1:])

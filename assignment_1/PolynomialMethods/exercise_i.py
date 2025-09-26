@@ -1,70 +1,76 @@
-# %%
-import numpy as np
+from __future__ import annotations
 import matplotlib.pyplot as plt
+import numpy as np
 from numpy.polynomial.legendre import leggauss
 from scipy.special import eval_jacobi
 
-
-# Function
-def u(x):
-    return 1.0 / (2.0 - np.cos(np.pi * (x)))
+from utils.plotting import save_figure, setup_assignment_plotting, style_axes
 
 
-# Compute Legendre coefficients using Gauss–Legendre quadrature
-def legendre_coeffs(N, M=200):
-    # Gauss–Legendre nodes and weights
-    xj, wj = leggauss(N)
-    coeffs = np.zeros(M)
+setup_assignment_plotting("assignment_1/Plots/PolynomialMethods/exercise_i")
 
-    for n in range(M):
-        # Legendre polynomial P_n(x) = Jacobi(n,0,0)
-        Pn = eval_jacobi(n, 0, 0, xj)
-        integral_approx = np.sum(wj * u(xj + 1) * Pn)
+
+def u(x: np.ndarray) -> np.ndarray:
+    return 1.0 / (2.0 - np.cos(np.pi * x))
+
+
+def legendre_coeffs(num_quad: int, num_modes: int = 200) -> np.ndarray:
+    nodes, weights = leggauss(num_quad)
+    coeffs = np.zeros(num_modes)
+    values = u(nodes)
+    for n in range(num_modes):
+        Pn = eval_jacobi(n, 0, 0, nodes)
+        integral_approx = np.sum(weights * values * Pn)
         coeffs[n] = (2 * n + 1) / 2 * integral_approx
-    return coeffs, xj
+    return coeffs
 
 
-# Experiment with different quadrature sizes
-Ns = [200]
-coeff_dict = {N: legendre_coeffs(N, M=200)[0] for N in Ns}
-
-# --- Plot decay of coefficients ---
-plt.figure(figsize=(10, 6))
-for N in Ns:
-    plt.semilogy(range(200), np.abs(coeff_dict[N]), label=f"N={N}")
-plt.xlabel("n (Polynomial degree)")
-plt.ylabel(r"$|c_n|$")
-plt.title("Legendre coefficients of $u(x) = 1/(2 - cos(πx))$")
-plt.legend()
-plt.grid(True, which="both")
-plt.show()
-# %%
-
-
-def synthesize(xj: np.ndarray, coeffs: np.ndarray):
-    N = len(coeffs)
-    result = np.zeros_like(xj)
-    for n in range(N):
-        Pn = eval_jacobi(n, 0, 0, xj)
-        result += coeffs[n] * Pn
+def synthesize(x_vals: np.ndarray, coeffs: np.ndarray) -> np.ndarray:
+    result = np.zeros_like(x_vals)
+    for n, coef in enumerate(coeffs):
+        result += coef * eval_jacobi(n, 0, 0, x_vals)
     return result
 
 
-# %%
+def plot_coeff_decay(coeffs: np.ndarray, num_quad: int) -> None:
+    degrees = np.arange(coeffs.size)
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.semilogy(degrees, np.abs(coeffs), marker="o", linestyle="-", label=fr"$N={num_quad}$")
+    style_axes(
+        ax,
+        title=r"Legendre coefficients of $u(x)=1/(2-\cos(\pi x))$",
+        xlabel="Polynomial degree n",
+        ylabel=r"$|c_n|$",
+        legend=True,
+        grid={"which": "both", "linestyle": ":", "linewidth": 0.5},
+    )
+    save_figure("exercise_i_coeff_decay", fig=fig, dpi=200)
 
-# --- Plot synthesized function ---
-xs = np.linspace(-1, 1, 500)
-coeffs = coeff_dict[200]
 
-synth_values = synthesize(xs, coeffs)
-synth_values = synthesize(xs, coeffs)
+def plot_synthesized_function(coeffs: np.ndarray) -> None:
+    xs = np.linspace(-1.0, 1.0, 500)
+    synthesized = synthesize(xs, coeffs)
 
-plt.figure(figsize=(10, 6))
-plt.plot(xs + 1, synth_values, label="Synthesized function")
-plt.xlabel("x")
-plt.ylabel("u(x)")
-plt.title("Synthesized function from Legendre coefficients")
-plt.legend()
-plt.grid(True)
-plt.show()
-# %%
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.plot(xs, synthesized, label="Modal synthesis")
+    ax.plot(xs, u(xs), linestyle="--", label=r"Exact $u(x)$")
+    style_axes(
+        ax,
+        title="Legendre series reconstruction",
+        xlabel="x",
+        ylabel="value",
+        legend=True,
+        grid={"linestyle": ":", "linewidth": 0.5},
+    )
+    save_figure("exercise_i_synthesis", fig=fig, dpi=200)
+
+
+def main() -> None:
+    num_quad = 200
+    coeffs = legendre_coeffs(num_quad)
+    plot_coeff_decay(coeffs, num_quad)
+    plot_synthesized_function(coeffs)
+
+
+if __name__ == "__main__":
+    main()

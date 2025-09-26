@@ -13,5 +13,9 @@ __pycache__/
 *.py[codz]
 *$py.class
 
-*.png
-*.pdf
+#*.png
+#*.pdf
+
+# virtual environments and packaging metadata
+.venv/
+*.egg-info/

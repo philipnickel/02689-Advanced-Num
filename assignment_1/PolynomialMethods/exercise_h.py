@@ -1,17 +1,12 @@
-"""Jacobi polynomials and illustrative plots for exercise h."""
-
 from __future__ import annotations
-
-from pathlib import Path
 from typing import Iterable
-
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.special import gamma
 
-BASE_DIR = Path(__file__).resolve().parent
-PLOT_DIR = BASE_DIR.parent / "Plots" / "PolynomialMethods" / "exercise_h"
-PLOT_DIR.mkdir(parents=True, exist_ok=True)
+from utils.plotting import save_figure, setup_assignment_plotting, style_axes
+
+setup_assignment_plotting("assignment_1/Plots/PolynomialMethods/exercise_h")
 
 
 def jacobi_polynomials(xs: np.ndarray, alpha: float, beta: float, degree: int) -> np.ndarray:
@@ -92,13 +87,8 @@ def plot_legendre(n_max: int = 5) -> Path:
     fig, ax = plt.subplots(figsize=(10, 5))
     for n in range(n_max + 1):
         ax.plot(xs, polys[n], label=rf"$P_{{{n}}}$")
-    ax.set_title("Legendre polynomials")
-    ax.set_xlabel("x")
-    ax.legend()
-    fig.tight_layout()
-    output = PLOT_DIR / "exercise_h_legendre.pdf"
-    fig.savefig(output)
-    return output
+    style_axes(ax, title="Legendre polynomials", xlabel="x", legend=True)
+    return save_figure("exercise_h_legendre", fig=fig, dpi=200)
 
 
 def plot_chebyshev(n_max: int = 5) -> Path:
@@ -108,13 +98,8 @@ def plot_chebyshev(n_max: int = 5) -> Path:
     fig, ax = plt.subplots(figsize=(10, 5))
     for n in range(n_max + 1):
         ax.plot(xs, polys[n], label=rf"$P_{{{n}}}$")
-    ax.set_title("Chebyshev polynomials")
-    ax.set_xlabel("x")
-    ax.legend()
-    fig.tight_layout()
-    output = PLOT_DIR / "exercise_h_chebyshev.pdf"
-    fig.savefig(output)
-    return output
+    style_axes(ax, title="Chebyshev polynomials", xlabel="x", legend=True)
+    return save_figure("exercise_h_chebyshev", fig=fig, dpi=200)
 
 
 def main(n_max: int = 5) -> Iterable[Path]:

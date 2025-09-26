@@ -1,1 +1,1 @@
-# Fourier Spectral Methods subpackage marker
+"""Fourier Spectral Methods subpackage."""

@@ -1,13 +1,9 @@
-#%% Imports 
-#import sys
-#sys.path.append("..")
-
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.fft import fft, fftshift
-from utils.plotting import save_figure, setup_plotting
+from utils.plotting import save_figure, setup_assignment_plotting, style_axes
 
-setup_plotting("FourierSpectralMethods/exercise_b")
+setup_assignment_plotting("assignment_1/Plots/FourierSpectralMethods/exercise_b")
 #%% Parameters
 N = 4
 x = np.linspace(0, 2, N, endpoint=False)
@@ -28,13 +24,14 @@ k_vals = np.arange(-N//2, N//2)
 coeffs_analytical = np.array([c_analytical(k) for k in k_vals])
 
 #%% Plot comparison
-plt.figure(figsize=(10,5))
-plt.stem(k_vals, np.abs(coeffs_shifted), basefmt=" ", linefmt="b-", markerfmt="bo", label="Numerical FFT")
-plt.stem(k_vals, coeffs_analytical, basefmt=" ", linefmt="r--", markerfmt="rx", label="Analytical")
-plt.xlabel("k")
-plt.ylabel("|c_k|")
-plt.title("Comparison of Fourier Coefficients")
-plt.legend()
-plt.grid(True)
-# save figure
-save_figure("exercise_b_coefficients.pdf")
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.stem(k_vals, np.abs(coeffs_shifted), basefmt=" ", linefmt="b-", markerfmt="bo", label="Numerical FFT")
+ax.stem(k_vals, coeffs_analytical, basefmt=" ", linefmt="r--", markerfmt="rx", label="Analytical")
+style_axes(
+    ax,
+    title="Comparison of Fourier Coefficients",
+    xlabel="k",
+    ylabel="|c_k|",
+    legend=True,
+)
+save_figure("exercise_b_coefficients", fig=fig)

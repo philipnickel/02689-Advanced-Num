@@ -5,10 +5,10 @@ from scipy.fft import fft, ifft, fftfreq
 from numba import njit
 import time
 
-from utils.plotting import save_figure, setup_plotting
+from utils.plotting import save_figure, setup_assignment_plotting, style_axes
 
 
-setup_plotting("FourierSpectralMethods/exercise_f")
+setup_assignment_plotting("assignment_1/Plots/FourierSpectralMethods/exercise_f")
 
 # ======================================================
 # Differentiation methods
@@ -101,48 +101,56 @@ if __name__ == "__main__":
     vprime_mat = matrix_diff(v, L)
 
     # --- Print solutions ---
-    print("x values:\n", x)
-    print("\nFunction v(x) = exp(sin(pi*x)):\n", v)
-    print("\nExact derivative v'(x):\n", vprime_exact)
-    print("\nFFT derivative:\n", vprime_fft)
-    print("\nMatrix derivative:\n", vprime_mat)
+    #print("x values:\n", x)
+    #print("\nFunction v(x) = exp(sin(pi*x)):\n", v)
+    #print("\nExact derivative v'(x):\n", vprime_exact)
+    #print("\nFFT derivative:\n", vprime_fft)
+    #print("\nMatrix derivative:\n", vprime_mat)
 
     # --- Plot solution comparison ---
-    plt.figure(figsize=(10,5))
-    plt.plot(x, vprime_exact, 'k-', linewidth=2, label="Exact derivative")
-    plt.plot(x, vprime_fft, 'bo', markersize=4, label="FFT derivative")
-    plt.plot(x, vprime_mat, 'r--', linewidth=1, label="Matrix derivative")
-    plt.xlabel("x")
-    plt.ylabel("v'(x)")
-    plt.title("Spectral Differentiation: FFT vs Matrix vs Exact")
-    plt.legend()
-    plt.grid(True)
-    save_figure("exercise_f_derivative_comparison.pdf")
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.plot(x, vprime_exact, 'k-', linewidth=2, label="Exact derivative")
+    ax.plot(x, vprime_fft, 'bo', markersize=4, label="FFT derivative")
+    ax.plot(x, vprime_mat, 'r--', linewidth=1, label="Matrix derivative")
+    style_axes(
+        ax,
+        title="Spectral Differentiation: FFT vs Matrix vs Exact",
+        xlabel="x",
+        ylabel="v'(x)",
+        legend=True,
+    )
+    save_figure("exercise_f_derivative_comparison", fig=fig)
 
     # --- Convergence study ---
     Ns_conv = [8, 16, 32, 64, 128, 256, 512]
     err_fft, err_mat = convergence_test(Ns_conv, L)
 
-    plt.figure(figsize=(8,5))
-    plt.loglog(Ns_conv, err_fft, 'bo-', label="FFT differentiation")
-    plt.loglog(Ns_conv, err_mat, 'rs-', label="Matrix differentiation")
-    plt.xlabel("N (grid points)")
-    plt.ylabel("Infinity norm error")
-    plt.title("Convergence of spectral differentiation")
-    plt.legend()
-    plt.grid(True, which="both")
-    save_figure("exercise_f_convergence.pdf")
+    fig_conv, ax_conv = plt.subplots(figsize=(8, 5))
+    ax_conv.loglog(Ns_conv, err_fft, 'bo-', label="FFT differentiation")
+    ax_conv.loglog(Ns_conv, err_mat, 'rs-', label="Matrix differentiation")
+    style_axes(
+        ax_conv,
+        title="Convergence of spectral differentiation",
+        xlabel="N (grid points)",
+        ylabel="Infinity norm error",
+        legend=True,
+        grid={'which': 'both'},
+    )
+    save_figure("exercise_f_convergence", fig=fig_conv)
 
     # --- Performance study ---
     Ns_perf = [16, 32, 64, 128, 256, 512, 1024]
     t_fft, t_mat = benchmark(Ns_perf, L)
 
-    plt.figure(figsize=(8,5))
-    plt.loglog(Ns_perf, t_fft, 'bo-', label="FFT differentiation")
-    plt.loglog(Ns_perf, t_mat, 'rs-', label="Matrix differentiation")
-    plt.xlabel("N (grid points)")
-    plt.ylabel("Time [s]")
-    plt.title("Performance: FFT vs Differentiation Matrix")
-    plt.legend()
-    plt.grid(True, which="both")
-    save_figure("exercise_f_performance.pdf")
+    fig_perf, ax_perf = plt.subplots(figsize=(8, 5))
+    ax_perf.loglog(Ns_perf, t_fft, 'bo-', label="FFT differentiation")
+    ax_perf.loglog(Ns_perf, t_mat, 'rs-', label="Matrix differentiation")
+    style_axes(
+        ax_perf,
+        title="Performance: FFT vs Differentiation Matrix",
+        xlabel="N (grid points)",
+        ylabel="Time [s]",
+        legend=True,
+        grid={'which': 'both'},
+    )
+    save_figure("exercise_f_performance", fig=fig_perf)
