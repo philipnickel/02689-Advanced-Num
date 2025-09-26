@@ -35,7 +35,6 @@ def jacobi_poly(xs: np.ndarray, alpha: float, beta: float, N: int):
         return jpm1
 
     for n in range(2, N + 1):
-        print(n)
         am1 = (2 * ((n - 1) + alpha) * ((n - 1) + beta)) / (
             (2 * (n - 1) + alpha + beta + 1) * (2 * (n - 1) + alpha + beta)
         )
