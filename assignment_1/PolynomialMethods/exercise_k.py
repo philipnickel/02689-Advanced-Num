@@ -1,4 +1,5 @@
 # %%
+from cProfile import label
 from matplotlib import pyplot as plt
 import numpy as np
 from assignment_1.PolynomialMethods.exercise_h import (
@@ -60,47 +61,51 @@ def int_matrix(xs):
 # %%
 
 if __name__ == "__main__":
-    xs, ws = leggauss(100)
-    D = diff_matrix(xs)
+    xs_g, ws = leggauss(20)
+    D = diff_matrix(xs_g)
 
+    ys_g = np.sin(xs_g * np.pi)
+    dys = D @ ys_g
+
+    xs = np.linspace(-1, 1, 100)
     ys = np.sin(xs * np.pi)
-    dys = D @ ys
     exact_dys = np.pi * np.cos(xs * np.pi)
-
-    plt.plot(xs, ys)
-    plt.plot(xs, dys)
-    plt.plot(xs, exact_dys)
+    plt.figure(figsize=(12, 5))
+    plt.plot(xs, ys, label="$sin(x\pi)$")
+    plt.plot(xs_g, ys_g, ".", label="$sin(x\pi)$ nodes")
+    plt.plot(xs, exact_dys, "--", label="Exact derivative")
+    plt.plot(xs_g, dys, ".", label="Spectral derivative")
     plt.grid()
+    plt.legend()
+    plt.title("Spectral derivative")
+    plt.savefig("./assignment_1/Plots/PolynomialMethods/exercise_k_1.pdf")
     # %%
 
     errors = []
-    Ns = 2 ** np.arange(0, 10)
+    errors_spec = []
+    Ns = np.arange(1, 50, 2)
 
     for N in Ns:
         xs, ws = leggauss(N)
         D = diff_matrix(xs)
+        M = int_matrix(xs)
 
         ys = np.sin(xs * np.pi)
         dys = D @ ys
         exact_dys = np.pi * np.cos(xs * np.pi)
 
-        error = np.linalg.norm(dys - exact_dys, ord=np.inf)
-        errors.append(error)
+        # error = np.linalg.norm(dys - exact_dys, ord=np.inf)
+        error_spec = (dys - exact_dys) @ M @ (dys - exact_dys)
+        # errors.append(error)
+        errors_spec.append(error_spec)
 
-    plt.loglog(Ns, errors, marker="o")
+    plt.figure(figsize=(12, 5))
+    # plt.semilogy(Ns, errors, marker="o", label="$L_\infty$")
+    plt.semilogy(Ns, errors_spec, marker="o")
     plt.xlabel("N")
-    plt.ylabel("Error (Infinity Norm)")
+    plt.ylabel("Error $L_2$")
     plt.title("Convergence Test for N")
     plt.grid()
-    plt.show()
 
-    plt.savefig("./assignment_1/Plots/PolynomialMethods/exercise_k.pdf")
-
-    # %%
-    xs, ws = leggauss(30)
-    M = int_matrix(xs)
-    ys = np.sin(xs * np.pi)
-    ys @ (M @ ys)
-# %%
-
+    plt.savefig("./assignment_1/Plots/PolynomialMethods/exercise_k_2.pdf")
 # %%
