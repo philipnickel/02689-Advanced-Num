@@ -25,7 +25,7 @@ def legendre_coeffs(N, M=200):
 
 
 # Experiment with different quadrature sizes
-Ns = [200]
+Ns = [40]
 coeff_dict = {N: legendre_coeffs(N, M=200)[0] for N in Ns}
 
 # --- Plot decay of coefficients ---

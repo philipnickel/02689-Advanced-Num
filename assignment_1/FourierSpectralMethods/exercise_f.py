@@ -115,7 +115,7 @@ if __name__ == "__main__":
     plt.show()
 
     # --- Convergence study ---
-    Ns_conv = [8, 16, 32, 64, 128, 256, 512]
+    Ns_conv = [8, 16, 32, 64, 128, 256, 512, 1024, 2048,4096,8192,16384]
     err_fft, err_mat = convergence_test(Ns_conv, L)
 
     plt.figure(figsize=(8,5))
@@ -129,7 +129,7 @@ if __name__ == "__main__":
     plt.show()
 
     # --- Performance study ---
-    Ns_perf = [16, 32, 64, 128, 256, 512, 1024]
+    Ns_perf = [16, 32, 64, 128, 256, 512, 1024, 2048, 4096,8192,16384,32768]
     t_fft, t_mat = benchmark(Ns_perf, L)
 
     plt.figure(figsize=(8,5))
@@ -141,3 +141,4 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True, which="both")
     plt.show()
+# %%

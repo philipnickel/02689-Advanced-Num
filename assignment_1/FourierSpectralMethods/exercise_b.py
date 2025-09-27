@@ -1,3 +1,4 @@
+# %%
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.fft import fft, fftshift
@@ -30,3 +31,4 @@ plt.title("Comparison of Fourier Coefficients")
 plt.legend()
 plt.grid(True)
 plt.show()
+# %%
