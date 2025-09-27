@@ -1,22 +1,25 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+from assignment_1.PolynomialMethods.exercise_h import (
+    legendre_polynomials_with_derivatives,
+)
 from utils.plotting import save_figure, setup_assignment_plotting, style_axes
-
-setup_assignment_plotting("assignment_1/Plots/PolynomialMethods/exercise_j")
-
-from assignment_1.PolynomialMethods.exercise_h import legendre_polynomials_with_derivatives
 
 
 def generalized_vandermonde(x: np.ndarray, degree: int | None = None) -> np.ndarray:
+    x = np.asarray(x)
     if degree is None:
         degree = x.size - 1
     values, _ = legendre_polynomials_with_derivatives(x, degree)
-    return values.T
+    return values[: degree + 1].T
 
 
 def jacobi_gauss_quadrature_nodes(alpha: float, beta: float, degree: int) -> np.ndarray:
-    """Jacobi-Gauss nodes - eigenproblem from Lecture 2."""
+    """Jacobi-Gauss nodes 
+
+    Lecture 2 Polynomial Methods, slides 40–41.
+    """
 
     if degree < 0:
         raise ValueError("degree must be non-negative")
@@ -54,8 +57,9 @@ def jacobi_gauss_quadrature_nodes(alpha: float, beta: float, degree: int) -> np.
 
 
 def legendre_gauss_lobatto_nodes(num_nodes: int) -> np.ndarray:
-    """Legendre-Gauss-Lobatto nodes using JacobiGL construction - Lecture 2."""
-
+    """Legendre-Gauss-Lobatto nodes
+    Lecture 2 Polynomial Methods slide 46
+    """
     if num_nodes < 2:
         raise ValueError("Need at least two nodes for LGL grid")
     if num_nodes == 2:
@@ -70,8 +74,10 @@ def legendre_gauss_lobatto_nodes(num_nodes: int) -> np.ndarray:
 
 
 def legendre_gauss_lobatto_weights(x_nodes: np.ndarray) -> np.ndarray:
-    """Compute LGL quadrature weights from the Lecture 2 Jacobi GL formula."""
+    """Quadrature weights for Legendre-Gauss-Lobatto nodes.
 
+   Lecture 2 Polynomial Methods  slide 46
+    """
     degree = x_nodes.size - 1
     if degree < 1:
         return np.array([2.0])
@@ -82,38 +88,13 @@ def legendre_gauss_lobatto_weights(x_nodes: np.ndarray) -> np.ndarray:
 
 
 def lagrange_on_grid(x_nodes: np.ndarray, x_eval: np.ndarray) -> np.ndarray:
+    #Lecture 2 slide 56
 
     degree = x_nodes.size - 1
-    if degree < 0:
-        raise ValueError("Need at least one node")
-    if degree == 0:
-        return np.ones((x_eval.size, 1))
-
-    values_nodes, _ = legendre_polynomials_with_derivatives(x_nodes, degree)
-    Pn_nodes = values_nodes[degree]
-
-    values_eval, derivs_eval = legendre_polynomials_with_derivatives(x_eval, degree)
-    dPn_eval = derivs_eval[degree]
-    prefactor = -(1.0 - x_eval * x_eval) * dPn_eval
-    denom = degree * (degree + 1)
-
-    diff = x_eval[:, None] - x_nodes[None, :]
-    lagrange_vals = np.zeros_like(diff)
-
-    mask = np.isclose(diff, 0.0)
-    np.divide(
-        prefactor[:, None],
-        denom * Pn_nodes[None, :] * diff,
-        out=lagrange_vals,
-        where=~mask,
-    )
-
-    if np.any(mask):
-        rows, cols = np.nonzero(mask)
-        lagrange_vals[rows, :] = 0.0
-        lagrange_vals[rows, cols] = 1.0
-
-    return lagrange_vals
+    V_nodes = generalized_vandermonde(x_nodes, degree)
+    V_eval = generalized_vandermonde(x_eval, degree)
+    identity = np.eye(degree + 1)
+    return V_eval @ np.linalg.solve(V_nodes, identity)
 
 
 def discrete_l2_error(f_exact: np.ndarray, f_num: np.ndarray, weights: np.ndarray) -> float:
@@ -122,14 +103,16 @@ def discrete_l2_error(f_exact: np.ndarray, f_num: np.ndarray, weights: np.ndarra
 
 
 def main() -> None:
+    setup_assignment_plotting("assignment_1/Plots/PolynomialMethods/exercise_j")
+
     num_nodes = 6
     x_nodes = legendre_gauss_lobatto_nodes(num_nodes)
-    x_eval = np.linspace(-1.0, 1.0, 1000, endpoint=False)
-    lagrange_vals = lagrange_on_grid(x_nodes, x_eval)
+    x_uniform = np.linspace(-1.0, 1.0, 100)
+    lagrange_vals = lagrange_on_grid(x_nodes, x_uniform)
 
     fig, ax = plt.subplots(figsize=(9, 5))
     for j in range(num_nodes):
-        ax.plot(x_eval, lagrange_vals[:, j], label=rf"$h_{{{j}}}(x)$")
+        ax.plot(x_uniform, lagrange_vals[:, j], label=rf"$h_{{{j}}}(x)$")
     ax.plot(x_nodes, np.zeros_like(x_nodes), "ko", label="LGL nodes")
     style_axes(
         ax,
@@ -141,13 +124,13 @@ def main() -> None:
     )
     save_figure("exercise_j_lagrange", fig=fig, dpi=200)
 
-    eval_points = 400
-    N_values = np.arange(4, 20, 2)
+    eval_points = 200
+    N_values = np.arange(4, 24, 2)
 
     x_eval = legendre_gauss_lobatto_nodes(eval_points)
     weights_eval = legendre_gauss_lobatto_weights(x_eval)
     f_exact = np.sin(np.pi * x_eval)
-    errors = []
+    errors: list[float] = []
     for N in N_values:
         x_nodes = legendre_gauss_lobatto_nodes(N)
         degree = N - 1
@@ -158,6 +141,7 @@ def main() -> None:
         f_approx = V_eval @ modal
         errors.append(discrete_l2_error(f_exact, f_approx, weights_eval))
 
+    errors = np.array(errors)
     fig, ax = plt.subplots(figsize=(8, 5))
     ax.loglog(N_values, errors, "o-", label=r"$L_2$ error for $\sin(\pi x)$")
 
@@ -199,10 +183,11 @@ def main() -> None:
     )
     save_figure("exercise_j_extrapolation", fig=fig, dpi=200)
 
-    if len(errors) >= 2:
-        ratios = np.array(errors[:-1]) / np.array(errors[1:])
+    if errors.size >= 2:
+        ratios = errors[:-1] / errors[1:]
         print("Error ratios N_k / N_{k+1}:", ratios)
 
 
 if __name__ == "__main__":
     main()
+

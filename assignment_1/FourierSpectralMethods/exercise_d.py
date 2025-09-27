@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from utils.plotting import save_figure, setup_assignment_plotting, style_axes
 from numba import njit
 
-setup_assignment_plotting("assignment_1/Plots/FourierSpectralMethods/exercise_d")
 plt.rcParams["text.usetex"] = False
 
 # %% Fourier differentiation matrix D 
@@ -45,12 +44,18 @@ def convergence_rate(Ns):
 
 
 if __name__ == "__main__":
+    setup_assignment_plotting("assignment_1/Plots/FourierSpectralMethods/exercise_d")
     Ns = 2 ** np.arange(4, 9)
     errors = convergence_rate(Ns)
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.loglog(Ns, errors, marker='o', label='Error')
     # Reference line of O(N**2)
-    ax.loglog(Ns, errors[0]*(Ns/Ns[0])**-2, linestyle='--', label='O(N^{-2})')
+    ax.loglog(
+        Ns,
+        errors[0] * (Ns / Ns[0]) ** -2,
+        linestyle='--',
+        label=r"$O(N^{-2})$",
+    )
     style_axes(
         ax,
         title='Convergence Rate of Fourier Spectral Differentiation',

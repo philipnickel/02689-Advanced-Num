@@ -2,10 +2,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.fft import fft, ifft, fftfreq
-from numba import njit
 import time
 
 from utils.plotting import save_figure, setup_assignment_plotting, style_axes
+from assignment_1.FourierSpectralMethods.exercise_d import fourier_diff_matrix
 
 
 setup_assignment_plotting("assignment_1/Plots/FourierSpectralMethods/exercise_f")
@@ -21,21 +21,6 @@ def fft_diff(v, L):
     k = fftfreq(N, d=L/N) * 2*np.pi
     vprime_hat = 1j * k * v_hat
     return np.real(ifft(vprime_hat))
-
-# --- Fourier differentiation matrix ---
-@njit
-def cot(x):
-    return 1.0 / np.tan(x)
-
-@njit
-def fourier_diff_matrix(N):
-    D = np.zeros((N, N))
-    for i in range(N):
-        for j in range(N):
-            if i != j:
-                D[i, j] = 0.5 * (-1)**(i + j) * cot(np.pi * (i - j) / N)
-        D[i, i] = -np.sum(D[i, :])  # negative sum trick
-    return D
 
 def matrix_diff(v, L):
     N = len(v)

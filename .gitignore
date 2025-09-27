@@ -14,7 +14,7 @@ __pycache__/
 *$py.class
 
 #*.png
-*.pdf
+#*.pdf
 
 # virtual environments and packaging metadata
 .venv/
