@@ -1,1 +1,0 @@
-- hent plotting tool fra bachelorproject

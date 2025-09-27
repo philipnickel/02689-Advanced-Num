@@ -6,3 +6,12 @@
 # 
 book.pdf
 .git/
+
+# python cache
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
+*$py.class
+
+*.png
+*.pdf
