@@ -64,8 +64,32 @@ def int_matrix(xs):
 # %%
 
 if __name__ == "__main__":
+
     xs, ws = leggauss(100)
     D = diff_matrix(xs)
+
+    ys_g = np.sin(xs * np.pi)
+    dys = D @ ys_g
+
+    xs = np.linspace(-1, 1, 100)
+    ys = np.sin(xs * np.pi)
+    exact_dys = np.pi * np.cos(xs * np.pi)
+    fig_diff, ax_diff = plt.subplots(figsize=(12, 5))
+    ax_diff.plot(xs, ys, label=r"$\sin(x\pi)$")
+    ax_diff.plot(xs, ys_g, ".", label=r"$\sin(x\pi)$ nodes")
+    ax_diff.plot(xs, exact_dys, "--", label="Exact derivative")
+    ax_diff.plot(xs, dys, ".", label="Spectral derivative")
+    style_axes(
+            ax_diff,
+            title="Spectral derivative",
+            xlabel="x",
+            ylabel="value",
+            legend=True,
+
+        )
+
+    save_figure("exercise_k_diff", fig=fig_diff, dpi=200)
+
 
     ys = np.sin(xs * np.pi)
     dys = D @ ys
@@ -75,16 +99,19 @@ if __name__ == "__main__":
     ax_diff.plot(xs, ys, label=r"$u(x) = \sin(\pi x)$")
     ax_diff.plot(xs, dys, label=r"$D u$")
     ax_diff.plot(xs, exact_dys, label=r"$u'(x)$")
+
     style_axes(
         ax_diff,
-        title="Spectral differentiation with Legendre polynomials",
+        title="Spectral differentiation comparison",
         xlabel="x",
         ylabel="value",
         legend=True,
     )
 
+    save_figure("exercise_k_diff_comparison", fig=fig_diff, dpi=200)
+
     errors = []
-    Ns = 2 ** np.arange(0, 10)
+    Ns = np.arange(4, 30, 4)
 
     for N in Ns:
         xs, ws = leggauss(N)
@@ -98,13 +125,23 @@ if __name__ == "__main__":
         errors.append(error)
 
     fig_conv, ax_conv = plt.subplots(figsize=(8, 5))
-    ax_conv.loglog(Ns, errors, marker="o")
+    ax_conv.loglog(Ns, errors, marker="o", label="Error")
+    ax_conv.loglog(
+        Ns,
+        errors[0] * (Ns/ Ns[0]) ** -2,
+        'k--',
+        label=r"$O(N^{-2})$",
+        alpha=0.5
+    )
+
+
     style_axes(
         ax_conv,
         title="Convergence Test for N",
         xlabel="N",
         ylabel="Error (Infinity Norm)",
         grid={"which": "both", "linestyle": ":", "linewidth": 0.5},
+        legend=True,
     )
     save_figure("exercise_k", fig=fig_conv, dpi=200)
 

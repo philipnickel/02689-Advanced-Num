@@ -45,7 +45,9 @@ def convergence_rate(Ns):
 
 if __name__ == "__main__":
     setup_assignment_plotting("assignment_1/Plots/FourierSpectralMethods/exercise_d")
-    Ns = 2 ** np.arange(4, 9)
+
+    #Ns = 2 ** np.arange(1, 7)
+    Ns = np.arange(4, 46, 4)
     errors = convergence_rate(Ns)
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.loglog(Ns, errors, marker='o', label='Error')
@@ -53,8 +55,9 @@ if __name__ == "__main__":
     ax.loglog(
         Ns,
         errors[0] * (Ns / Ns[0]) ** -2,
-        linestyle='--',
+        'k--',
         label=r"$O(N^{-2})$",
+        alpha=0.5
     )
     style_axes(
         ax,

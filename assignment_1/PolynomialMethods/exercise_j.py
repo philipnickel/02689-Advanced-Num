@@ -125,7 +125,7 @@ def main() -> None:
     save_figure("exercise_j_lagrange", fig=fig, dpi=200)
 
     eval_points = 200
-    N_values = np.arange(4, 24, 2)
+    N_values = np.arange(4, 30, 2)
 
     x_eval = legendre_gauss_lobatto_nodes(eval_points)
     weights_eval = legendre_gauss_lobatto_weights(x_eval)
@@ -146,7 +146,7 @@ def main() -> None:
     ax.loglog(N_values, errors, "o-", label=r"$L_2$ error for $\sin(\pi x)$")
 
     ref = errors[0] * (N_values[0] / N_values) ** 2
-    ax.loglog(N_values, ref, "--", color="0.6", label=r"Reference $N^{-2}$")
+    ax.loglog(N_values, ref, "--", color="0.6", label=r"$N^{-2}$")
     style_axes(
         ax,
         title=r"Legendre interpolation of $\sin(\pi x)$",
@@ -157,25 +157,34 @@ def main() -> None:
     )
     save_figure("exercise_j_convergence", fig=fig, dpi=200)
 
+    # Single extrapolation plot showing different N values
     x_ext = np.linspace(-1.5, 1.5, 400)
-    N = 20
-    x_nodes = legendre_gauss_lobatto_nodes(N)
-    degree = N - 1
-    V_nodes = generalized_vandermonde(x_nodes, degree)
-    nodal_vals = np.sin(np.pi * x_nodes)
-    modal = np.linalg.solve(V_nodes, nodal_vals)
-
-    V_ext = generalized_vandermonde(x_ext, degree)
-    approx_ext = V_ext @ modal
     exact_ext = np.sin(np.pi * x_ext)
-
-    fig, ax = plt.subplots(figsize=(8, 5))
-    ax.plot(x_ext, exact_ext, label=r"Exact $\sin(\pi x)$")
-    ax.plot(x_ext, approx_ext, "--", label=f"Legendre modal degree {degree}")
+    
+    # Test 4 different N values to demonstrate extrapolation behavior
+    N_values_extrapolation = [4, 8, 16]
+    
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(x_ext, exact_ext, "k-", label=r"Exact $\sin(\pi x)$", linewidth=2)
+    
+    for i, N in enumerate(N_values_extrapolation):
+        x_nodes = legendre_gauss_lobatto_nodes(N)
+        degree = N - 1
+        V_nodes = generalized_vandermonde(x_nodes, degree)
+        nodal_vals = np.sin(np.pi * x_nodes)
+        modal = np.linalg.solve(V_nodes, nodal_vals)
+        
+        V_ext = generalized_vandermonde(x_ext, degree)
+        approx_ext = V_ext @ modal
+        
+        
+        ax.plot(x_ext, approx_ext, "--", 
+                label=f"N={N}", linewidth=1)
+    
     ax.axvspan(-1.0, 1.0, color="0.9", alpha=0.5, label="Interpolation domain")
     style_axes(
         ax,
-        title="Legendre polynomial extrapolation",
+        title="Legendre polynomial extrapolation\n(Showing how accuracy improves with higher degree)",
         xlabel="x",
         ylabel="value",
         legend=True,
