@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from scipy.fft import fft, fftshift
 
 #%% Parameters
-N = 4
+N = 64
 x = np.linspace(0, 2, N, endpoint=False)
 u = 1 / (2 - np.cos(np.pi * x))
 
@@ -36,3 +36,5 @@ plt.legend()
 plt.grid(True)
 # save figure
 plt.savefig("assignment_1/Plots/FourierSpectralMethods/fourier_coefficients_comparison.pdf")
+
+# %%
