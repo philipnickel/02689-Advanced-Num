@@ -14,25 +14,30 @@ setup_assignment_plotting("assignment_1/Plots/FourierSpectralMethods/exercise_f"
 # Differentiation methods
 # ======================================================
 
+
 # --- FFT differentiation ---
 def fft_diff(v, L):
     N = len(v)
     v_hat = fft(v)
-    k = fftfreq(N, d=L/N) * 2*np.pi
+    k = fftfreq(N, d=L / N) * 2 * np.pi
     vprime_hat = 1j * k * v_hat
     return np.real(ifft(vprime_hat))
+
 
 def matrix_diff(v, L):
     N = len(v)
     D = (np.pi) * fourier_diff_matrix(N)  # scaling for domain
     return D @ v
 
+
 # --- Test function and exact derivative ---
 def u(x):
     return np.exp(np.sin(np.pi * x))
 
+
 def u_prime_exact(x):
     return np.pi * np.cos(np.pi * x) * np.exp(np.sin(np.pi * x))
+
 
 # ======================================================
 # Convergence test
@@ -51,6 +56,7 @@ def convergence_test(Ns, L=2):
         err_mat.append(np.linalg.norm(vprime_mat - vprime_exact, np.inf))
 
     return np.array(err_fft), np.array(err_mat)
+
 
 # ======================================================
 # Performance benchmark
@@ -71,6 +77,7 @@ def benchmark(Ns, L=2):
 
     return np.array(t_fft), np.array(t_mat)
 
+
 # ======================================================
 # Main execution
 # ======================================================
@@ -86,18 +93,18 @@ if __name__ == "__main__":
     vprime_mat = matrix_diff(v, L)
 
     # --- Print solutions ---
-    #print("x values:\n", x)
-    #print("\nFunction v(x) = exp(sin(pi*x)):\n", v)
-    #print("\nExact derivative v'(x):\n", vprime_exact)
-    #print("\nFFT derivative:\n", vprime_fft)
-    #print("\nMatrix derivative:\n", vprime_mat)
+    # print("x values:\n", x)
+    # print("\nFunction v(x) = exp(sin(pi*x)):\n", v)
+    # print("\nExact derivative v'(x):\n", vprime_exact)
+    # print("\nFFT derivative:\n", vprime_fft)
+    # print("\nMatrix derivative:\n", vprime_mat)
 
     # --- Plot solution comparison ---
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.plot(x, vprime_exact, linewidth=1, alpha=0.5, label="Exact derivative")
 
-    ax.plot(x, vprime_fft, linestyle='', marker='x', label="FFT derivative")
-    ax.plot(x, vprime_mat, linestyle='', marker='+', label="Matrix derivative")
+    ax.plot(x, vprime_fft, linestyle="", marker="x", label="FFT derivative")
+    ax.plot(x, vprime_mat, linestyle="", marker="+", label="Matrix derivative")
     style_axes(
         ax,
         title="Spectral Differentiation: FFT vs Matrix vs Exact",
@@ -109,22 +116,23 @@ if __name__ == "__main__":
     save_figure("exercise_f_derivative_comparison", fig=fig)
 
     # --- Convergence study ---
-    #Ns_conv = [8, 16, 32, 64, 128, 256, 512]
+    # Ns_conv = [8, 16, 32, 64, 128, 256, 512]
 
-    #Ns_conv= [4, 8, 16, 32, 64, 128]
-    Ns_conv = np.arange(2, 64, 10)
+    # Ns_conv= [4, 8, 16, 32, 64, 128]
+    Ns_conv = np.arange(2, 64 * 70, 10)
 
     err_fft, err_mat = convergence_test(Ns_conv, L)
 
     fig_conv, ax_conv = plt.subplots(figsize=(8, 5))
-    ax_conv.loglog(Ns_conv, err_fft, marker='o', label="FFT differentiation")
-    ax_conv.loglog(Ns_conv, err_mat, linestyle='--', marker='s', label="Matrix differentiation")
+    ax_conv.loglog(Ns_conv, err_fft, marker="o", label="FFT differentiation")
+    ax_conv.loglog(
+        Ns_conv, err_mat, linestyle="--", marker="s", label="Matrix differentiation"
+    )
 
     # Add reference line for algebraic convergence (for comparison)
     N_ref = np.array(Ns_conv)
-    algebraic_ref = 1e-2 * (N_ref[0]/N_ref)**2  # O(N^-2) reference
-    ax_conv.loglog(N_ref, algebraic_ref, 'k--', alpha=0.5,
-                  label='$O(N^{-2})$')
+    algebraic_ref = 1e-2 * (N_ref[0] / N_ref) ** 2  # O(N^-2) reference
+    ax_conv.loglog(N_ref, algebraic_ref, "k--", alpha=0.5, label="$O(N^{-2})$")
 
     style_axes(
         ax_conv,
@@ -133,33 +141,30 @@ if __name__ == "__main__":
         ylabel="Infinity norm error",
         legend=True,
         grid={"which": "both", "linestyle": ":", "linewidth": 0.5},
-
     )
     save_figure("exercise_f_convergence", fig=fig_conv)
 
     # --- Performance study ---
-    #Ns_perf = [16, 32, 64, 128, 256, 512, 1024]
+    # Ns_perf = [16, 32, 64, 128, 256, 512, 1024]
     Ns_perf = np.logspace(2, 11, num=20, base=2, dtype=int)
-    #np.arange(16, 512, 10)
+    # np.arange(16, 512, 10)
 
     t_fft, t_mat = benchmark(Ns_perf, L)
 
     fig_perf, ax_perf = plt.subplots(figsize=(8, 5))
-    ax_perf.loglog(Ns_perf, t_fft, marker='o', label="FFT differentiation")
-    ax_perf.loglog(Ns_perf, t_mat, marker='s', label="Matrix differentiation")
+    ax_perf.loglog(Ns_perf, t_fft, marker="o", label="FFT differentiation")
+    ax_perf.loglog(Ns_perf, t_mat, marker="s", label="Matrix differentiation")
 
     # Add theoretical complexity reference lines
     N_ref = np.array(Ns_perf)
 
     # O(N log N) reference for FFT
     fft_ref = t_fft[0] * (N_ref * np.log2(N_ref)) / (Ns_perf[0] * np.log2(Ns_perf[0]))
-    ax_perf.loglog(N_ref, fft_ref, 'k--', alpha=0.5,
-                  label='$O(N \\log N)$')
+    ax_perf.loglog(N_ref, fft_ref, "k--", alpha=0.5, label="$O(N \\log N)$")
 
     # O(N^2) reference for matrix multiplication
-    mat_ref = t_mat[0] * (N_ref**2) / (Ns_perf[0]**2)
-    ax_perf.loglog(N_ref, mat_ref, 'k:', alpha=0.5,
-                  label='$O(N^2)$')
+    mat_ref = t_mat[0] * (N_ref**2) / (Ns_perf[0] ** 2)
+    ax_perf.loglog(N_ref, mat_ref, "k:", alpha=0.5, label="$O(N^2)$")
 
     style_axes(
         ax_perf,
@@ -170,3 +175,5 @@ if __name__ == "__main__":
         grid={"which": "both", "linestyle": ":", "linewidth": 0.5},
     )
     save_figure("exercise_f_performance", fig=fig_perf)
+
+# %%
