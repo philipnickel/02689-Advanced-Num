@@ -23,10 +23,7 @@ def legendre_tau_derivative_matrices(num_modes: int) -> tuple[np.ndarray, np.nda
     )
     return D1, D2
 
-
-def solve_legendre_tau(epsilon: float, num_modes: int) -> np.ndarray:
-    """Return Legendre coefficients for the Tau discretisation."""
-
+def legendre_tau_system(epsilon: float, num_modes: int) -> tuple[np.ndarray, np.ndarray]:
     D1, D2 = legendre_tau_derivative_matrices(num_modes)
     operator = -4.0 * epsilon * D2 - 2.0 * D1
 
@@ -39,18 +36,29 @@ def solve_legendre_tau(epsilon: float, num_modes: int) -> np.ndarray:
 
     system[-2, :] = (-1.0) ** np.arange(num_modes)
     system[-1, :] = 1.0
-    rhs_mod[-2:] = 0.0
+    rhs_mod[-2:] = 0
 
-    return np.linalg.solve(system, rhs_mod)
+    return system, rhs_mod
 
-def main() -> None:
-    d1, d2 = legendre_tau_derivative_matrices(num_modes: int) -> tuple[np.ndarray, np.ndarray]:
 
+def solve_legendre_tau(epsilon: float, num_modes: int) -> np.ndarray:
+    """Solve the BVP using the Legendre Tau method."""
+    system, rhs = legendre_tau_system(epsilon, num_modes)
+    coeffs = np.linalg.solve(system, rhs)
+    return coeffs
 
 ## % visualize sparse matrix 
 
+def solve_legendre_collocation(epsilon: float, num_modes: int) -> tuple[np.ndarray, np.ndarray]:
+    """Solve the BVP using the Legendre Tau method."""
+    system, rhs = legendre_tau_system(epsilon, num_modes)
+    coeffs = np.linalg.solve(system, rhs)
+    return system, coeffs
+
 
 if __name__ == "__main__":
+
+# %% Imports 
 
     import sympy as sp
     import matplotlib.pyplot as plt
@@ -59,5 +67,22 @@ if __name__ == "__main__":
     from utils import plot_style  # noqa: F401
     plt.rcParams["text.usetex"] = False
 
+# %% Visualize system matrix
+    num_modes = 25  # example value
+    epsilon = 0.1
+    sys_matrix, rhs = legendre_tau_system(1e-2, num_modes)
 
-    main()
+    plt.figure(figsize=(10, 5))
+
+    plt.title("Sparcity System Matrix")
+    plt.spy(sys_matrix, markersize=5)
+
+    plt.figure(figsize=(10, 5))
+
+    plt.matshow(sys_matrix)
+    plt.title("Sparcity System Matrix")
+
+    plt.colorbar()
+
+
+
