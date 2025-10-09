@@ -36,6 +36,6 @@ axs[1].set_ylabel("$abs(f - \hat{f})$")
 axs[1].grid()
 
 plt.tight_layout()
-plt.savefig("../Plots/FourierSpectralMethods/exercise_a.pdf")
+plt.savefig("assignment_1/Plots/FourierSpectralMethods/exercise_a.pdf")
 
 # %%
