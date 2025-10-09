@@ -44,6 +44,15 @@ def normalized_jacobi_poly(xs: np.ndarray, alpha: float, beta: float, N: int):
     return np.exp(log_c) * jacobi_poly(xs, alpha, beta, N)
 
 
+def legendre_polynomials(xs: np.ndarray, degree: int) -> np.ndarray:
+    """Return Legendre polynomials P_0..P_degree evaluated at xs."""
+    xs = np.asarray(xs)
+    polys = np.empty((degree + 1, xs.size))
+    for n in range(degree + 1):
+        polys[n] = jacobi_poly(xs, 0.0, 0.0, n)
+    return polys
+
+
 # %%
 if __name__ == "__main__":
     plt.figure(figsize=(12, 5))

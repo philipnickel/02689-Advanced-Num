@@ -4,7 +4,6 @@
 
 
 # 
-book.pdf
 .git/
 
 # python cache
@@ -13,5 +12,3 @@ __pycache__/
 *.py[codz]
 *$py.class
 
-*.png
-*.pdf
