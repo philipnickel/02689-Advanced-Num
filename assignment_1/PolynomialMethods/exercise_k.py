@@ -1,5 +1,4 @@
 # %%
-from cProfile import label
 from matplotlib import pyplot as plt
 import numpy as np
 from assignment_1.PolynomialMethods.exercise_h import (
@@ -71,10 +70,10 @@ if __name__ == "__main__":
     ys = np.sin(xs * np.pi)
     exact_dys = np.pi * np.cos(xs * np.pi)
     plt.figure(figsize=(12, 5))
-    plt.plot(xs, ys, label="$sin(x\pi)$")
-    plt.plot(xs_g, ys_g, ".", label="$sin(x\pi)$ nodes")
-    plt.plot(xs, exact_dys, "--", label="Exact derivative")
-    plt.plot(xs_g, dys, ".", label="Spectral derivative")
+    plt.plot(xs, ys, label=rf"$sin(x\pi)$")
+    plt.plot(xs_g, ys_g, ".", label=rf"$sin(x\pi)$ nodes")
+    plt.plot(xs, exact_dys, "--", label=rf"Exact derivative")
+    plt.plot(xs_g, dys, ".", label=rf"Spectral derivative")
     plt.grid()
     plt.legend()
     plt.title("Spectral derivative")
