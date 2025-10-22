@@ -4,6 +4,7 @@ The differentiation matrix follows the nodal formulation in Lecture 1 (Fourier M
 where differentiation is effected through a dense matrix with cotangent entries.  We reuse
 `fourier_diff_matrix` from exercise d) and rescale it to the physical interval [-2, 2].
 """
+
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -35,14 +36,14 @@ def w1(x):
 
 
 def w2(x):
-    pos = (1.0 - np.cos(PI * x)) / (PI ** 2)
-    neg = (np.cos(PI * x) - 1.0) / (PI ** 2)
+    pos = (1.0 - np.cos(PI * x)) / (PI**2)
+    neg = (np.cos(PI * x) - 1.0) / (PI**2)
     return np.where(x < 0.0, neg, pos)
 
 
 def w3(x):
-    pos = (x / (PI ** 2)) - (np.sin(PI * x) / (PI ** 3))
-    neg = (np.sin(PI * x) / (PI ** 3)) - (x / (PI ** 2))
+    pos = (x / (PI**2)) - (np.sin(PI * x) / (PI**3))
+    neg = (np.sin(PI * x) / (PI**3)) - (x / (PI**2))
     return np.where(x < 0.0, neg, pos)
 
 
@@ -91,7 +92,9 @@ def plot_convergence(N_values, errors):
     fig, ax = plt.subplots(figsize=(8, 5))
     markers = {1: "o", 2: "s", 3: "^"}
     for i in (1, 2, 3):
-        ax.loglog(N_values, errors[i], marker=markers[i], label=rf"$w_{i}$ derivative error")
+        ax.loglog(
+            N_values, errors[i], marker=markers[i], label=rf"$w_{i}$ derivative error"
+        )
         tail = min(4, len(N_values))
         slope, _ = np.polyfit(np.log(N_values[-tail:]), np.log(errors[i][-tail:]), 1)
         ax.text(
@@ -128,4 +131,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    plt.show()

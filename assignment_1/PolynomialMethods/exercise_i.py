@@ -17,12 +17,12 @@ def nodal_to_modal(u_func, N, M):
     N : number of quadrature nodes
     M : number of Legendre modes (coefficients)
     """
-    xj, wj = leggauss(N)          # quadrature nodes and weights
-    uj = u_func(xj)               # evaluate function
+    xj, wj = leggauss(N)  # quadrature nodes and weights
+    uj = u_func(xj)  # evaluate function
     coeffs = np.zeros(M)
     for n in range(M):
         Pn = eval_jacobi(n, 0, 0, xj)
-        coeffs[n] = (2*n + 1)/2 * np.sum(wj * uj * Pn)
+        coeffs[n] = (2 * n + 1) / 2 * np.sum(wj * uj * Pn)
     return coeffs
 
 
@@ -42,7 +42,7 @@ def modal_to_nodal(x, coeffs):
 def compute_errors(u_func, coeffs, xs):
     true_values = u_func(xs)
     synth_values = modal_to_nodal(xs, coeffs)
-    L2_error = np.sqrt(np.trapz((synth_values - true_values)**2, xs))
+    L2_error = np.sqrt(np.trapz((synth_values - true_values) ** 2, xs))
     Linfty_error = np.max(np.abs(synth_values - true_values))
     return L2_error, Linfty_error, true_values, synth_values
 
@@ -51,8 +51,8 @@ def compute_errors(u_func, coeffs, xs):
 # Main execution
 # ======================================================
 if __name__ == "__main__":
-    M_modes = 200                 # number of Legendre coefficients
-    Ns = [10,40,80,100,200]  # quadrature sizes to experiment with
+    M_modes = 200  # number of Legendre coefficients
+    Ns = [10, 40, 80, 100, 200]  # quadrature sizes to experiment with
 
     xs = np.linspace(-1, 1, 500)  # fine grid for error computation
     errors_L2, errors_Linf = [], []
@@ -60,7 +60,9 @@ if __name__ == "__main__":
     plt.figure(figsize=(10, 6))
     for N in Ns:
         coeffs = nodal_to_modal(u, N, M_modes)
-        L2_error, Linfty_error, true_values, synth_values = compute_errors(u, coeffs, xs)
+        L2_error, Linfty_error, true_values, synth_values = compute_errors(
+            u, coeffs, xs
+        )
 
         errors_L2.append(L2_error)
         errors_Linf.append(Linfty_error)
@@ -75,7 +77,6 @@ if __name__ == "__main__":
     plt.title("Synthesized functions for different quadrature sizes")
     plt.legend()
     plt.grid(True)
-    plt.show()
 
     # --- Plot coefficient decay ---
     plt.figure(figsize=(10, 6))
@@ -87,7 +88,6 @@ if __name__ == "__main__":
     plt.title("Legendre coefficient decay for different quadrature sizes")
     plt.legend()
     plt.grid(True, which="both")
-    plt.show()
 
     # --- Error vs quadrature size ---
     plt.figure(figsize=(8, 5))
@@ -98,5 +98,4 @@ if __name__ == "__main__":
     plt.title("Error vs quadrature size")
     plt.legend()
     plt.grid(True, which="both")
-    plt.show()
 # %%

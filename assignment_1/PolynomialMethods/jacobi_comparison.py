@@ -83,7 +83,6 @@ ax3.legend()
 ax3.grid(True, alpha=0.3)
 
 plt.tight_layout()
-plt.show()
 
 # %%
 # Comparison for Chebyshev polynomials of the first kind (alpha=-0.5, beta=-0.5)
@@ -125,7 +124,6 @@ ax3.legend()
 ax3.grid(True, alpha=0.3)
 
 plt.tight_layout()
-plt.show()
 
 # %%
 # Numerical comparison - compute max errors
