@@ -1,15 +1,15 @@
 VENV ?= .venv
 PYTHON := $(if $(wildcard $(VENV)/bin/python),$(VENV)/bin/python,python3)
-ASSIGNMENT_MODULES := $(shell find assignment_2 -type f -name '*.py' ! -name '__init__.py' | sort | sed 's|^assignment_2/||; s|\.py$$||; s|/|.|g' | sed 's|^|assignment_2.|')
+ASSIGNMENT_MODULES := $(shell find assignment_1 -type f -name '*.py' ! -name '__init__.py' | sort | sed 's|^assignment_1/||; s|\.py$$||; s|/|.|g' | sed 's|^|assignment_1.|')
 
 .PHONY: clean run-all 
 
 clean:
 	@echo "Removing generated plots, __pycache__ directories, and .DS_Store files"
-	@if [ -d assignment_2/Figures]; then \
-		find assignment_2/Figures-mindepth 1 -exec rm -rf {} +; \
+	@if [ -d assignment_1/Figures]; then \
+		find assignment_1/Figures-mindepth 1 -exec rm -rf {} +; \
 	fi
-	@find assignment_2 utils -type d -name '__pycache__' -prune -exec rm -rf {} +
+	@find assignment_1 utils -type d -name '__pycache__' -prune -exec rm -rf {} +
 	@find . -type f -name '.DS_Store' -delete
 
 run-all:
