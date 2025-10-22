@@ -1,12 +1,17 @@
+#!/usr/bin/env python3
 import os
+import shutil
 import subprocess
 from pathlib import Path
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
-# --- Hardcoded directories ---
+# --- Hardcoded directories to scan for scripts ---
 DIRS = ["assignment_2"]
 
-MAX_CHARS = 4000  # cap error output to avoid spam
+# --- Where to collect figures afterwards ---
+DEST_ROOT = Path("Assignment_2_Report")
+
+MAX_CHARS = 4000  # cap error output
 
 
 def discover_scripts() -> list[Path]:
@@ -23,15 +28,35 @@ def to_module_name(path: Path) -> str:
 
 
 def run_script(path: Path):
-    """Return (path, code, mode, stdout, stderr). mode in {'direct','module'}."""
-    # 1) try direct
+    """Return (path, code, mode, stdout, stderr)."""
     r = subprocess.run(["python", str(path)], capture_output=True, text=True)
     if r.returncode == 0:
         return path, 0, "direct", r.stdout, r.stderr
-    # 2) fallback: as module
+
+    # fallback: as module
     modname = to_module_name(path)
     r2 = subprocess.run(["python", "-m", modname], capture_output=True, text=True)
     return path, r2.returncode, "module", r2.stdout, r2.stderr
+
+
+def copy_figures():
+    """Copy all Figures/ subfolders from each DIR into DEST_ROOT."""
+    DEST_ROOT.mkdir(exist_ok=True)
+    copied = 0
+    for d in DIRS:
+        src = Path(d) / "Figures"
+        if not src.exists():
+            continue
+        dst = DEST_ROOT / src.relative_to(Path(d).parent)
+        if dst.exists():
+            shutil.rmtree(dst)
+        shutil.copytree(src, dst)
+        copied += 1
+        print(f" Copied figures from {src} → {dst}")
+    if copied == 0:
+        print("  No 'Figures' folders found to copy.")
+    else:
+        print(f" Copied {copied} figure folder(s) into {DEST_ROOT}/")
 
 
 if __name__ == "__main__":
@@ -56,7 +81,6 @@ if __name__ == "__main__":
                 print(f"\n {path} [{mode}] (exit {code})")
                 payload = (err or out or "").strip()
                 if payload:
-                    # print at most MAX_CHARS to keep output readable
                     print(payload[-MAX_CHARS:])
                 else:
                     print("(no output captured)")
@@ -65,3 +89,6 @@ if __name__ == "__main__":
         print("\n All scripts completed successfully.")
     else:
         print(f"\n {fails} script(s) failed.")
+
+    # --- Post-run copy step ---
+    copy_figures()
