@@ -23,7 +23,10 @@ def legendre_tau_derivative_matrices(num_modes: int) -> tuple[np.ndarray, np.nda
     )
     return D1, D2
 
-def legendre_tau_system(epsilon: float, num_modes: int) -> tuple[np.ndarray, np.ndarray]:
+
+def legendre_tau_system(
+    epsilon: float, num_modes: int
+) -> tuple[np.ndarray, np.ndarray]:
     D1, D2 = legendre_tau_derivative_matrices(num_modes)
     operator = -4.0 * epsilon * D2 - 2.0 * D1
 
@@ -47,9 +50,13 @@ def solve_legendre_tau(epsilon: float, num_modes: int) -> np.ndarray:
     coeffs = np.linalg.solve(system, rhs)
     return coeffs
 
-## % visualize sparse matrix 
 
-def solve_legendre_collocation(epsilon: float, num_modes: int) -> tuple[np.ndarray, np.ndarray]:
+## % visualize sparse matrix
+
+
+def solve_legendre_collocation(
+    epsilon: float, num_modes: int
+) -> tuple[np.ndarray, np.ndarray]:
     """Solve the BVP using the Legendre Tau method."""
     system, rhs = legendre_tau_system(epsilon, num_modes)
     coeffs = np.linalg.solve(system, rhs)
@@ -58,16 +65,12 @@ def solve_legendre_collocation(epsilon: float, num_modes: int) -> tuple[np.ndarr
 
 if __name__ == "__main__":
 
-# %% Imports 
+    # %% Imports
 
     import sympy as sp
     import matplotlib.pyplot as plt
-    plt.rcParams.setdefault("text.usetex", False)
 
-    from utils import plot_style  # noqa: F401
-    plt.rcParams["text.usetex"] = False
-
-# %% Visualize system matrix
+    # %% Visualize system matrix
     num_modes = 25  # example value
     epsilon = 0.1
     sys_matrix, rhs = legendre_tau_system(1e-2, num_modes)
@@ -83,6 +86,3 @@ if __name__ == "__main__":
     plt.title("Sparcity System Matrix")
 
     plt.colorbar()
-
-
-
