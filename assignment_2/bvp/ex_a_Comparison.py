@@ -1,5 +1,5 @@
 # assignment_2/BVP/ex_a_Comparison_pd.py
-"""Legendre Tau vs Collocation"""
+"""Legendre Tau vs Collocation (ε-faceted with seaborn.relplot)."""
 
 from __future__ import annotations
 import numpy as np
@@ -31,70 +31,122 @@ def main() -> None:
     xi = np.linspace(-1.0, 1.0, 2001)
     x = 0.5 * (xi + 1.0)
 
-    # Solve once per epsilon
+    # Compute coefficients once per epsilon
     coeff_tau = {e: solve_legendre_tau(e, N) for e in epsilons}
     coeff_col = {e: solve_legendre_collocation(e, N)[1] for e in epsilons}
 
-    # === 1) Solution comparison (single epsilon) ===============================
-    ref = epsilons[0]
-    df_sol = pd.DataFrame(
-        {
-            "x": np.tile(x, 3),
-            "u": np.concatenate(
-                [
-                    exact_solution(x, ref),
-                    eval_legendre_series(coeff_tau[ref], xi),
-                    eval_legendre_series(coeff_col[ref], xi),
-                ]
+    # === 1) Combined solution DataFrame (for all epsilons) =====================
+    frames = []
+    for e in epsilons:
+        frames += [
+            pd.DataFrame(
+                {"x": x, "u": exact_solution(x, e), "method": "Exact", "epsilon": e}
             ),
-            "method": np.repeat(["Exact", "Tau", "Collocation"], len(x)),
-        }
-    )
-    ax = sns.lineplot(data=df_sol, x="x", y="u", hue="method", style="method")
-    ax.set(title=rf"Solution comparison, $\epsilon={ref}$", xlabel="x", ylabel="u(x)")
-    plt.savefig("assignment_2/Figures/BVP/ex_a_solution.pdf")
+            pd.DataFrame(
+                {
+                    "x": x,
+                    "u": eval_legendre_series(coeff_tau[e], xi),
+                    "method": "Tau",
+                    "epsilon": e,
+                }
+            ),
+            pd.DataFrame(
+                {
+                    "x": x,
+                    "u": eval_legendre_series(coeff_col[e], xi),
+                    "method": "Collocation",
+                    "epsilon": e,
+                }
+            ),
+        ]
+    df_sol = pd.concat(frames, ignore_index=True)
 
-    # === 2) Coefficient decay (single epsilon) =================================
+    # Plot all ε side by side using seaborn facets
+    g = sns.relplot(
+        data=df_sol,
+        x="x",
+        y="u",
+        hue="method",
+        style="method",
+        kind="line",
+        col="epsilon",
+        col_wrap=3,
+        facet_kws=dict(sharey=False, sharex=True),
+    )
+    g.set_titles(r"$\epsilon={col_name:g}$")
+    g.set_axis_labels("x", "u(x)")
+    g.figure.suptitle(r"Accuracy of methods for different $\epsilon$ ")
+    g.figure.savefig(
+        "assignment_2/Figures/BVP/ex_a_solution_facet.pdf", bbox_inches="tight"
+    )
+
+    # === 2) Coefficient decay (single epsilon for clarity) ==========================
+    ref = epsilons[0]
     k = np.arange(N)
     df_coef = pd.DataFrame(
         {
             "mode": np.r_[k[1:], k[1:]],
             "abs_c": np.r_[np.abs(coeff_tau[ref])[1:], np.abs(coeff_col[ref])[1:]],
             "method": ["Tau"] * (N - 1) + ["Collocation"] * (N - 1),
+            "epsilon": ref,
         }
     )
-    ax = sns.lineplot(data=df_coef, x="mode", y="abs_c", hue="method", style="method")
-    ax.set(
-        xscale="log",
-        yscale="log",
-        xlabel="Legendre mode n",
-        ylabel=r"$|c_n|$",
-        title=rf"Coefficient decay, $\epsilon={ref}$",
+    ax = sns.relplot(
+        data=df_coef,
+        x="mode",
+        y="abs_c",
+        hue="method",
+        style="method",
+        kind="line",
+        facet_kws=dict(sharex=True),
     )
-    plt.savefig("assignment_2/Figures/BVP/ex_a_coefficients.pdf")
+    ax.set(xscale="log", yscale="log", xlabel="Legendre mode n", ylabel=r"$|c_n|$")
+    ax.figure.suptitle(rf"Coefficient decay, $\epsilon={ref}$", y=1.02)
+    ax.figure.savefig(
+        "assignment_2/Figures/BVP/ex_a_coefficients.pdf", bbox_inches="tight"
+    )
 
-    # === 3) Error profiles (all epsilons) ======================================
+    # === 3) Error profiles (all epsilon) ============================================
     frames = []
     for e in epsilons:
         u_ex = exact_solution(x, e)
-        err_tau = np.abs(eval_legendre_series(coeff_tau[e], xi) - u_ex)
-        err_col = np.abs(eval_legendre_series(coeff_col[e], xi) - u_ex)
         frames += [
-            pd.DataFrame({"x": x, "error": err_tau, "method": "Tau", "epsilon": e}),
             pd.DataFrame(
-                {"x": x, "error": err_col, "method": "Collocation", "epsilon": e}
+                {
+                    "x": x,
+                    "error": np.abs(eval_legendre_series(coeff_tau[e], xi) - u_ex) ** 2,
+                    "method": "Tau",
+                    "epsilon": e,
+                }
+            ),
+            pd.DataFrame(
+                {
+                    "x": x,
+                    "error": np.abs(eval_legendre_series(coeff_col[e], xi) - u_ex) ** 2,
+                    "method": "Collocation",
+                    "epsilon": e,
+                }
             ),
         ]
     df_err = pd.concat(frames, ignore_index=True)
 
-    ax = sns.lineplot(data=df_err, x="x", y="error", hue="epsilon", style="method")
-    ax.set(
-        yscale="log",
-        xlabel="x",
-        ylabel=r"$|u_{\rm num}-u_{\rm exact}|$",
-        title="Error profiles for Tau vs Collocation",
+    g = sns.relplot(
+        data=df_err,
+        x="x",
+        y="error",
+        hue="method",
+        style="method",
+        kind="line",
+        col="epsilon",
+        col_wrap=3,
+        facet_kws=dict(sharey=False),
     )
-    plt.savefig("assignment_2/Figures/BVP/ex_a_errors.pdf")
+    g.set(yscale="log", xlabel="x", ylabel=r"$|u_{\rm num}-u_{\rm exact}|$")
+    g.set_titles(r"$\epsilon={col_name:g}$")
+    g.figure.suptitle("Error profiles for Tau vs Collocation", y=1.02)
+    g.figure.savefig(
+        "assignment_2/Figures/BVP/ex_a_errors_facet.pdf", bbox_inches="tight"
+    )
 
 
 if __name__ == "__main__":

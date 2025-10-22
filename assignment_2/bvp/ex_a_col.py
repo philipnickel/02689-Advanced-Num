@@ -8,7 +8,9 @@ from assignment_1.PolynomialMethods.exercise_k import diff_matrix, vandermonde
 from assignment_1.PolynomialMethods.exercise_j import legendre_gauss_lobatto_nodes
 
 
-def solve_legendre_collocation(epsilon: float, num_nodes: int) -> tuple[np.ndarray, np.ndarray]:
+def solve_legendre_collocation(
+    epsilon: float, num_nodes: int
+) -> tuple[np.ndarray, np.ndarray]:
     """Return LGL nodes and modal coefficients for the collocation scheme."""
     if num_nodes < 3:
         msg = "Collocation scheme requires at least three nodes."

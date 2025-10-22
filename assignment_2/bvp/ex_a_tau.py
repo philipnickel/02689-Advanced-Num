@@ -67,7 +67,6 @@ if __name__ == "__main__":
 
     # %% Imports
 
-    import sympy as sp
     import matplotlib.pyplot as plt
 
     # %% Visualize system matrix
