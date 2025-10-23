@@ -9,7 +9,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 DIRS = ["assignment_2"]
 
 # --- Where to collect figures afterwards ---
-DEST_ROOT = Path("Assignment_2_Report")
+DEST_ROOT = Path("Overleaf_Report_A2/Figures")
 
 MAX_CHARS = 4000  # cap error output
 
@@ -47,7 +47,7 @@ def copy_figures():
         src = Path(d) / "Figures"
         if not src.exists():
             continue
-        dst = DEST_ROOT / src.relative_to(Path(d).parent)
+        dst = DEST_ROOT
         if dst.exists():
             shutil.rmtree(dst)
         shutil.copytree(src, dst)
