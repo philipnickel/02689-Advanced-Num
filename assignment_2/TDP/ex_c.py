@@ -7,14 +7,14 @@ from assignment_1.FourierSpectralMethods.exercise_d import fourier_diff_matrix
 
 # %% Main Execution
 if __name__ == "__main__":
-    L = 3
-    N = 100
+    L = 5
+    N = 200
     x = (np.linspace(0, 2 * np.pi, N, endpoint=False) - np.pi) * L
     D1 = (1 / L) * fourier_diff_matrix(N)
     D2 = D1 @ D1
     D3 = D2 @ D1
 
-    c = 1
+    c = 2
     u0 = 0.5 * c * np.cosh(0.5 * np.sqrt(c) * x) ** (-2)
 
     # Compute eigenvalues with proper frozen-coefficient KdV operator
@@ -27,6 +27,7 @@ if __name__ == "__main__":
     eigvals = np.linalg.eigvals(A)
     max_eig = np.max(np.abs(eigvals))
     print(f"The maximum eigenvalue is {max_eig}")
+    print(f"Timestep should be under: {1.73 / max_eig}")
 
     # Plot the steady KdV solution
     plt.figure()
@@ -68,13 +69,10 @@ if __name__ == "__main__":
         return -6 * NL - D3 @ U
 
     # %%
-    c = 10
-    u0 = 0.5 * c * np.cosh(0.5 * np.sqrt(c) * x) ** (-2)
-
-    steps = 10000
+    steps = 40000
     u = np.zeros((steps, N), dtype=float)
     u[0] = u0
-    delta_t = 0.00001
+    delta_t = 0.0002
     for i in range(1, steps):
         U = u[i - 1]
         G = F_dealias(U)
@@ -88,7 +86,7 @@ if __name__ == "__main__":
     # %%
     u_last = 0.5 * c * np.cosh(0.5 * np.sqrt(c) * (x - c * steps * delta_t)) ** (-2)
 
-    plt.plot(x, u[0])
+    # plt.plot(x, u[0])
     plt.plot(x, u[-1])
     plt.plot(x, u_last)
 
