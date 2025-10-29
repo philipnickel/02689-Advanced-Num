@@ -46,12 +46,12 @@ if __name__ == "__main__":
     plt.show()
     # %%
 
-    def F_mat(U: np.ndarray):
+    def F(U: np.ndarray):
         return -(6 * U * D1 + D3) @ U
 
     def dealias_mult(u_hat: np.ndarray, v_hat: np.ndarray):
         N = len(u_hat)
-        M = int(np.round(3 / 2 * N))
+        M = int(3 / 2 * N)
         u_hat_pad = np.array([*u_hat[: N // 2], *np.zeros(M - N), *u_hat[N // 2 :]])
         v_hat_pad = np.array([*v_hat[: N // 2], *np.zeros(M - N), *v_hat[N // 2 :]])
         u_pad = np.fft.ifft(u_hat_pad)
@@ -61,23 +61,27 @@ if __name__ == "__main__":
         w_hat = np.array([*w_pad_hat[: N // 2], *w_pad_hat[(M - N // 2) : M]])
         return w_hat
 
-    def F_fourier(U: np.ndarray):
+    def F_dealias(U: np.ndarray):
         U_hat = np.fft.fft(U)
         dU_hat = np.fft.fft(D1 @ U)
-        A = dealias_mult(U_hat, dU_hat)
-        return -6 * A - D3 @ U
+        NL = np.fft.ifft(dealias_mult(U_hat, dU_hat))
+        return -6 * NL - D3 @ U
 
     # %%
-    steps = 1000
+    c = 10
+    u0 = 0.5 * c * np.cosh(0.5 * np.sqrt(c) * x) ** (-2)
+
+    steps = 10000
     u = np.zeros((steps, N), dtype=float)
     u[0] = u0
-    delta_t = 0.00004
+    delta_t = 0.00001
     for i in range(1, steps):
         U = u[i - 1]
-        G = F_fourier(U)
+        G = F_dealias(U)
         U = U + (1 / 3) * delta_t * G
-        G = -(5 / 9) * G + (15 / 16) * delta_t * G
-        G = -(153 / 128) * G + F_fourier(U)
+        G = -(5 / 9) * G + F_dealias(U)
+        U = U + (15 / 16) * delta_t * G
+        G = -(153 / 128) * G + F_dealias(U)
         u[i] = U + (8 / 15) * delta_t * G
     plt.matshow(u)
 
