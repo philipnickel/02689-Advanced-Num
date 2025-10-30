@@ -59,7 +59,7 @@ if __name__ == "__main__":
         v_pad = np.fft.ifft(v_hat_pad)
         w_pad = u_pad * v_pad
         w_pad_hat = np.fft.fft(w_pad)
-        w_hat = np.array([*w_pad_hat[: N // 2], *w_pad_hat[(M - N // 2) : M]])
+        w_hat = 3 / 2 * np.array([*w_pad_hat[: N // 2], *w_pad_hat[(M - N // 2) : M]])
         return w_hat
 
     def F_dealias(U: np.ndarray):
@@ -69,10 +69,11 @@ if __name__ == "__main__":
         return -6 * NL - D3 @ U
 
     # %%
-    steps = 40000
+    steps = 10000
     u = np.zeros((steps, N), dtype=float)
     u[0] = u0
     delta_t = 0.0002
+
     for i in range(1, steps):
         U = u[i - 1]
         G = F_dealias(U)
