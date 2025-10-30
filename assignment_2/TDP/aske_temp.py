@@ -11,26 +11,30 @@ def fourier_diff_matrix(x):
     D = np.real(np.fft.ifft(np.diag(ik) @ np.fft.fft(np.eye(N)), axis=0))
     return D
 
-#%% Stationary KdV Solver
-def solve_stationary_kdv(N=128, L=10.0, max_iter=2000, dt=0.001, tol=1e-10):
+#%% Analytical KdV Soliton
+def kdv_soliton(x, c=1.0, x0=0.0, t=0.0):
+    """
+    Analytical KdV soliton solution:
+        u(x, t) = (1/2)*c * sech^2( (1/2)*sqrt(c)*(x - c*t - x0) )
+    """
+    arg = 0.5 * np.sqrt(c) * (x - c * t - x0)
+    return 0.5 * c * (1 / np.cosh(arg))**2
+
+#%% "Solver" using analytical initial condition
+def solve_stationary_kdv(N=256, L=20.0, c=1.0, x0=0.0):
+    """
+    For this version, we don't numerically solve the steady KdV.
+    We use the analytical soliton as the stationary/traveling solution.
+    """
     x = np.linspace(-L, L, N, endpoint=False)
+
+    # Compute differentiation matrices
     D1 = fourier_diff_matrix(x)
     D2 = D1 @ D1
     D3 = D2 @ D1
 
-    u = np.cosh(x)**-2  # initial guess
-
-    for it in range(max_iter):
-        ux = D1 @ u
-        uxxx = D3 @ u
-        residual = 6 * u * ux + uxxx
-        norm = np.linalg.norm(residual)
-
-        if it % 100 == 0:
-            print(f"Iteration {it:4d}: residual = {norm:.3e}, max(u) = {u.max():.3f}")
-        if norm < tol:
-            print(f"Converged at iteration {it} with residual {norm:.3e}")
-            break
+    # Analytical solution (at t=0)
+    u = kdv_soliton(x, c=c, x0=x0, t=0.0)
 
     return x, u, D1, D3
 
@@ -52,26 +56,31 @@ def frozen_coeff_eigenvalues_kdv(u, D1, D3):
 
 #%% Main Execution
 if __name__ == "__main__":
-    # Correct unpacking: returns D3, not D2
-    x, u, D1, D3 = solve_stationary_kdv()
-    
-    # Compute eigenvalues with proper frozen-coefficient KdV operator
+    # Parameters for soliton
+    c = 1.0    # wave speed
+    x0 = 0.0   # initial center position
+
+    # Use analytical soliton as solution
+    x, u, D1, D3 = solve_stationary_kdv(c=c, x0=x0)
+
+    # Compute eigenvalues via frozen coefficient method
     eigvals = frozen_coeff_eigenvalues_kdv(u, D1, D3)
 
-    # Plot the steady KdV solution
-    plt.figure()
-    plt.plot(x, u)
-    plt.title("Steady KdV Solution")
+    # Plot the analytical soliton
+    plt.figure(figsize=(7, 4))
+    plt.plot(x, u, label="Analytical Soliton", color="C0")
+    plt.title("Analytical Solitary Wave Solution of the KdV Equation")
     plt.xlabel("x")
-    plt.ylabel("u(x)")
+    plt.ylabel("u(x, 0)")
     plt.grid(True)
+    plt.legend()
 
-    # Plot eigenvalues
-    plt.figure()
-    plt.scatter(eigvals.real, eigvals.imag, s=10)
+    # Plot eigenvalues in the complex plane
+    plt.figure(figsize=(6, 5))
+    plt.scatter(eigvals.real, eigvals.imag, s=12, color="C1")
     plt.title("Eigenvalues (Frozen Coefficient Approximation for KdV)")
-    plt.xlabel("Real(λ)")
-    plt.ylabel("Imag(λ)")
+    plt.xlabel("Re(λ)")
+    plt.ylabel("Im(λ)")
     plt.grid(True)
     plt.show()
 # %%
