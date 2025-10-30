@@ -7,7 +7,7 @@ from assignment_1.FourierSpectralMethods.exercise_d import fourier_diff_matrix
 
 # %% Main Execution
 if __name__ == "__main__":
-    L = 5
+    L = 10
     N = 200
     x = (np.linspace(0, 2 * np.pi, N, endpoint=False) - np.pi) * L
     D1 = (1 / L) * fourier_diff_matrix(N)
@@ -15,10 +15,10 @@ if __name__ == "__main__":
     D3 = D2 @ D1
 
     c = 2
-    u0 = 0.5 * c * np.cosh(0.5 * np.sqrt(c) * x) ** (-2)
+    u = lambda x, t: 0.5 * c * np.cosh(0.5 * np.sqrt(c) * (x - c * t)) ** (-2)
 
     # Compute eigenvalues with proper frozen-coefficient KdV operator
-    u_max = np.max(np.abs(u0))
+    u_max = np.max(np.abs(u(x, 0)))
 
     # Construct frozen-coefficient linearized system matrix
     A = -6 * u_max * D1 - D3
@@ -26,12 +26,13 @@ if __name__ == "__main__":
     # Compute eigenvalues
     eigvals = np.linalg.eigvals(A)
     max_eig = np.max(np.abs(eigvals))
+    delta_t = 1.73 / max_eig
     print(f"The maximum eigenvalue is {max_eig}")
-    print(f"Timestep should be under: {1.73 / max_eig}")
+    print(f"Timestep should be under: {delta_t}")
 
     # Plot the steady KdV solution
     plt.figure()
-    plt.plot(x, u0)
+    plt.plot(x, u(x, 0))
     plt.title("Steady KdV Solution")
     plt.xlabel("x")
     plt.ylabel("u(x)")
@@ -70,25 +71,24 @@ if __name__ == "__main__":
 
     # %%
     steps = 10000
-    u = np.zeros((steps, N), dtype=float)
-    u[0] = u0
-    delta_t = 0.0002
+    u_sol = np.zeros((steps, N), dtype=float)
+    u_sol[0] = u(x, 0)
+    delta_t = 0.001
 
     for i in range(1, steps):
-        U = u[i - 1]
+        U = u_sol[i - 1]
         G = F_dealias(U)
         U = U + (1 / 3) * delta_t * G
         G = -(5 / 9) * G + F_dealias(U)
         U = U + (15 / 16) * delta_t * G
         G = -(153 / 128) * G + F_dealias(U)
-        u[i] = U + (8 / 15) * delta_t * G
-    plt.matshow(u)
+        u_sol[i] = U + (8 / 15) * delta_t * G
+    plt.matshow(u_sol)
 
     # %%
-    u_last = 0.5 * c * np.cosh(0.5 * np.sqrt(c) * (x - c * steps * delta_t)) ** (-2)
 
     # plt.plot(x, u[0])
-    plt.plot(x, u[-1])
-    plt.plot(x, u_last)
+    plt.plot(x, u_sol[-1])
+    plt.plot(x, u(x, steps * delta_t))
 
 # %%
