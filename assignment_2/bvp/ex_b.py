@@ -18,11 +18,12 @@ from assignment_1.PolynomialMethods.exercise_k import (
 )
 
 
-def solve_bvp(r1, r2, Nr):
+def solve_bvp(
+    r1, r2, Nr: int, Ntheta: int
+):  # -> tuple[Any, Any, NDArray[Any], NDArray[Any]]:
     xs, ws = leggauss(Nr)
     rs = 0.5 * (r2 - r1) * (xs + 1) + r1
 
-    Ntheta = Nr
     thetas = np.linspace(0, 2 * np.pi, Ntheta, endpoint=False)
 
     Rs, Theta = np.meshgrid(rs, thetas)
@@ -44,12 +45,12 @@ def solve_bvp(r1, r2, Nr):
     B[:, 0] = 1
     B[:, -1] = 1
     b = B.flatten(order="F")
-    indices = np.where(B == 1)[0]
+    indices = np.where(b == 1)[0]
     L[indices, :] = 0
     L[indices, indices] = 1
     b[indices] = Phi.flatten(order="F")[indices]
 
-    Phi_hat = np.linalg.solve(L, B).reshape(Phi.shape, order="F")
+    Phi_hat = np.linalg.solve(L, b).reshape(Phi.shape, order="F")
 
     return Phi, Phi_hat, Rs, Theta
 
@@ -61,14 +62,14 @@ errors = np.zeros(Nrs.shape[0])
 for i, Nr in enumerate(Nrs):
     r1 = 1
     r2 = 10
-    Phi, Phi_hat, Rs, Theta = solve_bvp(r1, r2, Nr)
+    Phi, Phi_hat, Rs, Theta = solve_bvp(r1, r2, Nr, Ntheta=Nr)
     errors[i] = np.max(np.abs(Phi - Phi_hat))
 
 plt.loglog(Nrs, errors)
 # %%
 r1 = 1
 r2 = 3
-Phi, Phi_hat, Rs, Theta = solve_bvp(r1, r2, 20)
+Phi, Phi_hat, Rs, Theta = solve_bvp(r1, r2, 20, 30)
 fig, ax = plt.subplots(1, 1, subplot_kw={"projection": "polar"}, layout="constrained")
 con = ax.contourf(Theta, Rs, Phi_hat, 100)
 cbar = fig.colorbar(con, ax=ax)

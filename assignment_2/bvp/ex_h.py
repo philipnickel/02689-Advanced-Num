@@ -13,7 +13,7 @@ t1 = 0
 t2 = 1
 x1 = 0
 x2 = 2 * np.pi
-a = 10
+a = 3
 
 sigma = 1
 mu = x2 / 2
@@ -26,29 +26,26 @@ F = (
 )
 
 
-def solve_bvp(Nt=100):
-    Nx = Nt
+def solve_bvp(Nt: int, Nx: int):
+    ys_1, _ = leggauss(Nt)
+    ys_2, _ = leggauss(Nx)
 
-    ys, _ = leggauss(Nt)
+    ts = 0.5 * (t2 - t1) * (ys_1 + 1) + t1
 
-    ts, _ = leggauss(Nt)
-    ts = 0.5 * (t2 - t1) * (ts + 1) + t1
-
-    xs, _ = leggauss(Nx)
-    xs = 0.5 * (x2 - x1) * (xs + 1) + x1
+    xs = 0.5 * (x2 - x1) * (ys_2 + 1) + x1
 
     Ts, Xs = np.meshgrid(ts, xs)
 
     Phi = F(Xs - a * Ts)
 
-    Dx = (2 / (x2 - x1)) * polynomial_diff_matrix(ys)
-    Dt = (2 / (t2 - t1)) * polynomial_diff_matrix(ys)
+    Dt = (2 / (t2 - t1)) * polynomial_diff_matrix(ys_1)
+    Dx = (2 / (x2 - x1)) * polynomial_diff_matrix(ys_2)
 
     Lt_block = Dt
     Lx_block = (a * np.eye(Dx.shape[0])) @ Dx
 
-    Lt = np.kron(Lt_block, np.eye(Nt))
-    Lx = np.kron(np.eye(Nx), Lx_block)
+    Lt = np.kron(Lt_block, np.eye(Nx))
+    Lx = np.kron(np.eye(Nt), Lx_block)
 
     L = Lx + Lt
 
@@ -67,21 +64,8 @@ def solve_bvp(Nt=100):
     return Phi, Phi_hat, Ts, Xs
 
 
-hi, Phi_hat, Ts, Xs = solve_bvp()
+Phi, Phi_hat, Ts, Xs = solve_bvp(100, 100)
 
-# %%
-
-Nts = np.arange(10, 50, step=2)
-errors = np.zeros(Nts.shape[0])
-
-for i, Nt in enumerate(Nts):
-    r1 = 1
-    r2 = 10
-    Phi, Phi_hat, Ts, Xs = solve_bvp(Nt)
-    errors[i] = np.max(np.abs(Phi - Phi_hat))
-
-plt.semilogy(Nts, errors)
-# %%
 fig, axs = plt.subplots(1, 3, figsize=(12, 6))
 
 # Plot Phi
@@ -99,3 +83,16 @@ axs[2].set_title("Error")
 fig.colorbar(im3, ax=axs[2])
 
 plt.tight_layout()
+# %%
+
+Nts = np.arange(10, 50, step=2)
+errors = np.zeros(Nts.shape[0])
+
+for i, Nt in enumerate(Nts):
+    r1 = 1
+    r2 = 10
+    Phi, Phi_hat, Ts, Xs = solve_bvp(Nt)
+    errors[i] = np.max(np.abs(Phi - Phi_hat))
+
+plt.semilogy(Nts, errors)
+# %%
