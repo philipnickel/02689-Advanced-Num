@@ -40,16 +40,16 @@ def solve_bvp(r1, r2, Nr):
 
     L = Ltheta + Lr
 
-    b = np.zeros_like(Phi)
-    b[:, 0] = 1
-    b[:, -1] = 1
-    b = b.flatten(order="F")
-    indices = np.where(b == 1)[0]
+    B = np.zeros_like(Phi)
+    B[:, 0] = 1
+    B[:, -1] = 1
+    b = B.flatten(order="F")
+    indices = np.where(B == 1)[0]
     L[indices, :] = 0
     L[indices, indices] = 1
     b[indices] = Phi.flatten(order="F")[indices]
 
-    Phi_hat = np.linalg.solve(L, b).reshape(Phi.shape, order="F")
+    Phi_hat = np.linalg.solve(L, B).reshape(Phi.shape, order="F")
 
     return Phi, Phi_hat, Rs, Theta
 
