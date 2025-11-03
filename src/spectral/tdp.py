@@ -253,7 +253,7 @@ class KdVSolver:
         L : float
             Half-length of spatial domain [-L, L]
         dealias : bool, optional
-            Apply 2/3-rule dealiasing to nonlinear term (default: False)
+            Apply 3/2-rule dealiasing to nonlinear term (default: False)
         """
         self.N = N
         self.L = L
