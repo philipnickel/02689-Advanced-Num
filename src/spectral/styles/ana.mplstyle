@@ -25,6 +25,15 @@ ytick.minor.width : 0.5
 ytick.minor.visible : True
 ytick.right : True
 
+# Gridlines
+axes.grid : True               # draw grid by default on all Axes
+axes.grid.axis : both          # grid on both x and y axes
+axes.grid.which : both         # apply to both major and minor ticks
+grid.color : 0.85              # light gray (can use hex or rgb)
+grid.linestyle : -             # solid lines (use '--' for dashed)
+grid.alpha : 0.6               # transparency of gridlines
+
+
 # Set line widths
 axes.linewidth : 0.5
 grid.linewidth : 0.5

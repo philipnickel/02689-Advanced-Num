@@ -1,33 +1,7 @@
-# 02689-Advanced-Num
+# 02689 – Advanced Numerical Algorithms
 
-Advanced Numerical Algorithms - DTU Course 02689
+## ReadTheDocs
 
-## Setup
-
-Install uv:
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-Sync all dependencies (includes runtime, docs, and dev tools):
-```bash
-uv sync
-```
-
-## Usage
-
-Run exercises and build documentation:
-```bash
-# Run all exercises
-uv run python main.py --compute --plot --copy
-
-# Build documentation
-uv run python main.py --build-docs
-
-# Clean documentation
-uv run python main.py --clean-docs
-```
-
-## Dependencies
-Working LaTeX installation for the figures.
+For detailed documentation, see  
+[Implementation details on ReadTheDocs](https://02689-advanced-num-alg.readthedocs.io/en/latest/)
 
