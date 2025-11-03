@@ -17,7 +17,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from spectral.utils.plotting import add_parameter_footer, get_repo_root
+from spectral.utils.plotting import get_repo_root
 
 repo_root = get_repo_root()
 data_dir = repo_root / "data/A2/ex_g"
@@ -105,14 +105,17 @@ ax2.legend(title="Method")
 ax2.grid(True, alpha=0.3)
 ax2.axhline(y=0, color="k", linestyle="-", linewidth=0.5)
 
-# Overall title
-fig.suptitle("KdV Solver Scalability Analysis", fontsize=14, y=1.02)
-
-# Add parameter footer
+# Overall title with parameters
 L_val = df_timing["L"].iloc[0] if "L" in df_timing.columns else None
 T_val = df_timing["T"].iloc[0] if "T" in df_timing.columns else None
 if L_val and T_val:
-    add_parameter_footer(fig, rf"$L = {L_val:.1f}$, $T = {T_val:.1f}$")
+    fig.suptitle(
+        "KdV Solver Scalability Analysis" + "\n" +
+        rf"$L = {L_val:.1f}$, $T = {T_val:.1f}$",
+        y=1.02
+    )
+else:
+    fig.suptitle("KdV Solver Scalability Analysis", fontsize=14, y=1.02)
 
 output = save_dir / "scalability_analysis.pdf"
 fig.savefig(output, bbox_inches="tight")

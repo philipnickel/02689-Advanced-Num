@@ -42,26 +42,3 @@ def get_repo_root() -> Path:
     return current.parent.parent if caller_file else current.parent.parent
 
 
-def add_parameter_footer(fig, text: str) -> None:
-    r"""
-    Add a parameter footer to the bottom-left of a figure.
-
-    Parameters
-    ----------
-    fig : matplotlib.figure.Figure
-        The figure to annotate
-    text : str
-        The parameter text to display (use LaTeX formatting with rf'...')
-
-    """
-    # Add annotation to figure with consistent styling
-    fig.axes[0].annotate(
-        text,
-        xy=(0, 0),
-        xycoords="figure fraction",
-        xytext=(5, 5),
-        textcoords="offset points",
-        ha="left",
-        fontsize=7,
-        color="gray",
-    )

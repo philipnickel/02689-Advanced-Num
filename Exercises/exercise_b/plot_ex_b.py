@@ -16,7 +16,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from spectral.utils.plotting import add_parameter_footer, get_repo_root
+from spectral.utils.plotting import get_repo_root
 
 repo_root = get_repo_root()
 data_dir = repo_root / "data/A2/ex_b"
@@ -55,14 +55,14 @@ ax.set(
     xlabel=r"Number of radial nodes $N_r$",
     ylabel=r"$L^\infty$ Error",
 )
-ax.set_title("Convergence Study: Polar BVP")
-ax.legend()
-ax.grid(True, alpha=0.3)
-
-# Add parameter footer
 Nr_min = convergence_df["Nr"].min()
 Nr_max = convergence_df["Nr"].max()
-add_parameter_footer(fig, rf"$N_r \in [{Nr_min}, {Nr_max}]$")
+ax.set_title(
+    "Convergence Study: Polar BVP" + "\n" +
+    rf"$N_r \in [{Nr_min}, {Nr_max}]$"
+)
+ax.legend()
+ax.grid(True, alpha=0.3)
 
 fig.savefig(save_dir / "convergence.pdf", bbox_inches="tight")
 print(f"Saved: {save_dir}/convergence.pdf")
@@ -111,10 +111,10 @@ con = ax.contourf(Theta_ext, Rs_ext, Phi_hat_ext, 100)
 cbar = fig.colorbar(con, ax=ax)
 cbar.set_label(r"$\Phi$")
 ax.set_ylim(0, r2)
-ax.set_title("Numerical Solution (Spectral Collocation)")
-
-# Add parameter footer
-add_parameter_footer(fig, rf"$N_r = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)")
+ax.set_title(
+    "Numerical Solution (Spectral Collocation)" + "\n" +
+    rf"$N_r = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)"
+)
 
 fig.savefig(save_dir / "solution.pdf", bbox_inches="tight")
 print(f"Saved: {save_dir}/solution.pdf")
@@ -129,10 +129,10 @@ con = ax.contourf(Theta_ext, Rs_ext, error, 100, cmap="RdBu_r")
 cbar = fig.colorbar(con, ax=ax)
 cbar.set_label(r"$\Phi_{\rm num} - \Phi_{\rm exact}$")
 ax.set_ylim(0, r2)
-ax.set_title("Error")
-
-# Add parameter footer
-add_parameter_footer(fig, rf"$N_r = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)")
+ax.set_title(
+    "Error" + "\n" +
+    rf"$N_r = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)"
+)
 
 fig.savefig(save_dir / "error.pdf", bbox_inches="tight")
 print(f"Saved: {save_dir}/error.pdf")

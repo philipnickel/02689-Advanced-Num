@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from spectral.utils.plotting import add_parameter_footer, get_repo_root
+from spectral.utils.plotting import get_repo_root
 from spectral.utils.io import ensure_output_dir
 from spectral.utils.formatting import format_dt_latex
 
@@ -99,20 +99,18 @@ for method in sorted(df["method"].unique()):
     # Customize
     g.set_titles(col_template=r"$c$ = {col_name}")
     g.set_axis_labels(r"Position $x$", r"Amplitude $u$")
-    g.fig.suptitle(f"KdV Soliton Solutions - {method}", y=1.02, fontsize=14)
-
-    # Add parameter footer
     L = df_method["x"].max() - df_method["x"].min()
     dt_min = df_method["dt"].min()
     dt_latex = format_dt_latex(dt_min)
-    add_parameter_footer(
-        g.fig,
+    g.fig.suptitle(
+        f"KdV Soliton Solutions - {method}" + "\n" +
         rf"$N = {largest_N}$, $L = {L:.1f}$, $\Delta t = {dt_latex}$ (3 timesteps per c)",
+        y=1.05
     )
 
     # Save
     output = save_dir / f"solutions_{method.lower()}.pdf"
-    g.savefig(output, bbox_inches="tight")
+    g.savefig(output)
     print(f"  Saved: {output}")
 
 print("\nAll plots created!")

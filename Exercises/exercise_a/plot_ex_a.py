@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from spectral.utils.plotting import add_parameter_footer, get_repo_root
+from spectral.utils.plotting import get_repo_root
 
 repo_root = get_repo_root()
 data_dir = repo_root / "data/A2/ex_a"
@@ -50,10 +50,11 @@ g = sns.relplot(
 )
 g.set_titles(r"$\varepsilon={col_name:g}$")
 g.set_axis_labels(r"$x$", r"$u(x)$")
-g.figure.suptitle(r"Tau vs Collocation for different $\varepsilon$", y=1.02)
-
-# Add parameter footer
-add_parameter_footer(g.figure, rf"$N = {N}$ ({n_eval_points} Evaluation points)")
+g.figure.suptitle(
+    r"Tau vs Collocation for different $\varepsilon$" + "\n" +
+    rf"$N = {N}$ ({n_eval_points} Evaluation points)",
+    y=1.02
+)
 
 output = save_dir / "solutions_facet.pdf"
 g.figure.savefig(output, bbox_inches="tight")
@@ -88,10 +89,11 @@ g2 = sns.relplot(
 )
 g2.set(xscale="log", yscale="log", xlabel=r"Legendre mode $n$", ylabel=r"$|c_n|$")
 g2.set_titles(r"$\varepsilon={col_name:g}$")
-g2.figure.suptitle("Coefficient Decay: Tau vs Collocation", y=1.02)
-
-# Add parameter footer
-add_parameter_footer(g2.figure, rf"$N = {N}$ ({n_eval_points} Evaluation points)")
+g2.figure.suptitle(
+    "Coefficient Decay: Tau vs Collocation" + "\n" +
+    rf"$N = {N}$ ({n_eval_points} Evaluation points)",
+    y=1.02
+)
 
 output = save_dir / "coefficients_facet.pdf"
 g2.figure.savefig(output, bbox_inches="tight")
@@ -121,10 +123,11 @@ g3 = sns.relplot(
 )
 g3.set(yscale="log", xlabel=r"$x$", ylabel=r"$|u_{\rm num}-u_{\rm exact}|$")
 g3.set_titles(r"$\varepsilon={col_name:g}$")
-g3.figure.suptitle("Error Profiles: Tau vs Collocation", y=1.02)
-
-# Add parameter footer
-add_parameter_footer(g3.figure, rf"$N = {N}$ ({n_eval_points} Evaluation points)")
+g3.figure.suptitle(
+    "Error Profiles: Tau vs Collocation" + "\n" +
+    rf"$N = {N}$ ({n_eval_points} Evaluation points)",
+    y=1.02
+)
 
 output = save_dir / "errors_facet.pdf"
 g3.figure.savefig(output, bbox_inches="tight")
@@ -160,7 +163,16 @@ g4.set(
     ylabel=r"$L^\infty$ Error",
 )
 g4.set_titles(r"$\varepsilon={col_name:g}$")
-g4.figure.suptitle("Convergence Study: Tau vs Collocation", y=1.02)
+
+# Add parameter info (N range varies for convergence study)
+N_min = convergence_df["N"].min()
+N_max = convergence_df["N"].max()
+# Note: convergence data doesn't have x values, use main data for eval points
+g4.figure.suptitle(
+    "Convergence Study: Tau vs Collocation" + "\n" +
+    rf"$N \in [{N_min}, {N_max}]$ ({n_eval_points} Evaluation points)",
+    y=1.02
+)
 
 # Add reference lines to each subplot
 for ax, (eps_val, group) in zip(
@@ -178,14 +190,6 @@ for ax, (eps_val, group) in zip(
         N_ref, err_ref, "k--", alpha=0.5, linewidth=1.5, label=r"$\mathcal{O}(N^{-2})$"
     )
     ax.legend()
-
-# Add parameter footer (N range varies for convergence study)
-N_min = convergence_df["N"].min()
-N_max = convergence_df["N"].max()
-# Note: convergence data doesn't have x values, use main data for eval points
-add_parameter_footer(
-    g4.figure, rf"$N \in [{N_min}, {N_max}]$ ({n_eval_points} Evaluation points)"
-)
 
 output = save_dir / "convergence_facet.pdf"
 g4.figure.savefig(output, bbox_inches="tight")

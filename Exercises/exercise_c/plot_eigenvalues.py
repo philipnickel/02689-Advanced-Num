@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from spectral.utils.plotting import add_parameter_footer, get_repo_root
+from spectral.utils.plotting import get_repo_root
 
 repo_root = get_repo_root()
 data_dir = repo_root / "data/A2/ex_c"
@@ -98,14 +98,15 @@ for (c_val, method), ax in zip(
 
 g.set_axis_labels(r"Re($\lambda \cdot \Delta t$)", r"Im($\lambda \cdot \Delta t$)")
 g.set_titles(r"$c$ = {col_name}")
-g.fig.suptitle("Eigenvalues in Stability Plane", y=1.02)
-
-# Add parameter footer
 N_stab = stability_df_finite["N"].iloc[0] if "N" in stability_df_finite.columns else 80
 L_stab = (
     stability_df_finite["L"].iloc[0] if "L" in stability_df_finite.columns else 30.0
 )
-add_parameter_footer(g.fig, rf"$N = {N_stab}$, $L = {L_stab:.1f}$")
+g.fig.suptitle(
+    "Eigenvalues in Stability Plane" + "\n" +
+    rf"$N = {N_stab}$, $L = {L_stab:.1f}$",
+    y=1.02
+)
 
 output = save_dir / "eigenvalue_stability.pdf"
 g.savefig(output, bbox_inches="tight")
@@ -148,13 +149,14 @@ for c_val, ax in zip(sorted(scaling_df["c"].unique()), g1.axes.flat):
 g1.set(xscale="log", yscale="log")
 g1.set_axis_labels(r"Grid points $N$", r"Maximum $|\lambda|$")
 g1.set_titles(r"$c$ = {col_name}")
-g1.fig.suptitle("Eigenvalue Scaling with Resolution", y=1.02)
-
-# Add parameter footer
 N_min_s = scaling_df["N"].min()
 N_max_s = scaling_df["N"].max()
 L_s = scaling_df["L"].iloc[0] if "L" in scaling_df.columns else 30.0
-add_parameter_footer(g1.fig, rf"$N \in [{N_min_s}, {N_max_s}]$, $L = {L_s:.1f}$")
+g1.fig.suptitle(
+    "Eigenvalue Scaling with Resolution" + "\n" +
+    rf"$N \in [{N_min_s}, {N_max_s}]$, $L = {L_s:.1f}$",
+    y=1.02
+)
 
 output = save_dir / "eigenvalue_max_scaling.pdf"
 g1.savefig(output, bbox_inches="tight")
@@ -194,10 +196,10 @@ for c_val, ax in zip(sorted(scaling_df["c"].unique()), g2.axes.flat):
 g2.set(xscale="log", yscale="log")
 g2.set_axis_labels(r"Grid points $N$", r"Stable $\Delta t$")
 g2.set_titles(r"$c$ = {col_name}")
-g2.fig.suptitle("Timestep Scaling with Resolution", y=1.02)
-
-# Add parameter footer
-add_parameter_footer(g2.fig, rf"$N \in [{N_min_s}, {N_max_s}]$, $L = {L_s:.1f}$")
+g2.fig.suptitle(
+    'Timestep Scaling with Resolution' + "\n" +
+    rf"$N \in [{N_min_s}, {N_max_s}]$, $L = {L_s:.1f}$", y=1.02
+)
 
 output = save_dir / "eigenvalue_scaling.pdf"
 g2.savefig(output, bbox_inches="tight")

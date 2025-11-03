@@ -21,7 +21,7 @@ Each plot uses FacetGrid with c in columns and parameter (L or N) in rows.
 import pandas as pd
 import seaborn as sns
 
-from spectral.utils.plotting import add_parameter_footer, get_repo_root
+from spectral.utils.plotting import get_repo_root
 
 repo_root = get_repo_root()
 data_dir = repo_root / "data/A2/ex_d"
@@ -87,13 +87,7 @@ def plot_errors(df_errors, method, investigation_type, param_name):
         row_template=rf"${param_name}$={{row_name}}", col_template=r"$c$={col_name}"
     )
 
-    param_display = "L" if param_name == "L" else "N"
-    fixed_param = "N=128" if param_name == "L" else "L=30"
-    g.fig.suptitle(
-        f"{method} - {investigation_type.capitalize()} Investigation: Errors (varying {param_display}, {fixed_param})",
-        y=1.02,
-    )
-
+    # Title will be set in the main plotting loop with parameters
     return g.fig
 
 
@@ -137,13 +131,7 @@ def plot_conservation(df_quantities, method, investigation_type, param_name):
         row_template=rf"${param_name}$={{row_name}}", col_template=r"$c$={col_name}"
     )
 
-    param_display = "L" if param_name == "L" else "N"
-    fixed_param = "N=128" if param_name == "L" else "L=30"
-    g.fig.suptitle(
-        f"{method} - {investigation_type.capitalize()} Investigation: Conservation (varying {param_display}, {fixed_param})",
-        y=1.02,
-    )
-
+    # Title will be set in the main plotting loop with parameters
     return g.fig
 
 
@@ -183,13 +171,7 @@ def plot_quantities(df_quantities, method, investigation_type, param_name):
         row_template=rf"${param_name}$={{row_name}}", col_template=r"$c$={col_name}"
     )
 
-    param_display = "L" if param_name == "L" else "N"
-    fixed_param = "N=128" if param_name == "L" else "L=30"
-    g.fig.suptitle(
-        f"{method} - {investigation_type.capitalize()} Investigation: Quantities M, V, E (varying {param_display}, {fixed_param})",
-        y=1.02,
-    )
-
+    # Title will be set in the main plotting loop with parameters
     return g.fig
 
 
@@ -205,8 +187,10 @@ for method in methods:
     fig = plot_errors(df_domain_errors, method, "domain", "L")
     df_method_domain = df_domain_errors[df_domain_errors["method"] == method]
     L_vals = sorted(df_method_domain["L"].unique())
-    add_parameter_footer(
-        fig, rf"$N = 128$, $L \in [{L_vals[0]:.1f}, {L_vals[-1]:.1f}]$, $T = 20$"
+    fig.suptitle(
+        f"{method} - Domain Investigation: Errors (varying L, N=128)" + "\n" +
+        rf"$N = 128$, $L \in [{L_vals[0]:.1f}, {L_vals[-1]:.1f}]$, $T = 20$",
+        y=1.02
     )
     output = save_dir / f"{method.lower()}_domain_errors.pdf"
     fig.savefig(output, bbox_inches="tight")
@@ -214,8 +198,10 @@ for method in methods:
 
     # Domain investigation - conservation (relative errors)
     fig = plot_conservation(df_domain_quantities, method, "domain", "L")
-    add_parameter_footer(
-        fig, rf"$N = 128$, $L \in [{L_vals[0]:.1f}, {L_vals[-1]:.1f}]$, $T = 20$"
+    fig.suptitle(
+        f"{method} - Domain Investigation: Conservation (varying L, N=128)" + "\n" +
+        rf"$N = 128$, $L \in [{L_vals[0]:.1f}, {L_vals[-1]:.1f}]$, $T = 20$",
+        y=1.02
     )
     output = save_dir / f"{method.lower()}_domain_conservation.pdf"
     fig.savefig(output, bbox_inches="tight")
@@ -223,8 +209,10 @@ for method in methods:
 
     # Domain investigation - quantities (actual values)
     fig = plot_quantities(df_domain_quantities, method, "domain", "L")
-    add_parameter_footer(
-        fig, rf"$N = 128$, $L \in [{L_vals[0]:.1f}, {L_vals[-1]:.1f}]$, $T = 20$"
+    fig.suptitle(
+        f"{method} - Domain Investigation: Quantities M, V, E (varying L, N=128)" + "\n" +
+        rf"$N = 128$, $L \in [{L_vals[0]:.1f}, {L_vals[-1]:.1f}]$, $T = 20$",
+        y=1.02
     )
     output = save_dir / f"{method.lower()}_domain_quantities.pdf"
     fig.savefig(output, bbox_inches="tight")
@@ -234,8 +222,10 @@ for method in methods:
     fig = plot_errors(df_nodes_errors, method, "nodes", "N")
     df_method_nodes = df_nodes_errors[df_nodes_errors["method"] == method]
     N_vals = sorted(df_method_nodes["N"].unique())
-    add_parameter_footer(
-        fig, rf"$L = 30.0$, $N \in [{N_vals[0]}, {N_vals[-1]}]$, $T = 20$"
+    fig.suptitle(
+        f"{method} - Nodes Investigation: Errors (varying N, L=30)" + "\n" +
+        rf"$L = 30.0$, $N \in [{N_vals[0]}, {N_vals[-1]}]$, $T = 20$",
+        y=1.02
     )
     output = save_dir / f"{method.lower()}_nodes_errors.pdf"
     fig.savefig(output, bbox_inches="tight")
@@ -243,8 +233,10 @@ for method in methods:
 
     # Node investigation - conservation (relative errors)
     fig = plot_conservation(df_nodes_quantities, method, "nodes", "N")
-    add_parameter_footer(
-        fig, rf"$L = 30.0$, $N \in [{N_vals[0]}, {N_vals[-1]}]$, $T = 20$"
+    fig.suptitle(
+        f"{method} - Nodes Investigation: Conservation (varying N, L=30)" + "\n" +
+        rf"$L = 30.0$, $N \in [{N_vals[0]}, {N_vals[-1]}]$, $T = 20$",
+        y=1.02
     )
     output = save_dir / f"{method.lower()}_nodes_conservation.pdf"
     fig.savefig(output, bbox_inches="tight")
@@ -252,8 +244,10 @@ for method in methods:
 
     # Node investigation - quantities (actual values)
     fig = plot_quantities(df_nodes_quantities, method, "nodes", "N")
-    add_parameter_footer(
-        fig, rf"$L = 30.0$, $N \in [{N_vals[0]}, {N_vals[-1]}]$, $T = 20$"
+    fig.suptitle(
+        f"{method} - Nodes Investigation: Quantities M, V, E (varying N, L=30)" + "\n" +
+        rf"$L = 30.0$, $N \in [{N_vals[0]}, {N_vals[-1]}]$, $T = 20$",
+        y=1.02
     )
     output = save_dir / f"{method.lower()}_nodes_quantities.pdf"
     fig.savefig(output, bbox_inches="tight")

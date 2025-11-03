@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from spectral.utils.plotting import add_parameter_footer, get_repo_root
+from spectral.utils.plotting import get_repo_root
 from spectral.utils.io import ensure_output_dir
 from spectral.utils.formatting import format_dt_latex
 
@@ -48,28 +48,33 @@ sns.lineplot(
 ax.set_yscale("log")
 ax.set_xlabel(r"Number of modes ($N$)")
 ax.set_ylabel(r"$L^2$ error")
-ax.set_title("Spatial Convergence (Fourier spectral solver)", fontweight="bold")
 
 ax.grid(True, alpha=0.3)
 ax.legend(fontsize=8)
 
-# Add parameter footer
+# Add parameter information to title
 N_min_sp = df_spatial["N"].min()
 N_max_sp = df_spatial["N"].max()
 dt_sp = df_spatial["dt"].iloc[0] if "dt" in df_spatial.columns else None
 L_sp = df_spatial["L"].iloc[0] if "L" in df_spatial.columns else None
-if dt_sp and L_sp:
-    dt_latex = format_dt_latex(dt_sp)
-    add_parameter_footer(
-        fig,
-        rf"$N \in [{N_min_sp}, {N_max_sp}]$, $\Delta t = {dt_latex}$, $L = {L_sp:.1f}$",
-    )
-elif L_sp:
-    add_parameter_footer(fig, rf"$N \in [{N_min_sp}, {N_max_sp}]$, $L = {L_sp:.1f}$")
-else:
-    add_parameter_footer(fig, rf"$N \in [{N_min_sp}, {N_max_sp}]$")
+T_sp = df_spatial["T"].iloc[0] if "T" in df_spatial.columns else df_spatial["t_end"].iloc[0] if "t_end" in df_spatial.columns else None
 
-plt.tight_layout()
+if dt_sp and L_sp and T_sp:
+    dt_latex = format_dt_latex(dt_sp)
+    param_text = rf"$N \in [{N_min_sp}, {N_max_sp}]$, $\Delta t = {dt_latex}$, $L = {L_sp:.1f}$, $T = {T_sp:.2f}$"
+elif L_sp and T_sp:
+    param_text = rf"$N \in [{N_min_sp}, {N_max_sp}]$, $L = {L_sp:.1f}$, $T = {T_sp:.2f}$"
+elif T_sp:
+    param_text = rf"$N \in [{N_min_sp}, {N_max_sp}]$, $T = {T_sp:.2f}$"
+else:
+    param_text = rf"$N \in [{N_min_sp}, {N_max_sp}]$"
+
+ax.set_title(
+    "Spatial Convergence (Fourier spectral solver)" + "\n" + param_text,
+    fontweight="bold"
+)
+
+#plt.tight_layout()
 spatial_fig = OUTPUT_DIR / "spatial_convergence.pdf"
 plt.savefig(spatial_fig, dpi=300, bbox_inches="tight")
 print(f"Saved: {spatial_fig}")
@@ -104,32 +109,36 @@ ax.set_yscale("log")
 ax.invert_xaxis()
 ax.set_xlabel(r"Time step $\Delta t$")
 ax.set_ylabel(r"$L^2$ error")
-ax.set_title("Temporal Convergence (N=128)", fontweight="bold")
 
 ax.grid(True, alpha=0.3)
 ax.legend(fontsize=8)
 
-# Add parameter footer
+# Add parameter information to title
 N_temp = df_temporal["N"].iloc[0] if "N" in df_temporal.columns else 128
 dt_min_t = df_temporal["dt"].min()
 dt_max_t = df_temporal["dt"].max()
 L_temp = df_temporal["L"].iloc[0] if "L" in df_temporal.columns else None
+T_temp = df_temporal["T"].iloc[0] if "T" in df_temporal.columns else df_temporal["t_end"].iloc[0] if "t_end" in df_temporal.columns else None
 dt_min_latex = format_dt_latex(dt_min_t)
 dt_max_latex = format_dt_latex(dt_max_t)
 
-if L_temp:
-    add_parameter_footer(
-        fig,
-        rf"$N = {N_temp}$, $\Delta t \in [{dt_min_latex}, {dt_max_latex}]$, $L = {L_temp:.1f}$",
-    )
+if L_temp and T_temp:
+    param_text_temp = rf"$N = {N_temp}$, $\Delta t \in [{dt_min_latex}, {dt_max_latex}]$, $L = {L_temp:.1f}$, $T = {T_temp:.2f}$"
+elif L_temp:
+    param_text_temp = rf"$N = {N_temp}$, $\Delta t \in [{dt_min_latex}, {dt_max_latex}]$, $L = {L_temp:.1f}$"
+elif T_temp:
+    param_text_temp = rf"$N = {N_temp}$, $\Delta t \in [{dt_min_latex}, {dt_max_latex}]$, $T = {T_temp:.2f}$"
 else:
-    add_parameter_footer(
-        fig, rf"$N = {N_temp}$, $\Delta t \in [{dt_min_latex}, {dt_max_latex}]$"
-    )
+    param_text_temp = rf"$N = {N_temp}$, $\Delta t \in [{dt_min_latex}, {dt_max_latex}]$"
 
-plt.tight_layout()
+ax.set_title(
+    "Temporal Convergence (N=128)" + "\n" + param_text_temp,
+    fontweight="bold"
+)
+
+#plt.tight_layout()
 temporal_fig = OUTPUT_DIR / "temporal_convergence.pdf"
-plt.savefig(temporal_fig, dpi=300, bbox_inches="tight")
+plt.savefig(temporal_fig, dpi=300)
 print(f"Saved: {temporal_fig}")
 
 print("\nAll plots created successfully!")

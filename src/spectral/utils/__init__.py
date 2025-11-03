@@ -7,7 +7,7 @@ from .formatting import (
     format_parameter_range,
     build_parameter_string,
 )
-from .plotting import add_parameter_footer, get_repo_root
+from .plotting import get_repo_root
 from .norms import discrete_l2_error, discrete_l2_norm, discrete_linf_error
 
 __all__ = [
@@ -21,7 +21,6 @@ __all__ = [
     "format_parameter_range",
     "build_parameter_string",
     # Plotting
-    "add_parameter_footer",
     "get_repo_root",
     # Norms
     "discrete_l2_error",

@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from spectral.utils.plotting import add_parameter_footer, get_repo_root
+from spectral.utils.plotting import get_repo_root
 
 # Paths
 
@@ -103,17 +103,24 @@ def plot_high_band_power(df: pd.DataFrame) -> None:
         ax.set_ylabel(r"Energy above $2/3 \, k_{\max}$")
 
     g._legend.set_title("spectral treatment")
-    g.fig.suptitle("High-wavenumber energy (aliasing diagnostic)", y=1.02)
 
-    # Add parameter footer
+    # Add parameter information to title
     N_unique = sorted(df["N"].unique())
     L_val = df["L"].iloc[0] if "L" in df.columns else None
     if L_val and len(N_unique) > 1:
-        add_parameter_footer(
-            g.fig, rf"$N \in [{N_unique[0]}, {N_unique[-1]}]$, $L = {L_val:.1f}$"
-        )
+        param_text = rf"$N \in [{N_unique[0]}, {N_unique[-1]}]$, $L = {L_val:.1f}$"
     elif L_val:
-        add_parameter_footer(g.fig, rf"$N = {N_unique[0]}$, $L = {L_val:.1f}$")
+        param_text = rf"$N = {N_unique[0]}$, $L = {L_val:.1f}$"
+    else:
+        param_text = ""
+
+    if param_text:
+        g.fig.suptitle(
+            "High-wavenumber energy (aliasing diagnostic)" + "\n" + param_text,
+            y=1.02
+        )
+    else:
+        g.fig.suptitle("High-wavenumber energy (aliasing diagnostic)", y=1.02)
 
     g.fig.savefig(RESULTS_DIR / "ex_e_high_band_power.pdf", bbox_inches="tight")
 
@@ -150,17 +157,24 @@ def plot_spectrum_scatter(df: pd.DataFrame) -> None:
         ax.set_ylabel(r"$|\hat{u}_k|$")
 
     g._legend.set_title("snapshot time")
-    g.fig.suptitle("Modal amplitudes at representative times", y=1.02)
 
-    # Add parameter footer
+    # Add parameter information to title
     N_unique_s = sorted(df["N"].unique())
     L_val_s = df["L"].iloc[0] if "L" in df.columns else None
     if L_val_s and len(N_unique_s) > 1:
-        add_parameter_footer(
-            g.fig, rf"$N \in [{N_unique_s[0]}, {N_unique_s[-1]}]$, $L = {L_val_s:.1f}$"
-        )
+        param_text_s = rf"$N \in [{N_unique_s[0]}, {N_unique_s[-1]}]$, $L = {L_val_s:.1f}$"
     elif L_val_s:
-        add_parameter_footer(g.fig, rf"$N = {N_unique_s[0]}$, $L = {L_val_s:.1f}$")
+        param_text_s = rf"$N = {N_unique_s[0]}$, $L = {L_val_s:.1f}$"
+    else:
+        param_text_s = ""
+
+    if param_text_s:
+        g.fig.suptitle(
+            "Modal amplitudes at representative times" + "\n" + param_text_s,
+            y=1.02
+        )
+    else:
+        g.fig.suptitle("Modal amplitudes at representative times", y=1.02)
 
     g.fig.savefig(RESULTS_DIR / "ex_e_spectrum_snapshots.pdf", bbox_inches="tight")
 

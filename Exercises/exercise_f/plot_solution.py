@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from spectral.utils.plotting import add_parameter_footer, get_repo_root
+from spectral.utils.plotting import get_repo_root
 from spectral.utils.io import ensure_output_dir
 from spectral.utils.formatting import extract_metadata, format_dt_latex
 
@@ -102,17 +102,15 @@ fig.colorbar(im, ax=ax, label=r"$u(x, t)$")
 
 ax.set_xlabel(r"Time $t$")
 ax.set_ylabel(r"Position $x$")
-ax.set_title("KdV two-soliton collision")
-
-# Add parameter footer
 N = metadata.get("N", "?")
 L = metadata.get("L", "?")
 dt = metadata.get("dt", "?")
 c1 = metadata.get("c1", "?")
 c2 = metadata.get("c2", "?")
 dt_latex = format_dt_latex(dt)
-add_parameter_footer(
-    fig, rf"$N = {N}$, $L = {L}$, $\Delta t = {dt_latex}$, $c_1 = {c1}$, $c_2 = {c2}$"
+ax.set_title(
+    "KdV two-soliton collision" + "\n" +
+    rf"$N = {N}$, $L = {L}$, $\Delta t = {dt_latex}$, $c_1 = {c1}$, $c_2 = {c2}$"
 )
 
 output_path = save_dir / "spacetime.pdf"

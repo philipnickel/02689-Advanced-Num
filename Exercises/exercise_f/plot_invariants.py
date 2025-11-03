@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 from spectral.tdp import KdVSolver
-from spectral.utils.plotting import add_parameter_footer, get_repo_root
+from spectral.utils.plotting import get_repo_root
 from spectral.utils.io import load_simulation_data, ensure_output_dir
 from spectral.utils.formatting import extract_metadata, format_dt_latex
 
@@ -95,15 +95,17 @@ axs[1].set_ylabel("Relative drift")
 axs[1].set_title("Relative drift from initial value")
 axs[1].legend(loc="best")
 
-# Add parameter footer
+# Add overall title with parameters
 N = metadata.get("N", "?")
 L = metadata.get("L", "?")
 dt = metadata.get("dt", "?")
 c1 = metadata.get("c1", "?")
 c2 = metadata.get("c2", "?")
 dt_latex = format_dt_latex(dt)
-add_parameter_footer(
-    fig, rf"$N = {N}$, $L = {L}$, $\Delta t = {dt_latex}$, $c_1 = {c1}$, $c_2 = {c2}$"
+fig.suptitle(
+    "Conserved Quantities for Two-Soliton Collision" + "\n" +
+    rf"$N = {N}$, $L = {L}$, $\Delta t = {dt_latex}$, $c_1 = {c1}$, $c_2 = {c2}$",
+    y=0.98
 )
 
 output_path = save_dir / "invariants.pdf"
