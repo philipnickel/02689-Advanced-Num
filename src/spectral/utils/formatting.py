@@ -79,7 +79,7 @@ def format_parameter_range(
     Returns
     -------
     str
-        Formatted string like 'N ∈ [32, 128]' or '$N \\in [32, 128]$'
+        Formatted string'
 
     """
     if len(values) == 0:

@@ -57,8 +57,11 @@ class BvpProblem:
 
 
 def legendre_tau_derivative_matrices(num_modes: int) -> tuple[np.ndarray, np.ndarray]:
-    """
+    r"""
     Return first and second derivative matrices in Legendre modal space.
+
+    Computes spectral differentiation matrices for Legendre polynomial expansions
+    using the recurrence relations for derivatives of Legendre polynomials.
 
     Parameters
     ----------
@@ -71,6 +74,23 @@ def legendre_tau_derivative_matrices(num_modes: int) -> tuple[np.ndarray, np.nda
         First derivative matrix of shape (num_modes, num_modes)
     D2 : np.ndarray
         Second derivative matrix of shape (num_modes, num_modes)
+
+    Notes
+    -----
+    The derivative matrices are constructed using the relations:
+
+    .. math::
+
+        \hat{u}_n^{(1)} = (2n+1) \sum_{\substack{p=n+1\\ n+p\;\text{odd}}} \hat{u}_p
+
+    .. math::
+
+        \hat{u}_n^{(2)} = \left(n+\tfrac{1}{2}\right)
+        \sum_{\substack{p=n+2\\ n+p\;\text{even}}}
+        [p(p+1)-n(n+1)]\hat{u}_p
+
+    for :math:`n \geq 0`, where :math:`\hat{u}_n^{(q)}` denotes the :math:`n`-th
+    coefficient of the :math:`q`-th derivative.
     """
     n = np.arange(num_modes, dtype=float)[:, None]
     p = np.arange(num_modes, dtype=float)[None, :]
@@ -90,12 +110,20 @@ def legendre_tau_derivative_matrices(num_modes: int) -> tuple[np.ndarray, np.nda
 
 
 def legendre_tau_problem(epsilon: float, num_modes: int) -> BvpProblem:
-    """
-    Assemble Legendre tau method system as a BVP problem.
+    r"""
+    Assemble Legendre tau method system for Exercise A boundary value problem.
 
-    The tau method is a modal spectral method that approximates the solution
-    as a truncated series of Legendre polynomials. Boundary conditions are
-    enforced by replacing the last rows of the discrete operator.
+    Solves the BVP:
+
+    .. math::
+
+        -\varepsilon \frac{d^2u}{dx^2} - \frac{du}{dx} = 1, \quad u(0) = u(1) = 0
+
+    on :math:`x \in [0, 1]` using the Legendre tau method on :math:`t \in [-1, 1]`.
+
+    The tau method approximates the solution as a truncated series of Legendre
+    polynomials. Boundary conditions are enforced by replacing the last two rows
+    of the discrete operator with the boundary condition equations.
 
     Parameters
     ----------
@@ -108,6 +136,17 @@ def legendre_tau_problem(epsilon: float, num_modes: int) -> BvpProblem:
     -------
     BvpProblem
         Assembled BVP system with boundary conditions
+
+    Notes
+    -----
+    The transformation :math:`x = \frac{1}{2}(t + 1)` gives :math:`\frac{d}{dx} = 2\frac{d}{dt}`,
+    resulting in the operator:
+
+    .. math::
+
+        \mathcal{L} = -4\varepsilon D^{(2)} - 2D^{(1)}
+
+    Boundary conditions use :math:`P_n(1) = 1` and :math:`P_n(-1) = (-1)^n`.
     """
     D1, D2 = legendre_tau_derivative_matrices(num_modes)
     operator = -4.0 * epsilon * D2 - 2.0 * D1
@@ -127,8 +166,14 @@ def legendre_tau_problem(epsilon: float, num_modes: int) -> BvpProblem:
 
 
 def solve_legendre_tau(epsilon: float, num_modes: int) -> np.ndarray:
-    """
-    Solve the Legendre tau formulation.
+    r"""
+    Solve Exercise A boundary value problem using Legendre tau method.
+
+    Solves:
+
+    .. math::
+
+        -\varepsilon \frac{d^2u}{dx^2} - \frac{du}{dx} = 1, \quad u(0) = u(1) = 0
 
     Parameters
     ----------
@@ -148,6 +193,12 @@ def solve_legendre_tau(epsilon: float, num_modes: int) -> np.ndarray:
     but instead enforces the differential equation in a weighted sense
     with boundary conditions imposed through row replacement.
 
+    The analytical solution is:
+
+    .. math::
+
+        u(x) = \frac{e^{-x/\varepsilon}+(x-1)-e^{-1/\varepsilon}x}{e^{-1/\varepsilon}-1}
+
     References
     ----------
     Engsig-Karup, "Lecture 5: Boundary Value Problems", p. 14
@@ -165,8 +216,14 @@ def solve_legendre_tau(epsilon: float, num_modes: int) -> np.ndarray:
 def solve_legendre_collocation(
     epsilon: float, num_nodes: int
 ) -> tuple[np.ndarray, np.ndarray]:
-    """
-    Solve boundary value problem using Legendre-Gauss-Lobatto collocation.
+    r"""
+    Solve Exercise A boundary value problem using Legendre-Gauss-Lobatto collocation.
+
+    Solves:
+
+    .. math::
+
+        -\varepsilon \frac{d^2u}{dx^2} - \frac{du}{dx} = 1, \quad u(0) = u(1) = 0
 
     The collocation method enforces the differential equation exactly at
     the collocation nodes (Legendre-Gauss-Lobatto points). This nodal
@@ -191,6 +248,9 @@ def solve_legendre_collocation(
     Legendre-Gauss-Lobatto points include the domain endpoints, making
     them natural for imposing Dirichlet boundary conditions. The spectral
     differentiation matrix is constructed directly at these nodes.
+
+    The same coordinate transformation as the tau method applies:
+    :math:`x = \frac{1}{2}(t + 1)`.
 
     References
     ----------
@@ -224,8 +284,18 @@ def solve_legendre_collocation(
 def solve_polar_bvp(
     r1: float, r2: float, Nr: int
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Solve Laplace's equation in polar coordinates using spectral collocation.
+    r"""
+    Solve Exercise B: Laplace's equation in polar coordinates using mixed spectral collocation.
+
+    Solves:
+
+    .. math::
+
+        \nabla^2 \phi = \frac{1}{r}\frac{\partial}{\partial r}
+        \left(r \frac{\partial \phi}{\partial r}\right)
+        + \frac{1}{r^2}\frac{\partial^2 \phi}{\partial \theta^2} = 0
+
+    on the domain :math:`(r, \theta) \in [r_1, r_2] \times [0, 2\pi]`.
 
     Parameters
     ----------
@@ -246,6 +316,27 @@ def solve_polar_bvp(
         Radial meshgrid
     Theta : np.ndarray
         Angular meshgrid
+
+    Notes
+    -----
+    Uses mixed spectral collocation:
+
+    - Legendre-Gauss quadrature for the radial direction :math:`r`
+    - Fourier collocation for the periodic angular direction :math:`\theta`
+
+    The analytical solution is:
+
+    .. math::
+
+        \phi(r,\theta) = V_\infty \left(r + \frac{r_1^2}{r}\right)\cos(\theta)
+
+    with :math:`V_\infty = 1`.
+
+    The system is vectorized using the Kronecker product identity:
+
+    .. math::
+
+        \text{Vec}(A U C) = (C^T \otimes A) \text{Vec}(U)
     """
     xs, ws = leggauss(Nr)
     rs = 0.5 * (r2 - r1) * (xs + 1) + r1
@@ -293,12 +384,20 @@ def solve_transport_spacetime(
     a: float,
     exact_solution: np.ndarray,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """
-    Solve transport equation using space-time Legendre collocation.
+    r"""
+    Solve Exercise H: Linear advection problem using space-time Legendre collocation.
 
-    Solves ∂u/∂t + a ∂u/∂x = 0 with boundary conditions:
-    - Initial condition at t=t1
-    - Inflow condition at x=x1 (a > 0)
+    Solves:
+
+    .. math::
+
+        \frac{\partial \phi}{\partial t} + a\,\frac{\partial \phi}{\partial x} = 0, \quad
+        x \in (0, 2\pi), \; t \ge 0
+
+    with boundary conditions:
+
+    - Initial condition: :math:`\phi(x,0) = \phi_0(x)` at :math:`t=t_1`
+    - Inflow condition: :math:`\phi(0,t) = g_l(t)` at :math:`x=x_1` (for :math:`a > 0`)
 
     Parameters
     ----------
@@ -325,6 +424,23 @@ def solve_transport_spacetime(
         Temporal meshgrid
     Xs : np.ndarray
         Spatial meshgrid
+
+    Notes
+    -----
+    Uses Legendre-Gauss-Lobatto collocation for both spatial and temporal domains.
+    Unlike Exercise B, both dimensions use Legendre basis (not Fourier) since the
+    domain is not assumed periodic.
+
+    The analytical solution is :math:`\phi(x,t) = f(x - at)` where :math:`f` is
+    an arbitrary function. In this implementation, :math:`f` is taken to be a Gaussian:
+
+    .. math::
+
+        \phi(x,t) = \frac{1}{\sigma\sqrt{2\pi}} e^{-\frac{1}{2}\left( \frac{x -at - \mu}{\sigma} \right)^2}
+
+    with :math:`a=3`, :math:`\mu = \pi`, and :math:`\sigma = 1`.
+
+    The system is vectorized using the Kronecker product identity as in Exercise B.
     """
     # Get Legendre-Gauss-Lobatto nodes
     ys_x = legendre_gauss_lobatto_nodes(Nx)

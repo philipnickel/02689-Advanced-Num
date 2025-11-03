@@ -153,8 +153,8 @@ def get_time_integrator(name: str, **kwargs) -> TimeIntegrator:
 
 
 def soliton(x: np.ndarray, t: float, c: float, x0: float = 0.0) -> np.ndarray:
-    """
-    Compute KdV soliton solution.
+    r"""
+    Compute KdV soliton solution :math:`u(x,t) = \frac{c/2}{\cosh^2(\sqrt{c}/2 \cdot \xi)}`.
 
     Parameters
     ----------
@@ -171,6 +171,10 @@ def soliton(x: np.ndarray, t: float, c: float, x0: float = 0.0) -> np.ndarray:
     -------
     np.ndarray
         Soliton amplitude at each spatial point
+
+    Notes
+    -----
+    The traveling wave coordinate is :math:`\xi = x - ct - x_0`.
     """
     xi = x - c * t - x0
     return 0.5 * c / np.cosh(0.5 * np.sqrt(c) * xi) ** 2
@@ -182,7 +186,7 @@ def two_soliton_initial(
     """
     Initial condition for two-soliton collision simulation.
 
-    Superposition of two solitons at t=0.
+    Superposition of two solitons at :math:`t=0`.
 
     Parameters
     ----------
@@ -206,22 +210,36 @@ def two_soliton_initial(
 
 
 class KdVSolver:
-    """Korteweg-de Vries equation solver using Fourier spectral methods.
+    r"""Korteweg-de Vries equation solver for Exercises C-G using Fourier spectral methods.
 
-    Solves the KdV equation u_t + 6u*u_x + u_xxx = 0 on a periodic
-    domain using Fourier collocation for spatial discretization.
+    Solves the KdV equation
+
+    .. math::
+
+        \partial_t u + 6u \partial_x u + \partial_{xxx}u = 0
+
+    on the domain :math:`-\infty < x < \infty`, :math:`t > 0` with periodic boundary
+    conditions, using Fourier collocation for spatial discretization.
     The nonlinear term can optionally be dealiased using the 3/2-rule.
 
     Notes
     -----
     The Fourier spectral method provides exponential convergence for
     smooth periodic solutions. Spatial derivatives are computed in
-    Fourier space via multiplication by ik for first derivatives and
-    (ik)^3 for third derivatives, where k is the wavenumber.
+    Fourier space via multiplication by :math:`ik` for first derivatives and
+    :math:`(ik)^3` for third derivatives, where :math:`k` is the wavenumber.
 
     The 3/2-rule dealiasing prevents aliasing errors in the nonlinear
-    convolution product u*u_x by padding the Fourier coefficients to
-    3/2 times the original resolution.
+    convolution product :math:`u u_x` by padding the Fourier coefficients to
+    3/2 times the original resolution (Exercise E).
+
+    Used in:
+
+    - **Exercise C**: Spatial and time discretization
+    - **Exercise D**: Evolution of errors and quantities of interest
+    - **Exercise E**: Dealiasing implementation
+    - **Exercise F**: Soliton solutions
+    - **Exercise G**: Two-soliton collisions
     """
 
     def __init__(self, N: int, L: float, dealias: bool = False):
@@ -473,9 +491,9 @@ class KdVSolver:
         """
         Compute conserved quantities for KdV equation.
 
-        Mass:     M = ∫ u dx
-        Momentum: V = ∫ u² dx
-        Energy:   E = ∫ (½u_x² - u³) dx
+        Mass:     
+        Momentum: 
+        Energy:   
 
         Parameters
         ----------

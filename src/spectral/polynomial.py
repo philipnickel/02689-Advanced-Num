@@ -14,11 +14,11 @@ from scipy.special import gammaln, eval_jacobi
 
 def jacobi_poly(xs: np.ndarray, alpha: float, beta: float, N: int) -> np.ndarray:
     """
-    Compute Jacobi polynomial P_N^(alpha,beta)(x) using recurrence relation.
+    Compute Jacobi polynomial :math:`P_N^{(\alpha,\beta)}(x)` using recurrence relation.
 
-    Jacobi polynomials are orthogonal polynomials on [-1,1] with weight
-    function w(x) = (1-x)^alpha * (1+x)^beta. Special cases include Legendre
-    polynomials (alpha=beta=0) and Chebyshev polynomials.
+    Jacobi polynomials are orthogonal polynomials on :math:`[-1,1]` with weight
+    function :math:`w(x) = (1-x)^\alpha (1+x)^\beta`. Special cases include Legendre
+    polynomials (:math:`\alpha=\beta=0`) and Chebyshev polynomials.
 
     Parameters
     ----------
@@ -107,8 +107,8 @@ def normalized_jacobi_poly(
 
 
 def legendre_polynomials(xs: np.ndarray, degree: int) -> np.ndarray:
-    """
-    Return Legendre polynomials P_0..P_degree evaluated at xs.
+    r"""
+    Return Legendre polynomials :math:`P_0, \ldots, P_{\text{degree}}` evaluated at xs.
 
     Parameters
     ----------
@@ -162,11 +162,11 @@ def grad_jacobi_poly(
 
 
 def legendre_gauss_lobatto_nodes(num_nodes: int) -> np.ndarray:
-    """
+    r"""
     Compute Legendre-Gauss-Lobatto (LGL) nodes.
 
-    LGL nodes are the roots of (1-x^2) * P'_N(x), where P_N is the Legendre
-    polynomial of degree N. They include the endpoints ±1, making them ideal
+    LGL nodes are the roots of :math:`(1-x^2) P'_N(x)`, where :math:`P_N` is the Legendre
+    polynomial of degree :math:`N`. They include the endpoints :math:`\pm 1`, making them ideal
     for imposing Dirichlet boundary conditions.
 
     Parameters
@@ -181,7 +181,7 @@ def legendre_gauss_lobatto_nodes(num_nodes: int) -> np.ndarray:
 
     Notes
     -----
-    LGL quadrature integrates polynomials of degree up to 2N-3 exactly.
+    LGL quadrature integrates polynomials of degree up to :math:`2N-3` exactly.
     The inclusion of boundary points makes these nodes particularly well-suited
     for spectral collocation methods with Dirichlet boundary conditions.
 
@@ -201,7 +201,7 @@ def legendre_gauss_lobatto_nodes(num_nodes: int) -> np.ndarray:
 
 
 def vandermonde(xs: np.ndarray, alpha: float, beta: float) -> np.ndarray:
-    """
+    r"""
     Construct Vandermonde matrix for Jacobi polynomials.
 
     The Vandermonde matrix relates modal (polynomial) coefficients to
@@ -225,8 +225,13 @@ def vandermonde(xs: np.ndarray, alpha: float, beta: float) -> np.ndarray:
     Notes
     -----
     The Vandermonde matrix enables transformation between modal and nodal
-    representations: u_nodal = V @ u_modal. Its inverse is used for
-    interpolation and constructing spectral operators.
+    representations:
+
+    .. math::
+
+        \mathbf{u}_{\text{nodal}} = V \mathbf{u}_{\text{modal}}
+
+    Its inverse is used for interpolation and constructing spectral operators.
 
     References
     ----------

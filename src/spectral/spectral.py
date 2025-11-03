@@ -15,11 +15,11 @@ from .polynomial import (
 
 
 def legendre_diff_matrix(nodes: np.ndarray) -> np.ndarray:
-    """
+    r"""
     Return Legendre spectral differentiation matrix at arbitrary nodes.
 
-    Constructs the spectral differentiation matrix D such that D @ u
-    approximates du/dx at the collocation nodes. The matrix is computed
+    Constructs the spectral differentiation matrix :math:`D` such that :math:`D\mathbf{u}`
+    approximates :math:`\frac{du}{dx}` at the collocation nodes. The matrix is computed
     using Vandermonde matrices without requiring explicit quadrature.
 
     Parameters
@@ -34,9 +34,15 @@ def legendre_diff_matrix(nodes: np.ndarray) -> np.ndarray:
 
     Notes
     -----
-    The differentiation matrix is constructed as D = V_x @ V^(-1), where
-    V is the Vandermonde matrix and V_x contains derivatives of the basis
-    polynomials. This approach works for arbitrary node distributions.
+    The differentiation matrix is constructed as
+
+    .. math::
+
+        D = V_x V^{-1}
+
+    where :math:`V` is the Vandermonde matrix and :math:`V_x` contains
+    derivatives of the basis polynomials. This approach works for arbitrary
+    node distributions.
 
     References
     ----------
@@ -115,7 +121,7 @@ def fourier_diff_matrix_on_interval(
     N: int, a: float = -2.0, b: float = 2.0
 ) -> np.ndarray:
     """
-    Fourier differentiation matrix rescaled to periodic interval [a, b].
+    Fourier differentiation matrix rescaled to periodic interval :math:`[a, b]`.
 
     Parameters
     ----------
