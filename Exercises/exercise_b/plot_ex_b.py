@@ -64,8 +64,8 @@ Nr_min = convergence_df["Nr"].min()
 Nr_max = convergence_df["Nr"].max()
 add_parameter_footer(fig, rf"$N_r \in [{Nr_min}, {Nr_max}]$")
 
-fig.savefig(save_dir / "convergence.pdf", bbox_inches="tight")
-print(f"Saved: {save_dir}/convergence.pdf")
+fig.savefig(save_dir / "convergence_r.pdf", bbox_inches="tight")
+print(f"Saved: {save_dir}/convergence_r.pdf")
 
 # %%
 
@@ -87,23 +87,23 @@ Ntheta_vals = convergence_df["Ntheta"].values
 err_vals = convergence_df["Linf_err"].values
 
 # Add reference line
-slope = -2
-Ntheta_ref = np.array([Ntheta_vals[0], Ntheta_vals[-1]])
-err_ref = err_vals[0] * (Ntheta_ref / Ntheta_vals[0]) ** slope
+# slope = -2
+# Ntheta_ref = np.array([Ntheta_vals[0], Ntheta_vals[-1]])
+# err_ref = err_vals[0] * (Ntheta_ref / Ntheta_vals[0]) ** slope
 
-ax.plot(
-    Ntheta_ref,
-    err_ref,
-    "k--",
-    alpha=0.5,
-    linewidth=1.5,
-    label=r"$\mathcal{O}(N_r^{-2})$",
-)
+# ax.plot(
+#     Ntheta_ref,
+#     err_ref,
+#     "k--",
+#     alpha=0.5,
+#     linewidth=1.5,
+#     label=r"$\mathcal{O}(N_{\theta}^{-2})$",
+# )
 
 ax.set(
-    xscale="log",
+    # xscale="log",
     yscale="log",
-    xlabel=r"Number of radial nodes $N_r$",
+    xlabel=r"Number of radial nodes $N_{\theta}$",
     ylabel=r"$L^\infty$ Error",
 )
 ax.set_title("Convergence Study: Polar BVP, $N_r = 20$")
@@ -113,10 +113,10 @@ ax.grid(True, alpha=0.3)
 # Add parameter footer
 Ntheta_min = convergence_df["Ntheta"].min()
 Ntheta_max = convergence_df["Ntheta"].max()
-add_parameter_footer(fig, rf"$N_r \in [{Ntheta_min}, {Ntheta_max}]$")
+add_parameter_footer(fig, rf"$N_{{\theta}} \in [{Ntheta_min}, {Ntheta_max}]$")
 
-fig.savefig(save_dir / "convergence.pdf", bbox_inches="tight")
-print(f"Saved: {save_dir}/convergence.pdf")
+fig.savefig(save_dir / "convergence_theta.pdf", bbox_inches="tight")
+print(f"Saved: {save_dir}/convergence_theta.pdf")
 
 # %%
 # Load and prepare solution

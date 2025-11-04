@@ -24,12 +24,13 @@ data_dir.mkdir(parents=True, exist_ok=True)
 
 # %% Convergence study
 print("Running convergence study...")
-Nrs = np.arange(10, 50, step=2)
+Nrs = np.arange(10, 70, step=2)
+Nthetas = np.arange(6, 30, step=2)
 errors_Nr = np.zeros(Nrs.shape[0])
-errors_Ntheta = np.zeros(Nrs.shape[0])
+errors_Ntheta = np.zeros(Nthetas.shape[0])
 
 r1 = 1
-r2 = 3
+r2 = 10
 
 for i, Nr in enumerate(Nrs):
     Phi, Phi_hat, Rs, Theta = solve_polar_bvp(r1, r2, Nr=Nr, Ntheta=50)
@@ -37,7 +38,7 @@ for i, Nr in enumerate(Nrs):
     print(f"  Nr={Nr}: max error = {errors_Nr[i]:.6e}")
 
 
-for i, Ntheta in enumerate(Nrs):
+for i, Ntheta in enumerate(Nthetas):
     Phi, Phi_hat, Rs, Theta = solve_polar_bvp(r1, r2, Nr=20, Ntheta=Ntheta)
     errors_Ntheta[i] = np.max(np.abs(Phi - Phi_hat))
     print(f"  Nr={Ntheta}: max error = {errors_Ntheta[i]:.6e}")
@@ -47,14 +48,14 @@ convergence_df = pd.DataFrame({"Nr": Nrs, "Linf_err": errors_Nr})
 convergence_df.to_parquet(data_dir / "convergence_r.parquet", index=False)
 print(f"Saved convergence data: {data_dir}/convergence_r.parquet")
 
-convergence_df = pd.DataFrame({"Ntheta": Nrs, "Linf_err": errors_Ntheta})
+convergence_df = pd.DataFrame({"Ntheta": Nthetas, "Linf_err": errors_Ntheta})
 convergence_df.to_parquet(data_dir / "convergence_theta.parquet", index=False)
 print(f"Saved convergence data: {data_dir}/convergence_theta.parquet")
 
 # %% Solve BVP for visualization
 print("\nSolving BVP for visualization...")
 r1 = 1
-r2 = 3
+r2 = 10
 Nr = 20
 Ntheta = 20
 Phi, Phi_hat, Rs, Theta = solve_polar_bvp(r1, r2, Nr, Ntheta)
