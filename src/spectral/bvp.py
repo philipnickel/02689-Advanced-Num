@@ -282,7 +282,7 @@ def solve_legendre_collocation(
 
 
 def solve_polar_bvp(
-    r1: float, r2: float, Nr: int
+    r1: float, r2: float, Nr: int, Ntheta: int
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     r"""
     Solve Exercise B: Laplace's equation in polar coordinates using mixed spectral collocation.
@@ -338,11 +338,10 @@ def solve_polar_bvp(
 
         \text{Vec}(A U C) = (C^T \otimes A) \text{Vec}(U)
     """
-    xs, ws = leggauss(Nr)
+    xs = legendre_gauss_lobatto_nodes(Nr)
     rs = 0.5 * (r2 - r1) * (xs + 1) + r1
 
     theta_basis = FourierEquispacedBasis(domain=(0.0, 2.0 * np.pi))
-    Ntheta = Nr
     thetas = theta_basis.nodes(Ntheta)
 
     Rs, Theta = np.meshgrid(rs, thetas)

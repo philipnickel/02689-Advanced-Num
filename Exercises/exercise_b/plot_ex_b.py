@@ -23,7 +23,7 @@ data_dir = repo_root / "data/A2/ex_b"
 save_dir = repo_root / "figures/A2/ex_b"
 save_dir.mkdir(parents=True, exist_ok=True)
 
-convergence_df = pd.read_parquet(data_dir / "convergence.parquet")
+convergence_df = pd.read_parquet(data_dir / "convergence_r.parquet")
 print(f"Loaded convergence data: {convergence_df.shape}")
 
 fig, ax = plt.subplots(figsize=(8, 6))
@@ -55,7 +55,7 @@ ax.set(
     xlabel=r"Number of radial nodes $N_r$",
     ylabel=r"$L^\infty$ Error",
 )
-ax.set_title("Convergence Study: Polar BVP")
+ax.set_title("Convergence Study: Polar BVP, $N_{\\theta}= 50$")
 ax.legend()
 ax.grid(True, alpha=0.3)
 
@@ -63,6 +63,57 @@ ax.grid(True, alpha=0.3)
 Nr_min = convergence_df["Nr"].min()
 Nr_max = convergence_df["Nr"].max()
 add_parameter_footer(fig, rf"$N_r \in [{Nr_min}, {Nr_max}]$")
+
+fig.savefig(save_dir / "convergence.pdf", bbox_inches="tight")
+print(f"Saved: {save_dir}/convergence.pdf")
+
+# %%
+
+convergence_df = pd.read_parquet(data_dir / "convergence_theta.parquet")
+print(f"Loaded convergence data: {convergence_df.shape}")
+
+fig, ax = plt.subplots(figsize=(8, 6))
+sns.lineplot(
+    data=convergence_df,
+    x="Ntheta",
+    y="Linf_err",
+    marker="o",
+    ax=ax,
+    label="Spectral Collocation",
+)
+
+# Add reference line showing convergence rate
+Ntheta_vals = convergence_df["Ntheta"].values
+err_vals = convergence_df["Linf_err"].values
+
+# Add reference line
+slope = -2
+Ntheta_ref = np.array([Ntheta_vals[0], Ntheta_vals[-1]])
+err_ref = err_vals[0] * (Ntheta_ref / Ntheta_vals[0]) ** slope
+
+ax.plot(
+    Ntheta_ref,
+    err_ref,
+    "k--",
+    alpha=0.5,
+    linewidth=1.5,
+    label=r"$\mathcal{O}(N_r^{-2})$",
+)
+
+ax.set(
+    xscale="log",
+    yscale="log",
+    xlabel=r"Number of radial nodes $N_r$",
+    ylabel=r"$L^\infty$ Error",
+)
+ax.set_title("Convergence Study: Polar BVP, $N_r = 20$")
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+# Add parameter footer
+Ntheta_min = convergence_df["Ntheta"].min()
+Ntheta_max = convergence_df["Ntheta"].max()
+add_parameter_footer(fig, rf"$N_r \in [{Ntheta_min}, {Ntheta_max}]$")
 
 fig.savefig(save_dir / "convergence.pdf", bbox_inches="tight")
 print(f"Saved: {save_dir}/convergence.pdf")
@@ -114,7 +165,10 @@ ax.set_ylim(0, r2)
 ax.set_title("Numerical Solution (Spectral Collocation)")
 
 # Add parameter footer
-add_parameter_footer(fig, rf"$N_r = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)")
+add_parameter_footer(
+    fig,
+    rf"$N_r = N_\theta = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)",
+)
 
 fig.savefig(save_dir / "solution.pdf", bbox_inches="tight")
 print(f"Saved: {save_dir}/solution.pdf")
@@ -132,9 +186,13 @@ ax.set_ylim(0, r2)
 ax.set_title("Error")
 
 # Add parameter footer
-add_parameter_footer(fig, rf"$N_r = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)")
+add_parameter_footer(
+    fig, rf"$N_r = N_\theta = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)"
+)
 
 fig.savefig(save_dir / "error.pdf", bbox_inches="tight")
 print(f"Saved: {save_dir}/error.pdf")
 
 print(f"\nAll plots saved to {save_dir}")
+
+# %%
