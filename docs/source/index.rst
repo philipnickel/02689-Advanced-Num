@@ -5,7 +5,7 @@ Assignment 2 – 02689 Advanced Numerical Algorithms
 
 This documentation serves as an appendix to assignment 2 for DTU course 02689 Advanced Numerical Algorithms.
 
-For the full codebase, please visit the `GitHub repository <https://github.com/your-repo-url>`.
+For the full codebase, please visit the `GitHub repository <https://github.com/philipnickel/02689-Advanced-Num>`.
 
 Contents
 --------

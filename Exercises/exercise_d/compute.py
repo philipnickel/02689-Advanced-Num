@@ -12,7 +12,7 @@ For each configuration, computes:
 - L2 and Linf errors over time
 - Conservation quantities (M, V, E) over time
 """
-
+#TODO: Review how the quantities are calculated!!!!!!!!!!!
 # %% Imports and setup
 import os
 from pathlib import Path
@@ -36,7 +36,7 @@ METHODS = ("RK4", "RK3")
 save_every_steps = 50  # Save every 50 steps
 
 # Domain investigation: varying L, fixed N
-DOMAIN_N = 128
+DOMAIN_N = 64
 DOMAIN_L_vals = [20.0, 30.0, 40.0]
 
 # Node investigation: varying N, fixed L
@@ -51,7 +51,7 @@ def estimate_stable_dt(
     N: int, L: float, method_name: str, c: float, safety_factor=0.1
 ) -> float:
     """Estimate stable dt with safety factor."""
-    s = KdVSolver(N, L)
+    s = KdVSolver(N, L, dealias=True)
     u_max = float(np.max(np.abs(soliton(s.x, 0.0, c, x0))))
     dt_est = KdVSolver.stable_dt(N, L, u_max, integrator_name=method_name.lower())
     dt_safe = safety_factor * dt_est if np.isfinite(dt_est) else 1e-3

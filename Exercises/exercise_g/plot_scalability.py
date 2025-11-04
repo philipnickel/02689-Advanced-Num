@@ -77,33 +77,48 @@ ax1.legend(title="Method", loc="best")
 ax1.grid(True, alpha=0.3)
 
 # ===== Panel 2: Normalized efficiency =====
-# Compute normalized time for each method
+# Compare full step timing vs direct RHS evaluations
+colors = dict(zip(df_timing["method"].unique(), sns.color_palette("deep")))
+
 for method in df_timing["method"].unique():
     subset = df_timing[df_timing["method"] == method].sort_values("N")
     N_vals = subset["N"].values
-    time_vals = subset["time_per_step"].values
+    step_vals = subset["time_per_step"].values
+    rhs_vals = subset["rhs_time"].values
 
-    # Normalize by N log N
-    normalized = time_vals / (N_vals * np.log(N_vals))
+    normalized_step = step_vals / (N_vals * np.log(N_vals))
+    normalized_rhs = rhs_vals / (N_vals * np.log(N_vals))
 
-    # Plot
     ax2.plot(
         N_vals,
-        normalized,
+        normalized_step,
         marker="o",
-        markersize=8,
+        markersize=7,
         linewidth=2,
-        label=method,
-        alpha=0.8,
+        color=colors[method],
+        alpha=0.85,
+        label=f"{method} (step)",
+    )
+
+    ax2.plot(
+        N_vals,
+        normalized_rhs,
+        marker="s",
+        markersize=6,
+        linewidth=1.8,
+        linestyle="--",
+        color=colors[method],
+        alpha=0.85,
+        label=f"{method} (rhs)",
     )
 
 ax2.set_xlabel(r"Number of grid points $N$")
 ax2.set_ylabel(r"Time / $(N \log N)$ [s]")
-ax2.set_title("Scaling Efficiency (should be flat)")
+ax2.set_title("Scaling Efficiency (step vs. rhs)")
 ax2.set_xscale("log")
-ax2.legend(title="Method")
+ax2.set_yscale("log")
+ax2.legend(title="Metric", fontsize=9)
 ax2.grid(True, alpha=0.3)
-ax2.axhline(y=0, color="k", linestyle="-", linewidth=0.5)
 
 # Overall title with parameters
 L_val = df_timing["L"].iloc[0] if "L" in df_timing.columns else None
@@ -136,12 +151,49 @@ for method in df_timing["method"].unique():
 
 print("\nScaling exponent (fit to N^α in log-log space):")
 for method in df_timing["method"].unique():
-    subset = df_timing[df_timing["method"] == method]
+    subset = df_timing[df_timing["method"] == method].sort_values("N")
+    subset_fit = subset[subset["N"] >= 128]
+    if len(subset_fit) >= 2:
+        subset = subset_fit
     log_N = np.log(subset["N"].values)
     log_t = np.log(subset["time_per_step"].values)
     # Linear fit in log-log space
     coef = np.polyfit(log_N, log_t, 1)
     print(f"  {method}: α = {coef[0]:.3f} (ideal: ~1.0-1.1 for N log N)")
+
+print("\nRHS-only exponent (direct rhs_time fit):")
+for method in df_timing["method"].unique():
+    subset = df_timing[df_timing["method"] == method].sort_values("N")
+    subset_fit = subset[subset["N"] >= 128]
+    if len(subset_fit) >= 2:
+        subset = subset_fit
+    log_N = np.log(subset["N"].values)
+    log_rhs = np.log(subset["rhs_time"].values)
+    coef = np.polyfit(log_N, log_rhs, 1)
+    print(f"  {method}: α_rhs = {coef[0]:.3f}")
+
+print("\nDecomposition: time ≈ a N log N + b N + c")
+for method in df_timing["method"].unique():
+    subset = df_timing[df_timing["method"] == method].sort_values("N")
+    subset_fit = subset[subset["N"] >= 128]
+    if len(subset_fit) < 2:
+        subset_fit = subset
+    N_vals = subset_fit["N"].values
+    time_vals = subset_fit["time_per_step"].values
+    A = np.column_stack([N_vals * np.log(N_vals), N_vals, np.ones_like(N_vals)])
+    coeff, *_ = np.linalg.lstsq(A, time_vals, rcond=None)
+    a_fft, b_linear, c_const = coeff
+    residual = time_vals - (b_linear * N_vals + c_const)
+    mask = residual > 0
+    fft_slope = (
+        np.polyfit(np.log(N_vals[mask]), np.log(residual[mask]), 1)[0]
+        if np.count_nonzero(mask) >= 2
+        else float("nan")
+    )
+    print(
+        f"  {method}: a={a_fft:.3e}, b={b_linear:.3e}, c={c_const:.3e}, "
+        f"α_fft ≈ {fft_slope:.3f}"
+    )
 
 print("\nNote: Low scaling exponents are expected for small N ranges.")
 print("The O(N log N) behavior from FFT becomes dominant at larger N.")

@@ -48,13 +48,11 @@ g = sns.relplot(
     height=4,
     aspect=1.2,
 )
-g.set_titles(r"$\varepsilon={col_name:g}$")
+#g.set_titles(r"$\varepsilon={col_name:g}$")
 g.set_axis_labels(r"$x$", r"$u(x)$")
 g.figure.suptitle(
-    r"Tau vs Collocation for different $\varepsilon$" + "\n" +
-    rf"$N = {N}$ ({n_eval_points} Evaluation points)",
-    y=1.02
-)
+    r"Tau vs Collocation", fontsize=20, y=1.1)
+g.set_titles(r"$\varepsilon={col_name:g}$" + rf", $N = {N}$, ({n_eval_points} Eval. points)", fontsize=10, y=1.05)
 
 output = save_dir / "solutions_facet.pdf"
 g.figure.savefig(output, bbox_inches="tight")

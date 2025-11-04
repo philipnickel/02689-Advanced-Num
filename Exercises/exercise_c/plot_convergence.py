@@ -46,6 +46,7 @@ sns.lineplot(
 )
 
 ax.set_yscale("log")
+ax.set_xscale("log")
 ax.set_xlabel(r"Number of modes ($N$)")
 ax.set_ylabel(r"$L^2$ error")
 

@@ -30,7 +30,12 @@ T_timing = 1.0  # Very short simulation for timing
 METHODS = ("RK4", "RK3")
 
 # Sequential timing: vary N (extended range to see asymptotic behavior)
-N_values = [32, 64, 128, 256, 512]
+N_values = [32, 64, 128, 256, 512, 1024, 2048, 4096]
+# Ensure enough steps per run for reliable timing while keeping runtimes manageable
+MIN_STEPS = 200
+MAX_STEPS = 2000
+# RHS benchmarking repetitions
+RHS_REPEATS = 200
 
 
 # %% Helper: stable dt estimation
@@ -59,6 +64,20 @@ def time_single_case(method: str, N: int, L: float, c: float, T: float):
 
     # Estimate stable dt
     dt = estimate_stable_dt(N, L, method, c, safety_factor=0.1)
+    # Cap timestep to guarantee at least MIN_STEPS samples, but don't exceed stability limit
+    dt = min(dt, T / MIN_STEPS)
+
+    # Determine effective simulation horizon to avoid excessive step counts
+    T_effective = min(T, MAX_STEPS * dt)
+    T_effective = max(T_effective, MIN_STEPS * dt)
+
+    # Benchmark RHS evaluation (dominant cost)
+    u0_hat = np.fft.fft(u0)
+    solver.rhs(u0_hat, 0.0)  # Warm-up
+    rhs_start = time.perf_counter()
+    for _ in range(RHS_REPEATS):
+        solver.rhs(u0_hat, 0.0)
+    rhs_time = (time.perf_counter() - rhs_start) / RHS_REPEATS
 
     # Clear history for multi-step methods
     if hasattr(integ, "u_history"):
@@ -68,7 +87,7 @@ def time_single_case(method: str, N: int, L: float, c: float, T: float):
     start_time = time.perf_counter()
     t_saved, u_hist, perf_metrics = solver.solve(
         u0.copy(),
-        T,
+        T_effective,
         dt,
         integrator=integ,
         save_every=1000000,  # Don't save intermediate
@@ -85,11 +104,13 @@ def time_single_case(method: str, N: int, L: float, c: float, T: float):
         "N": N,
         "L": L,
         "c": c,
-        "T": T,
+        "T_requested": T,
+        "T_effective": T_effective,
         "dt": dt,
         "n_steps": n_steps,
         "wall_time": wall_time,
         "time_per_step": time_per_step,
+        "rhs_time": rhs_time,
     }
 
 

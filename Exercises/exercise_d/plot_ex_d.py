@@ -13,7 +13,7 @@ Creates 6 plots per method (12 total):
 
 Each plot uses FacetGrid with c in columns and parameter (L or N) in rows.
 """
-
+#TODO: Compared aliased to non-aliased methods
 # %%
 # Single soliton diagnostics
 # Analyze errors and conservation properties for single soliton solutions.
