@@ -30,8 +30,8 @@ print(f"Types: {df['type'].unique().tolist()}")
 print(f"Time points: {df['t'].nunique()}")
 
 # %% Pivot to 2D arrays for heatmaps
-xs = df["x"].unique()
-ts = df["t"].unique()
+xs = np.sort(df["x"].unique())
+ts = np.sort(df["t"].unique())
 
 Phi = df[df["type"] == "True"].pivot(index="x", columns="t", values="value").values
 Phi_hat = (
@@ -56,9 +56,12 @@ vmin = min(Phi.min(), Phi_hat.min())
 vmax = max(Phi.max(), Phi_hat.max())
 errmax = np.abs(error).max()
 
-im0 = axs[0].matshow(Phi, vmin=vmin, vmax=vmax, aspect="auto")
-im1 = axs[1].matshow(Phi_hat, vmin=vmin, vmax=vmax, aspect="auto")
-im2 = axs[2].matshow(error, cmap="viridis", vmin=-errmax, vmax=errmax, aspect="auto")
+im0 = axs[0].matshow(Phi, vmin=vmin, vmax=vmax, aspect="auto",
+                     extent=[ts[0], ts[-1], xs[-1], xs[0]])
+im1 = axs[1].matshow(Phi_hat, vmin=vmin, vmax=vmax, aspect="auto",
+                     extent=[ts[0], ts[-1], xs[-1], xs[0]])
+im2 = axs[2].matshow(error, cmap="viridis", vmin=-errmax, vmax=errmax, aspect="auto",
+                     extent=[ts[0], ts[-1], xs[-1], xs[0]])
 
 # Colorbars
 fig.colorbar(im0, ax=[axs[0], axs[1]], orientation="horizontal", label="Amplitude")
@@ -76,7 +79,7 @@ axs[1].set_title("Predicted Solution", pad=20, fontsize=12)
 Nx = df["Nx"].iloc[0] if "Nx" in df.columns else len(xs)
 Nt = df["Nt"].iloc[0] if "Nt" in df.columns else len(ts)
 axs[2].set_title(
-    f"Error (L2: {error_l2:.2e})" + "\n" + rf"$N_x = {Nx}$, $N_t = {Nt}$",
+    f"Error (L2: {error_l2:.2e})" + "\n" + rf"\tiny $N_x = {Nx}$, $N_t = {Nt}$",
     pad=20,
     fontsize=12
 )

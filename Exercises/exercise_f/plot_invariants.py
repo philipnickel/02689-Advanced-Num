@@ -21,6 +21,10 @@ from spectral.utils.plotting import get_repo_root
 from spectral.utils.io import load_simulation_data, ensure_output_dir
 from spectral.utils.formatting import extract_metadata, format_dt_latex
 
+TREATMENT_ORDER = ["Aliased", "De-aliased (3/2-rule)"]
+QUANTITY_ORDER = ["Mass", "Momentum", "Energy"]
+
+
 repo_root = get_repo_root()
 data_dir = repo_root / "data/A2/ex_f"
 save_dir = ensure_output_dir(repo_root / "figures/A2/ex_f")
@@ -33,67 +37,88 @@ print("=" * 60)
 df = load_simulation_data(data_dir, "kdv_two_soliton")
 print(f"Data shape: {df.shape}")
 
+if "Treatment" not in df.columns:
+    df["Treatment"] = "Aliased"
+if "dealias" not in df.columns:
+    df["dealias"] = df["Treatment"].eq("De-aliased (3/2-rule)")
+
 # Metadata
 metadata = extract_metadata(
     df, ["dx", "dt", "N", "L", "save_every", "c1", "x01", "c2", "x02"]
 )
-dx = float(metadata.get("dx", df["x"].diff().abs().dropna().iloc[0]))
 
 print("Metadata:")
 for key, val in metadata.items():
     print(f"  {key} = {val}")
 
-# %% Reshape grid ------------------------------------------------------------
-x_vals = np.sort(df["x"].unique())
-t_vals = np.sort(df["t"].unique())
-
-U = (
-    df.pivot(index="x", columns="t", values="u")
-    .reindex(index=x_vals, columns=t_vals)
-    .to_numpy()
-)
-
-print(f"Unique x count: {len(x_vals)}, unique t count: {len(t_vals)}")
+available_treatments = list(df["Treatment"].drop_duplicates())
+print(f"Treatments present: {available_treatments}")
 
 # %% Compute conserved quantities -------------------------------------------
-# Sort by time and space to ensure correct spatial ordering within each time slice
-df_sorted = df.sort_values(["t", "x"])
-grouped = df_sorted.groupby("t", sort=False)["u"]
-quantities = grouped.apply(
-    lambda u: KdVSolver.compute_conserved_quantities(u.to_numpy(), dx)
-)
-mass, momentum, energy = np.vstack(quantities.to_list()).T
+# Sort to ensure deterministic ordering within each (Treatment, t)
+df_sorted = df.sort_values(["Treatment", "t", "x"])
 
-df_abs = pd.DataFrame(
-    {"t": t_vals, "Mass": mass, "Momentum": momentum, "Energy": energy}
+
+def _compute_quantities(group: pd.DataFrame) -> pd.Series:
+    if "dx" in group.columns:
+        dx_local = float(group["dx"].iloc[0])
+    else:
+        x_vals_local = np.sort(group["x"].unique())
+        if len(x_vals_local) > 1:
+            dx_local = float(np.diff(x_vals_local).mean())
+        else:
+            dx_local = 1.0
+    M, V, E = KdVSolver.compute_conserved_quantities(group["u"].to_numpy(), dx_local)
+    return pd.Series({"Mass": M, "Momentum": V, "Energy": E})
+
+
+df_abs = (
+    df_sorted.groupby(["Treatment", "t"], sort=False, observed=True)
+    .apply(_compute_quantities, include_groups=False)
+    .reset_index()
 )
 
-M0, V0, E0 = df_abs.loc[0, ["Mass", "Momentum", "Energy"]]
-denom = pd.Series(
-    {"Mass": abs(M0) or 1.0, "Momentum": abs(V0) or 1.0, "Energy": abs(E0) or 1.0}
-)
+df_abs["Treatment"] = pd.Categorical(df_abs["Treatment"], categories=TREATMENT_ORDER, ordered=True)
+
 df_rel = df_abs.copy()
-for col in ["Mass", "Momentum", "Energy"]:
-    df_rel[col] = (df_rel[col] - df_rel[col].iloc[0]) / denom[col]
+grouped_rel = df_rel.groupby("Treatment", sort=False, observed=True)
+for quantity in QUANTITY_ORDER:
+    df_rel[quantity] = grouped_rel[quantity].transform(
+        lambda series: (series - series.iloc[0]) / (abs(series.iloc[0]) or 1.0)
+    )
 
-df_abs_long = df_abs.melt("t", var_name="Quantity", value_name="Value")
-df_rel_long = df_rel.melt("t", var_name="Quantity", value_name="Relative drift")
+df_rel_long = df_rel.melt(
+    id_vars=["Treatment", "t"],
+    value_vars=QUANTITY_ORDER,
+    var_name="Quantity",
+    value_name="Relative drift",
+)
+df_rel_long["Quantity"] = pd.Categorical(df_rel_long["Quantity"], categories=QUANTITY_ORDER, ordered=True)
 
 # %% Plot --------------------------------------------------------------------
 fig, axs = plt.subplots(
     2, 1, figsize=(10, 8), sharex=True, gridspec_kw={"hspace": 0.15}
 )
 
-sns.lineplot(data=df_abs_long, x="t", y="Value", hue="Quantity", ax=axs[0])
-axs[0].set_ylabel("Quantity value")
-axs[0].set_title("Conserved quantities over time")
-axs[0].legend(loc="best")
+for ax, treatment in zip(axs, TREATMENT_ORDER):
+    subset = df_rel_long[df_rel_long["Treatment"] == treatment]
+    if subset.empty:
+        ax.set_visible(False)
+        continue
+    sns.lineplot(
+        data=subset,
+        x="t",
+        y="Relative drift",
+        hue="Quantity",
+        hue_order=QUANTITY_ORDER,
+        ax=ax,
+    )
+    ax.axhline(0.0, color="gray", linestyle="--", linewidth=0.8, alpha=0.6)
+    ax.set_ylabel("Relative drift")
+    ax.set_title(f"{treatment} – Relative drift from initial value")
+    ax.legend(loc="best", title="Quantity")
 
-sns.lineplot(data=df_rel_long, x="t", y="Relative drift", hue="Quantity", ax=axs[1])
-axs[1].set_xlabel(r"Time $t$")
-axs[1].set_ylabel("Relative drift")
-axs[1].set_title("Relative drift from initial value")
-axs[1].legend(loc="best")
+axs[-1].set_xlabel(r"Time $t$")
 
 # Add overall title with parameters
 N = metadata.get("N", "?")
@@ -104,9 +129,8 @@ c2 = metadata.get("c2", "?")
 dt_latex = format_dt_latex(dt)
 fig.suptitle(
     "KdV Two-Soliton Conserved Quantities" + "\n" +
-    rf"$N = {N}$, $L = {L}$, $\Delta t = {dt_latex}$, $c_1 = {c1}$, $c_2 = {c2}$",
+    rf"\tiny $N = {N}$, $L = {L}$, $\Delta t = {dt_latex}$, $c_1 = {c1}$, $c_2 = {c2}$",
     y=0.98,
-    fontsize=14
 )
 
 output_path = save_dir / "invariants.pdf"

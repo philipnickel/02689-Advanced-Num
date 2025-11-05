@@ -36,6 +36,25 @@ print("=" * 60)
 df = pd.read_parquet(data_dir / "kdv_two_soliton.parquet")
 print(f"Data shape: {df.shape}")
 
+preferred_treatments = [
+    "De-aliased (3/2-rule)",
+    "Aliased",
+]
+
+if "Treatment" in df.columns:
+    available = list(df["Treatment"].drop_duplicates())
+    print(f"Available treatments: {available}")
+    target_treatment = None
+    for candidate in preferred_treatments:
+        if candidate in available:
+            target_treatment = candidate
+            break
+    if target_treatment is None and available:
+        target_treatment = available[0]
+    if target_treatment:
+        df = df[df["Treatment"] == target_treatment].copy()
+        print(f"Selected treatment for plotting: {target_treatment}")
+
 # %%
 # Extract metadata
 # ----------------

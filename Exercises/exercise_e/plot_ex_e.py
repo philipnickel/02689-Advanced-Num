@@ -83,24 +83,20 @@ for ax in g.axes.flat:
 
 # Add parameter information to title
 N_unique = sorted(spectra["N"].unique())
-L_val = spectra["L"].iloc[0] if "L" in spectra.columns else None
-if L_val and len(N_unique) > 1:
-    param_text = rf"$N \in [{N_unique[0]}, {N_unique[-1]}]$, $L = {L_val:.1f}$"
-elif L_val:
-    param_text = rf"$N = {N_unique[0]}$, $L = {L_val:.1f}$"
-else:
-    param_text = ""
+L_val = spectra["L"].iloc[0]
+T_val = spectra["t"].max()
 
-if param_text:
-    g.fig.suptitle(
-        "KdV Aliasing Diagnostic" + "\n" + param_text,
-        y=1.02,
-        fontsize=14
-    )
+if len(N_unique) > 1:
+    param_text = rf"\tiny $N \in [{N_unique[0]}, {N_unique[-1]}]$, $L = {L_val:.1f}$, $T = {T_val:.1f}$"
 else:
-    g.fig.suptitle("KdV Aliasing Diagnostic", y=1.02)
+    param_text = rf"\tiny $N = {N_unique[0]}$, $L = {L_val:.1f}$, $T = {T_val:.1f}$"
 
-g.fig.savefig(RESULTS_DIR / "ex_e_high_band_power.pdf")
+g.fig.suptitle(
+    "KdV Aliasing Diagnostic: High-Band Energy" + "\n" + param_text,
+    y=1.02,
+)
+
+g.fig.savefig(RESULTS_DIR / "ex_e_high_band_power.pdf", bbox_inches="tight")
 
 
 # Get final time for each N separately (they have different saved times)
@@ -127,14 +123,20 @@ for ax in g.axes.flat:
 
 # Add parameter information to title
 N_unique_s = sorted(spectra["N"].unique())
-L_val_s = spectra["L"].iloc[0] if "L" in spectra.columns else None
-t_final_rounded = int(round(plot_df["t"].max()))
+L_val_s = spectra["L"].iloc[0]
+t_final = plot_df["t"].max()
 
-g.figure.suptitle(r"KdV Modal Amplitudes", y=1.05)
-g.set_titles(
-    r"$N={col_name:g}$" + "\n" + rf"\tiny , L = {L_val_s:.1f}, t = {t_final_rounded}")
+if len(N_unique_s) > 1:
+    param_text_s = rf"\tiny $N \in [{N_unique_s[0]}, {N_unique_s[-1]}]$, $L = {L_val_s:.1f}$, $t = {t_final:.1f}$"
+else:
+    param_text_s = rf"\tiny $N = {N_unique_s[0]}$, $L = {L_val_s:.1f}$, $t = {t_final:.1f}$"
 
-g.fig.savefig(RESULTS_DIR / "ex_e_final_spectra.pdf")
+g.fig.suptitle(
+    "KdV Modal Amplitudes at Final Time" + "\n" + param_text_s,
+    y=1.02,
+)
+
+g.fig.savefig(RESULTS_DIR / "ex_e_final_spectra.pdf", bbox_inches="tight")
 
 
 # Conservation plot
@@ -168,8 +170,8 @@ g_cons = sns.relplot(
     x="t",
     y="relative_error",
     hue="Treatment",
-    col="N",
-    row="Quantity",
+    col="Quantity",
+    row="N",
     kind="line",
     facet_kws={"sharex": True, "sharey": False},
     markers=True,
@@ -181,10 +183,22 @@ for ax in g_cons.axes.flat:
     ax.set_ylabel(r"Relative Error $(Q(t) - Q_0)/|Q_0|$")
     ax.axhline(0, color="gray", linestyle="--", linewidth=0.5)
 
-L_val_cons = conservation["L"].iloc[0] if "L" in conservation.columns else None
-g_cons.figure.suptitle("KdV Conservation Errors", fontsize=16, y=0.995)
+# Add parameter information to title
+N_unique_cons = sorted(conservation["N"].unique())
+L_val_cons = L_val  # Use L from spectra data
+T_val_cons = conservation["t"].max()
 
-g_cons.fig.savefig(RESULTS_DIR / "ex_e_conservation.pdf", bbox_inches="tight")
+if len(N_unique_cons) > 1:
+    param_text_cons = rf"\tiny $N \in [{N_unique_cons[0]}, {N_unique_cons[-1]}]$, $L = {L_val_cons:.1f}$, $T = {T_val_cons:.1f}$"
+else:
+    param_text_cons = rf"\tiny $N = {N_unique_cons[0]}$, $L = {L_val_cons:.1f}$, $T = {T_val_cons:.1f}$"
+
+g_cons.fig.suptitle(
+    "KdV Conservation Errors" + "\n" + param_text_cons,
+    y=1.05,
+)
+
+g_cons.fig.savefig(RESULTS_DIR / "ex_e_conservation.pdf")
 
 
 print(f"Figures saved in {RESULTS_DIR}")

@@ -37,12 +37,12 @@ DEALIAS_OPTIONS = (False, True)
 save_every_steps = 50  # Save every 50 steps
 
 # Domain investigation: varying L, fixed N
-DOMAIN_N = 200
+DOMAIN_N = 100
 DOMAIN_L_vals = [30.0, 40.0, 50.0]
 
 # Node investigation: varying N, fixed L
 NODES_L = 40.0
-NODES_N_vals = [70, 100,150]
+NODES_N_vals = [70, 100, 150]
 
 max_workers = os.cpu_count() or 4
 

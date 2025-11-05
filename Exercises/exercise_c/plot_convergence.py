@@ -143,11 +143,11 @@ error_ref_base = df_temporal["Error"].max() * 100  # Position reference lines ne
 
 # O(dt^3) reference line for RK3
 error_ref_3 = error_ref_base * (dt_ref / dt_max_t) ** 3
-plt.plot(dt_ref, error_ref_3, 'k:', linewidth=1.5, alpha=0.6, label=r'$\mathcal{O}(\Delta t^3)$')
+#plt.plot(dt_ref, error_ref_3, 'k:', linewidth=1.5, alpha=0.6, label=r'$\mathcal{O}(\Delta t^3)$')
 
 # O(dt^4) reference line for RK4
 error_ref_4 = error_ref_base * (dt_ref / dt_max_t) ** 4
-plt.plot(dt_ref, error_ref_4, 'k--', linewidth=1.5, alpha=0.6, label=r'$\mathcal{O}(\Delta t^4)$')
+#plt.plot(dt_ref, error_ref_4, 'k--', linewidth=1.5, alpha=0.6, label=r'$\mathcal{O}(\Delta t^4)$')
 
 plt.legend(title="")
 

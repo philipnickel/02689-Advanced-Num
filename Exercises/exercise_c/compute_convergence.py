@@ -29,14 +29,14 @@ from spectral.tdp import KdVSolver, soliton, RK4, RK3
 DATA_DIR = Path("data/A2/ex_c")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-L_SPATIAL = 30.0
-L_TEMPORAL = 30.0  # Larger domain => larger dx => allows larger dt
+L_SPATIAL = 40.0
+L_TEMPORAL = 40.0  # Larger domain => larger dx => allows larger dt
 X0 = 0.0
 
 DEALIAS_OPTIONS = [False, True]
 INTEGRATORS = [RK4, RK3]
 
-WAVE_SPEED = 0.5
+WAVE_SPEED = 1.00
 
 T_SPATIAL = 0.01#2.0e-2
 DT_SPATIAL = 1.0e-6  # sufficiently small to suppress temporal error
@@ -47,13 +47,13 @@ N_VALUES_SPATIAL = 2 * np.logspace(np.log10(5), np.log10(175), num=20, dtype=int
 
 
 N_TEMPORAL = 100  # Moderate-high spatial resolution for good accuracy
-T_TEMPORAL = 30.0  # Long time to accumulate temporal error
+T_TEMPORAL = 1.00  # Long time to accumulate temporal error
 U_MAX_TEMPORAL = 0.5 * WAVE_SPEED  # Peak amplitude of single soliton
 
 # Temporal dt sampling: start from larger dt (aim for min dt ~ 0.01)
 # Skip tiny dt values that just hit spatial error floor
 DT_FRACTION_MIN = 0.01  # Start from 1% of dt_stable
-DT_FRACTION_MAX = 0.99   # Go to 80% of stability limit
+DT_FRACTION_MAX = 0.90   # Go to 80% of stability limit
 N_DT_SUBCRITICAL = 30   # Good sampling to see power law
 N_DT_SUPERCRITICAL = 0  # Don't test supercritical (that's just blowup)
 

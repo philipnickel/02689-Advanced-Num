@@ -21,7 +21,7 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 L = 30.0
 c = 0.5
 x0 = 0.0
-N_VALUES = 2**np.arange(6, 14)  # Powers of 2: [64, 128, ..., 8192]
+N_VALUES = 2**np.arange(6, 10)  # Powers of 2: [64, 128, ..., 8192]
 METHODS = {"RK4": RK4, "RK3": RK3}
 MIN_STEPS = 200
 MAX_STEPS = 2000
