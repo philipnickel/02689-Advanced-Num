@@ -25,14 +25,13 @@ N_VALUES = 2**np.arange(6, 14)  # Powers of 2: [64, 128, ..., 8192]
 METHODS = {"RK4": RK4, "RK3": RK3}
 MIN_STEPS = 200
 MAX_STEPS = 2000
-# Sweep over different dt scales (different tolerance/accuracy requirements)
-DT_SCALES = np.array([0.05, 0.1, 0.2, 0.3, 0.4])
+N_TRIALS = 5  # Number of timing trials for confidence intervals
 
 print("=" * 70)
 print("Scalability Analysis: KdV Solver")
 print("=" * 70)
 print(f"Testing N = {N_VALUES[0]} to {N_VALUES[-1]}")
-print(f"Sweeping dt scales: {DT_SCALES[0]:.2f}× to {DT_SCALES[-1]:.2f}× stable dt")
+print(f"Number of timing trials: {N_TRIALS}")
 print(f"Methods: {', '.join(METHODS.keys())}\n")
 
 # %% Run timing experiments --------------------------------------------------
@@ -54,24 +53,22 @@ for method_name, method_class in METHODS.items():
         if not np.isfinite(dt_stable) or dt_stable <= 0.0:
             dt_stable = 1e-3
 
-        # Warm up (trigger JIT with one dt scale)
-        dt_warmup = DT_SCALES[0] * dt_stable
-        dt_warmup = min(dt_warmup, 1.0 / MIN_STEPS)
+        # Use moderate dt for timing (0.3× stable)
+        dt = 0.3 * dt_stable
+        dt = min(dt, 1.0 / MIN_STEPS)
+
+        # Determine number of steps
+        T_effective = min(1.0, MAX_STEPS * dt)
+        T_effective = max(T_effective, MIN_STEPS * dt)
+        n_steps = int(T_effective / dt)
+
+        # Warm up (trigger JIT compilation)
         for _ in range(10):
-            _ = integrator.step(solver.rhs, u0, 0.0, dt_warmup)
+            _ = integrator.step(solver.rhs, u0, 0.0, dt)
 
-        # Sweep over different dt scales (different tolerances)
+        # Run multiple timing trials
         timing_results = []
-        for scale in DT_SCALES:
-            dt = scale * dt_stable
-            dt = min(dt, 1.0 / MIN_STEPS)
-
-            # Determine number of steps
-            T_effective = min(1.0, MAX_STEPS * dt)
-            T_effective = max(T_effective, MIN_STEPS * dt)
-            n_steps = int(T_effective / dt)
-
-            # Time the simulation
+        for trial in range(N_TRIALS):
             u = u0.copy()
             t = 0.0
             wall_start = time.perf_counter()
@@ -84,21 +81,21 @@ for method_name, method_class in METHODS.items():
             time_per_step = wall_elapsed / n_steps
             timing_results.append(time_per_step)
 
-            # Store result for this dt scale
+            # Store result for this trial
             results.append({
                 "method": method_name,
                 "N": N,
-                "dt_scale": scale,
+                "trial": trial,
                 "time_per_step": time_per_step,
                 "wall_time": wall_elapsed,
                 "n_steps": n_steps,
             })
 
-        # Print with mean timing across dt scales
+        # Print with mean timing across trials
         mean_time = np.mean(timing_results)
         std_time = np.std(timing_results)
         print(f"  N={N:5d}  time/step={mean_time:.6f}±{std_time:.6f}s  "
-              f"(across {len(DT_SCALES)} dt scales)")
+              f"(across {N_TRIALS} trials)")
 
 # %% Save results ------------------------------------------------------------
 df = pd.DataFrame(results)

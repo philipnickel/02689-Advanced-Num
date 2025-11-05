@@ -21,13 +21,13 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 L = 40.0
 N = 256
-T_FINAL = 3.0
+T_FINAL = 10.0  # Longer simulation for better timing statistics
 AMPLITUDE = 5.0
 WAVENUMBER = 2.0 * np.pi / (2 * L)
 FREQUENCY = 3.0
-DT_SCALES = np.array([0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.25, 0.2])
+DT_SCALES = np.array([0.8, 0.7, 0.6, 0.5, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.08])
 METHODS = {"RK3": RK3, "RK4": RK4}
-N_TRIALS = 5  # Number of timing trials for confidence intervals
+N_TRIALS = 10  # Number of timing trials for confidence intervals
 
 print("=" * 70)
 print("Work-Precision Analysis: KdV Solver with Manufactured Solutions")

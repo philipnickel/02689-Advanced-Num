@@ -48,10 +48,10 @@ N_VALUES_SPATIAL = 2 * np.logspace(np.log10(5), np.log10(175), num=20, dtype=int
 # Round and force evenness
 
 
-N_TEMPORAL = 250  # From spatial study: error ~1e-11, well below temporal errors
-T_TEMPORAL = 0.1  # Very short time to avoid accumulated nonlinear effects
+N_TEMPORAL = 350  # From spatial study: error ~1e-11, well below temporal errors
+T_TEMPORAL = 0.01  # Very short time to avoid accumulated nonlinear effects
 # Logarithmic spacing for timesteps - extend to larger dt to see convergence
-DT_VALUES = np.logspace(-6, -1, num=12)
+DT_VALUES = np.logspace(-8, -5, num=5)
 
 
 
@@ -169,12 +169,14 @@ print(f"\nSaved spatial convergence data")
 temporal_rows: list[dict[str, object]] = []
 
 print("\n--- Temporal Convergence (De-aliased) ---")
+print(f"Testing {len(INTEGRATORS)} integrators × {len(DT_VALUES)} timesteps = {len(INTEGRATORS) * len(DT_VALUES)} cases\n")
 
-for integrator_class in INTEGRATORS:
+for integrator_idx, integrator_class in enumerate(INTEGRATORS, 1):
     method_name = integrator_class.__name__
-    print(f"  Method: {method_name}")
+    print(f"[{integrator_idx}/{len(INTEGRATORS)}] Method: {method_name}")
 
-    for dt in DT_VALUES:
+    successful_runs = 0
+    for dt_idx, dt in enumerate(DT_VALUES, 1):
         try:
             current_half_length = L_TEMPORAL
             x, dx, u_num, t_end, steps_taken = _solve_case(
@@ -193,11 +195,11 @@ for integrator_class in INTEGRATORS:
 
             # Skip if we got NaN or inf
             if not (np.isfinite(l2) and np.isfinite(linf)):
-                print(f"    dt={dt:.3e}: SKIPPED (unstable)")
+                print(f"  [{dt_idx:2d}/{len(DT_VALUES)}] dt={dt:.3e}: SKIPPED (unstable)")
                 continue
 
         except Exception as exc:  # pragma: no cover - diagnostic output
-            print(f"    dt={dt:.3e}: FAILED ({exc})")
+            print(f"  [{dt_idx:2d}/{len(DT_VALUES)}] dt={dt:.3e}: FAILED ({exc})")
             continue
 
         n_timesteps = int(np.round(T_TEMPORAL / dt))
@@ -215,7 +217,10 @@ for integrator_class in INTEGRATORS:
             }
         )
 
-        print(f"    dt={dt:.3e} ({n_timesteps:4d} steps): L2={l2:.6e}, L∞={linf:.6e}")
+        successful_runs += 1
+        print(f"  [{dt_idx:2d}/{len(DT_VALUES)}] dt={dt:.3e} ({n_timesteps:4d} steps): L2={l2:.6e}, L∞={linf:.6e}")
+
+    print(f"  → Completed {successful_runs}/{len(DT_VALUES)} runs for {method_name}\n")
 
 
 
