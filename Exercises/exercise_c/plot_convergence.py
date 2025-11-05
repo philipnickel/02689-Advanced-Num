@@ -160,6 +160,5 @@ plt.title(
 temporal_fig = OUTPUT_DIR / "temporal_convergence.pdf"
 plt.savefig(temporal_fig, dpi=300, bbox_inches="tight")
 print(f"Saved: {temporal_fig}")
-plt.close()
 
 print("\nAll plots created successfully!")
