@@ -46,21 +46,6 @@ df = pd.read_parquet(parquet_path)
 
 print(f"Data shape: {df.shape}")
 
-preferred_treatments = ["De-aliased (3/2-rule)", "Aliased"]
-if "Treatment" in df.columns:
-    available = list(df["Treatment"].drop_duplicates())
-    print(f"Available treatments: {available}")
-    target_treatment = None
-    for candidate in preferred_treatments:
-        if candidate in available:
-            target_treatment = candidate
-            break
-    if target_treatment is None and available:
-        target_treatment = available[0]
-    if target_treatment:
-        df = df[df["Treatment"] == target_treatment].copy()
-        print(f"Selected treatment for animation: {target_treatment}")
-
 # Metadata for context
 metadata_cols = ["dx", "dt", "N", "L", "save_every", "c1", "x01", "c2", "x02"]
 metadata = {col: df[col].iloc[0] for col in metadata_cols if col in df.columns}
