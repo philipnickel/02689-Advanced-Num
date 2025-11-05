@@ -29,8 +29,8 @@ from spectral.tdp import KdVSolver, soliton, RK4, RK3
 DATA_DIR = Path("data/A2/ex_c")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-L_SPATIAL = 40.0
-L_TEMPORAL = 40.0
+L_SPATIAL = 20.0
+L_TEMPORAL = 20.0
 X0 = 0.0
 
 DEALIAS_OPTIONS = [False, True]
@@ -46,7 +46,7 @@ WAVE_SPEED = 1.0
 T_SPATIAL = 0.01#2.0e-2
 DT_SPATIAL = 1.0e-6  # sufficiently small to suppress temporal error
 # Logarithmic spacing with 20 values from 16 to 256, ensuring even numbers
-N_VALUES_SPATIAL = (np.geomspace(10, 300, num=20, dtype=int) // 2) * 2
+N_VALUES_SPATIAL = (np.geomspace(10, 350, num=20, dtype=int) // 2) * 2
 
 N_TEMPORAL = 100
 # Logarithmic spacing using arange with powers of 0.5 (halving each step)

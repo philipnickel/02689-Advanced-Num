@@ -14,6 +14,7 @@ from __future__ import annotations
 
 
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -25,11 +26,22 @@ repo_root = get_repo_root()
 DATA_DIR = repo_root / "data/A2/ex_c"
 OUTPUT_DIR = ensure_output_dir(repo_root / "figures/A2/ex_c")
 
-print("Creating spatial convergence plot...")
+print("Creating spatial convergence plots...")
 
 spatial_path = DATA_DIR / "kdv_spatial_convergence.parquet"
 df_spatial = pd.read_parquet(spatial_path)
 
+# Add parameter information to title
+N_min_sp = df_spatial["N"].min()
+N_max_sp = df_spatial["N"].max()
+dt_sp = df_spatial["dt"].iloc[0]
+L_sp = df_spatial["L"].iloc[0]
+T_sp = df_spatial["T"].iloc[0]
+dt_latex = format_dt_latex(dt_sp)
+
+param_text = rf"\tiny $N \in [{N_min_sp}, {N_max_sp}]$, $\Delta t = {dt_latex}$, $L = {L_sp:.1f}$, $T = {T_sp:.2f}$"
+
+# 1. Log-log plot with reference line
 fig, ax = plt.subplots()
 
 sns.lineplot(
@@ -48,32 +60,47 @@ ax.set_xscale("log")
 ax.set_xlabel(r"Number of modes ($N$)")
 ax.set_ylabel(r"$L^2$ error")
 
-
-# Add parameter information to title
-N_min_sp = df_spatial["N"].min()
-N_max_sp = df_spatial["N"].max()
-dt_sp = df_spatial["dt"].iloc[0] if "dt" in df_spatial.columns else None
-L_sp = df_spatial["L"].iloc[0] if "L" in df_spatial.columns else None
-T_sp = df_spatial["T"].iloc[0] if "T" in df_spatial.columns else df_spatial["t_end"].iloc[0] if "t_end" in df_spatial.columns else None
-
-if dt_sp and L_sp and T_sp:
-    dt_latex = format_dt_latex(dt_sp)
-    param_text = rf"$N \in [{N_min_sp}, {N_max_sp}]$, $\Delta t = {dt_latex}$, $L = {L_sp:.1f}$, $T = {T_sp:.2f}$"
-elif L_sp and T_sp:
-    param_text = rf"$N \in [{N_min_sp}, {N_max_sp}]$, $L = {L_sp:.1f}$, $T = {T_sp:.2f}$"
-elif T_sp:
-    param_text = rf"$N \in [{N_min_sp}, {N_max_sp}]$, $T = {T_sp:.2f}$"
-else:
-    param_text = rf"$N \in [{N_min_sp}, {N_max_sp}]$"
+# Add O(N^-2) reference line
+N_ref = np.array([N_min_sp, N_max_sp])
+# Scale the reference line to match the data
+error_ref_base = df_spatial["Error"].max() * 10  # Position reference line near the data
+error_ref = error_ref_base * (N_ref / N_min_sp) ** (-2)
+ax.plot(N_ref, error_ref, 'k--', linewidth=1, alpha=0.5, label=r'$\mathcal{O}(N^{-2})$')
+ax.legend()
 
 ax.set_title(
     "KdV Spatial Convergence" + "\n" + param_text,
 )
 
-#plt.tight_layout()
-spatial_fig = OUTPUT_DIR / "spatial_convergence.pdf"
-plt.savefig(spatial_fig, dpi=300, bbox_inches="tight")
-print(f"Saved: {spatial_fig}")
+spatial_fig_loglog = OUTPUT_DIR / "spatial_convergence_loglog.pdf"
+plt.savefig(spatial_fig_loglog, dpi=300, bbox_inches="tight")
+print(f"Saved: {spatial_fig_loglog}")
+
+# 2. Semi-log plot
+fig, ax = plt.subplots()
+
+sns.lineplot(
+    data=df_spatial,
+    x="N",
+    y="Error",
+    hue="method",
+    style="dealias",
+    markers=True,
+    dashes=False,
+    ax=ax,
+)
+
+ax.set_yscale("log")
+ax.set_xlabel(r"Number of modes ($N$)")
+ax.set_ylabel(r"$L^2$ error")
+
+ax.set_title(
+    "KdV Spatial Convergence" + "\n" + param_text,
+)
+
+spatial_fig_semilog = OUTPUT_DIR / "spatial_convergence_semilog.pdf"
+plt.savefig(spatial_fig_semilog, dpi=300, bbox_inches="tight")
+print(f"Saved: {spatial_fig_semilog}")
 
 # %%
 # Temporal convergence
@@ -104,24 +131,30 @@ ax.invert_xaxis()
 ax.set_xlabel(r"Time step $\Delta t$")
 ax.set_ylabel(r"$L^2$ error")
 
-
 # Add parameter information to title
-N_temp = df_temporal["N"].iloc[0] if "N" in df_temporal.columns else 128
+N_temp = df_temporal["N"].iloc[0]
 dt_min_t = df_temporal["dt"].min()
 dt_max_t = df_temporal["dt"].max()
-L_temp = df_temporal["L"].iloc[0] if "L" in df_temporal.columns else None
-T_temp = df_temporal["T"].iloc[0] if "T" in df_temporal.columns else df_temporal["t_end"].iloc[0] if "t_end" in df_temporal.columns else None
+L_temp = df_temporal["L"].iloc[0]
+T_temp = df_temporal["T"].iloc[0]
 dt_min_latex = format_dt_latex(dt_min_t)
 dt_max_latex = format_dt_latex(dt_max_t)
 
-if L_temp and T_temp:
-    param_text_temp = rf"$N = {N_temp}$, $\Delta t \in [{dt_min_latex}, {dt_max_latex}]$, $L = {L_temp:.1f}$, $T = {T_temp:.2f}$"
-elif L_temp:
-    param_text_temp = rf"$N = {N_temp}$, $\Delta t \in [{dt_min_latex}, {dt_max_latex}]$, $L = {L_temp:.1f}$"
-elif T_temp:
-    param_text_temp = rf"$N = {N_temp}$, $\Delta t \in [{dt_min_latex}, {dt_max_latex}]$, $T = {T_temp:.2f}$"
-else:
-    param_text_temp = rf"$N = {N_temp}$, $\Delta t \in [{dt_min_latex}, {dt_max_latex}]$"
+# Add reference lines for O(dt^3) and O(dt^4)
+dt_ref = np.array([dt_min_t, dt_max_t])
+error_ref_base = df_temporal["Error"].max() * 100  # Position reference lines near the data
+
+# O(dt^3) reference line for RK3
+error_ref_3 = error_ref_base * (dt_ref / dt_max_t) ** 3
+ax.plot(dt_ref, error_ref_3, 'k:', linewidth=1.5, alpha=0.6, label=r'$\mathcal{O}(\Delta t^3)$')
+
+# O(dt^4) reference line for RK4
+error_ref_4 = error_ref_base * (dt_ref / dt_max_t) ** 4
+ax.plot(dt_ref, error_ref_4, 'k--', linewidth=1.5, alpha=0.6, label=r'$\mathcal{O}(\Delta t^4)$')
+
+ax.legend()
+
+param_text_temp = rf"\tiny $N = {N_temp}$, $\Delta t \in [{dt_min_latex}, {dt_max_latex}]$, $L = {L_temp:.1f}$, $T = {T_temp:.2f}$"
 
 ax.set_title(
     "KdV Temporal Convergence" + "\n" + param_text_temp,
