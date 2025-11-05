@@ -2,7 +2,6 @@
 """Main script to run all exercises."""
 
 import argparse
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -204,7 +203,9 @@ def build_latex_docs():
 
         # Find the generated LaTeX file (main document, not support files)
         # Look for the largest .tex file which should be the main document
-        tex_files = [f for f in latex_dir.glob("*.tex") if not f.name.startswith("sphinx")]
+        tex_files = [
+            f for f in latex_dir.glob("*.tex") if not f.name.startswith("sphinx")
+        ]
         if not tex_files:
             print(f"  ✗ No .tex file found in {latex_dir}")
             return False
@@ -214,16 +215,16 @@ def build_latex_docs():
 
         # Read the source file and extract content only (skip preamble)
         print(f"  Extracting content from {source_tex.name}...")
-        with open(source_tex, 'r', encoding='utf-8') as f:
+        with open(source_tex, "r", encoding="utf-8") as f:
             lines = f.readlines()
 
         # Find \begin{document} and extract content from there
         begin_doc_idx = None
         end_doc_idx = None
         for i, line in enumerate(lines):
-            if '\\begin{document}' in line:
+            if "\\begin{document}" in line:
                 begin_doc_idx = i
-            if '\\end{document}' in line:
+            if "\\end{document}" in line:
                 end_doc_idx = i
                 break
 
@@ -236,7 +237,7 @@ def build_latex_docs():
         content_start = begin_doc_idx + 1
         # Look for first \chapter or \section
         for i in range(begin_doc_idx + 1, min(begin_doc_idx + 50, len(lines))):
-            if '\\chapter{' in lines[i] or '\\section{' in lines[i]:
+            if "\\chapter{" in lines[i] or "\\section{" in lines[i]:
                 content_start = i
                 break
 
@@ -244,24 +245,29 @@ def build_latex_docs():
 
         # Write content-only file
         content_file = sphinx_styles_dir / "sphinx_content_only.tex"
-        with open(content_file, 'w', encoding='utf-8') as f:
+        with open(content_file, "w", encoding="utf-8") as f:
             f.writelines(content_lines)
 
         print(f"  ✓ Extracted {len(content_lines)} lines to sphinx_content_only.tex")
 
         # Copy all Sphinx style files
-        style_files = list(latex_dir.glob("sphinx*.sty")) + list(latex_dir.glob("sphinx*.cls"))
+        style_files = list(latex_dir.glob("sphinx*.sty")) + list(
+            latex_dir.glob("sphinx*.cls")
+        )
         for style_file in style_files:
             shutil.copy2(style_file, sphinx_styles_dir / style_file.name)
 
         print(f"  ✓ Copied {len(style_files)} Sphinx style files")
         print(f"  → Sphinx content available at: {content_file}")
-        print(f"  → Include in LaTeX with: \\input{{sphinx_styles/sphinx_content_only.tex}}\n")
+        print(
+            "  → Include in LaTeX with: \\input{sphinx_styles/sphinx_content_only.tex}\n"
+        )
         return True
 
     except Exception as e:
         print(f"  ✗ Failed to copy Sphinx files: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

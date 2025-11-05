@@ -51,7 +51,10 @@ g = sns.relplot(
 g.set_axis_labels(r"$x$", r"$u(x)$")
 g.figure.suptitle(r"Tau vs Collocation", y=1.05)
 g.set_titles(
-    r"$\varepsilon={col_name:g}$" + "\n" + rf"\tiny $N = {N}$, ({n_eval_points} Eval. points)")
+    r"$\varepsilon={col_name:g}$"
+    + "\n"
+    + rf"\tiny $N = {N}$, ({n_eval_points} Eval. points)"
+)
 
 output = save_dir / "solutions_facet.pdf"
 g.figure.savefig(output, bbox_inches="tight")
@@ -87,7 +90,9 @@ g2 = sns.relplot(
 g2.set(xscale="log", yscale="log", xlabel=r"Legendre mode $n$", ylabel=r"$|c_n|$")
 g2.figure.suptitle(r"Tau vs Collocation", y=1.05)
 g2.set_titles(
-    r"$\varepsilon={col_name:g}$" + "\n" + rf"\tiny $N = {N}$, ({n_eval_points} Eval. points)"
+    r"$\varepsilon={col_name:g}$"
+    + "\n"
+    + rf"\tiny $N = {N}$, ({n_eval_points} Eval. points)"
 )
 
 output = save_dir / "coefficients_facet.pdf"
@@ -119,7 +124,9 @@ g3 = sns.relplot(
 g3.set(yscale="log", xlabel=r"$x$", ylabel=r"$|u_{\rm num}-u_{\rm exact}|$")
 g3.figure.suptitle(r"Tau vs Collocation", y=1.05)
 g3.set_titles(
-    r"$\varepsilon={col_name:g}$" + "\n" + rf"\tiny $N = {N}$, ({n_eval_points} Eval. points)"
+    r"$\varepsilon={col_name:g}$"
+    + "\n"
+    + rf"\tiny $N = {N}$, ({n_eval_points} Eval. points)"
 )
 
 output = save_dir / "errors_facet.pdf"
@@ -163,7 +170,9 @@ N_max = convergence_df["N"].max()
 # Title hierarchy: main title and column titles with parameters
 g4.figure.suptitle(r"Tau vs Collocation", y=1.05)
 g4.set_titles(
-    r"$\varepsilon={col_name:g}$" + "\n" + rf"\tiny $N \in [{N_min}, {N_max}]$, ({n_eval_points} Eval. points)"
+    r"$\varepsilon={col_name:g}$"
+    + "\n"
+    + rf"\tiny $N \in [{N_min}, {N_max}]$, ({n_eval_points} Eval. points)"
 )
 
 # Add reference lines to each subplot

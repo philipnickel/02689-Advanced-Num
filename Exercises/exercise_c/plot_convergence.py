@@ -64,7 +64,9 @@ N_ref = np.array([N_min_sp, N_max_sp])
 # Scale the reference line to match the data
 error_ref_base = df_spatial["Error"].max() * 10  # Position reference line near the data
 error_ref = error_ref_base * (N_ref / N_min_sp) ** (-2)
-plt.plot(N_ref, error_ref, 'k--', linewidth=1, alpha=0.5, label=r'$\mathcal{O}(N^{-2})$')
+plt.plot(
+    N_ref, error_ref, "k--", linewidth=1, alpha=0.5, label=r"$\mathcal{O}(N^{-2})$"
+)
 plt.legend(title="")
 
 plt.title(
@@ -139,15 +141,17 @@ dt_max_latex = format_dt_latex(dt_max_t)
 
 # Add reference lines for O(dt^3) and O(dt^4)
 dt_ref = np.array([dt_min_t, dt_max_t])
-error_ref_base = df_temporal["Error"].max() * 100  # Position reference lines near the data
+error_ref_base = (
+    df_temporal["Error"].max() * 100
+)  # Position reference lines near the data
 
 # O(dt^3) reference line for RK3
 error_ref_3 = error_ref_base * (dt_ref / dt_max_t) ** 3
-#plt.plot(dt_ref, error_ref_3, 'k:', linewidth=1.5, alpha=0.6, label=r'$\mathcal{O}(\Delta t^3)$')
+# plt.plot(dt_ref, error_ref_3, 'k:', linewidth=1.5, alpha=0.6, label=r'$\mathcal{O}(\Delta t^3)$')
 
 # O(dt^4) reference line for RK4
 error_ref_4 = error_ref_base * (dt_ref / dt_max_t) ** 4
-#plt.plot(dt_ref, error_ref_4, 'k--', linewidth=1.5, alpha=0.6, label=r'$\mathcal{O}(\Delta t^4)$')
+# plt.plot(dt_ref, error_ref_4, 'k--', linewidth=1.5, alpha=0.6, label=r'$\mathcal{O}(\Delta t^4)$')
 
 plt.legend(title="")
 

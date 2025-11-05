@@ -40,5 +40,3 @@ def get_repo_root() -> Path:
     # Fallback: assume 2 levels up from script directory
     # Works for Exercises/exercise_X/script.py structure
     return current.parent.parent if caller_file else current.parent.parent
-
-

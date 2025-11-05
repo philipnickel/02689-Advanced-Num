@@ -9,6 +9,7 @@ from numba import njit
 # Use numpy.fft directly (minimal overhead)
 fft_backend = np.fft
 
+
 # Numba JIT kernels to eliminate Python overhead in element-wise operations
 @njit(cache=True)
 def _jit_nonlinear_term(u: np.ndarray, ux: np.ndarray) -> np.ndarray:
@@ -25,9 +26,15 @@ def _jit_combine_rhs(nonlinear: np.ndarray, uxxx: np.ndarray) -> np.ndarray:
     return result
 
 
-@njit(cache=True, inline='always')
-def _jit_rk4_combine(u: np.ndarray, k1: np.ndarray, k2: np.ndarray,
-                     k3: np.ndarray, k4: np.ndarray, dt: float) -> np.ndarray:
+@njit(cache=True, inline="always")
+def _jit_rk4_combine(
+    u: np.ndarray,
+    k1: np.ndarray,
+    k2: np.ndarray,
+    k3: np.ndarray,
+    k4: np.ndarray,
+    dt: float,
+) -> np.ndarray:
     """Fused RK4 final combination."""
     result = np.empty_like(u)
     dt6 = dt / 6.0
@@ -36,7 +43,7 @@ def _jit_rk4_combine(u: np.ndarray, k1: np.ndarray, k2: np.ndarray,
     return result
 
 
-@njit(cache=True, inline='always')
+@njit(cache=True, inline="always")
 def _jit_rk4_stage(u: np.ndarray, k: np.ndarray, factor: float) -> np.ndarray:
     """Compute u + factor * k for RK4 stages."""
     result = np.empty_like(u)
@@ -45,9 +52,7 @@ def _jit_rk4_stage(u: np.ndarray, k: np.ndarray, factor: float) -> np.ndarray:
     return result
 
 
-
-
-@njit(cache=True, inline='always')
+@njit(cache=True, inline="always")
 def _jit_rk3_stage1(u: np.ndarray, k1: np.ndarray, dt: float) -> np.ndarray:
     """RK3 first stage: u + dt*k1."""
     result = np.empty_like(u)
@@ -56,8 +61,10 @@ def _jit_rk3_stage1(u: np.ndarray, k1: np.ndarray, dt: float) -> np.ndarray:
     return result
 
 
-@njit(cache=True, inline='always')
-def _jit_rk3_stage2(u: np.ndarray, u1: np.ndarray, k2: np.ndarray, dt: float) -> np.ndarray:
+@njit(cache=True, inline="always")
+def _jit_rk3_stage2(
+    u: np.ndarray, u1: np.ndarray, k2: np.ndarray, dt: float
+) -> np.ndarray:
     """RK3 second stage: 0.75*u + 0.25*u1 + 0.25*dt*k2."""
     result = np.empty_like(u)
     for i in range(u.size):
@@ -65,14 +72,15 @@ def _jit_rk3_stage2(u: np.ndarray, u1: np.ndarray, k2: np.ndarray, dt: float) ->
     return result
 
 
-@njit(cache=True, inline='always')
-def _jit_rk3_stage3(u: np.ndarray, u2: np.ndarray, k3: np.ndarray, dt: float) -> np.ndarray:
+@njit(cache=True, inline="always")
+def _jit_rk3_stage3(
+    u: np.ndarray, u2: np.ndarray, k3: np.ndarray, dt: float
+) -> np.ndarray:
     """RK3 third stage: (1/3)*u + (2/3)*u2 + (2/3)*dt*k3."""
     result = np.empty_like(u)
     for i in range(u.size):
-        result[i] = (1.0/3.0) * u[i] + (2.0/3.0) * u2[i] + (2.0/3.0) * dt * k3[i]
+        result[i] = (1.0 / 3.0) * u[i] + (2.0 / 3.0) * u2[i] + (2.0 / 3.0) * dt * k3[i]
     return result
-
 
 
 # =============================================================================
@@ -164,9 +172,9 @@ class RK3(TimeIntegrator):
         temp += 0.25 * dt * k2
 
         k3 = rhs(temp, t + 0.5 * dt)
-        np.multiply(1.0/3.0, u, out=u_stage)
-        u_stage += (2.0/3.0) * temp
-        u_stage += (2.0/3.0) * dt * k3
+        np.multiply(1.0 / 3.0, u, out=u_stage)
+        u_stage += (2.0 / 3.0) * temp
+        u_stage += (2.0 / 3.0) * dt * k3
 
         return u_stage
 
@@ -318,7 +326,9 @@ class ManufacturedSolution:
     convergence testing without shock formation or instabilities.
     """
 
-    def __init__(self, amplitude: float = 1.0, wavenumber: float = 1.0, frequency: float = 0.1):
+    def __init__(
+        self, amplitude: float = 1.0, wavenumber: float = 1.0, frequency: float = 0.1
+    ):
         """Initialize manufactured solution parameters."""
         self.A = amplitude
         self.k = wavenumber
@@ -455,7 +465,7 @@ class KdVSolver:
 
         # For correct frequency splitting with both even and odd N
         n_low = (N + 1) // 2  # Number of non-negative frequencies
-        n_high = N // 2       # Number of negative frequencies
+        n_high = N // 2  # Number of negative frequencies
 
         # Pad with zeros in middle of frequency space
         # [low freqs, zeros, high freqs]
@@ -469,11 +479,13 @@ class KdVSolver:
 
         # Transform back and truncate (keep low and high freqs, discard padded region)
         w_pad_hat = fft_backend.fft(w_pad)
-        w_hat = (3 / 2) * np.concatenate([w_pad_hat[:n_low], w_pad_hat[M - n_high:]])
+        w_hat = (3 / 2) * np.concatenate([w_pad_hat[:n_low], w_pad_hat[M - n_high :]])
 
         return w_hat
 
-    def rhs(self, u: np.ndarray, t: float, source_term: Callable | None = None) -> np.ndarray:
+    def rhs(
+        self, u: np.ndarray, t: float, source_term: Callable | None = None
+    ) -> np.ndarray:
         """
         Compute right-hand side of semi-discrete KdV equation.
 

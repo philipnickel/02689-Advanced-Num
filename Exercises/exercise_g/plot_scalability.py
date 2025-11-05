@@ -54,8 +54,7 @@ for ax in g.axes.flat:
     N_mid = df["N"].median()
     time_theory = time_ref_base * (N_ref * np.log(N_ref)) / (N_mid * np.log(N_mid))
 
-    ax.plot(N_ref, time_theory, "k--", alpha=0.5, 
-            label=r"$\mathcal{O}(N \log N)$")
+    ax.plot(N_ref, time_theory, "k--", alpha=0.5, label=r"$\mathcal{O}(N \log N)$")
 
 g.set_axis_labels(r"Grid Size $N$", r"Time per Step (s)")
 
@@ -63,7 +62,9 @@ g.set_axis_labels(r"Grid Size $N$", r"Time per Step (s)")
 N_vals = sorted(df["N"].unique())
 n_trials = df["trial"].nunique()
 
-param_text = rf"\tiny $N \in [{N_vals[0]}, {N_vals[-1]}]$, {n_trials} trials per configuration"
+param_text = (
+    rf"\tiny $N \in [{N_vals[0]}, {N_vals[-1]}]$, {n_trials} trials per configuration"
+)
 
 g.fig.suptitle(
     "Scalability Analysis: RK3 vs RK4" + "\n" + param_text,
@@ -71,8 +72,8 @@ g.fig.suptitle(
 )
 
 # Update legend to include reference line
-#handles, labels = g.axes.flat[0].get_legend_handles_labels()
-#g.axes.flat[0].legend(handles, labels, loc="upper left")
+# handles, labels = g.axes.flat[0].get_legend_handles_labels()
+# g.axes.flat[0].legend(handles, labels, loc="upper left")
 
 # Save
 output_file = OUTPUT_DIR / "scalability_analysis.pdf"

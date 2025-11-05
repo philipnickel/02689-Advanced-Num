@@ -9,16 +9,25 @@ Usage: python profile_soliton.py <N>
 import argparse
 import sys
 import numpy as np
-from spectral.tdp import KdVSolver, soliton, RK4
+from spectral.tdp import KdVSolver, soliton
 
 
 def main():
     # Parse command line arguments
-    parser = argparse.ArgumentParser(description="Profile KdV solver with single soliton")
+    parser = argparse.ArgumentParser(
+        description="Profile KdV solver with single soliton"
+    )
     parser.add_argument("N", type=int, help="Number of grid points")
-    parser.add_argument("--T", type=float, default=0.1, help="Final time (default: 0.1)")
-    parser.add_argument("--method", type=str, default="RK4", choices=["RK3", "RK4"],
-                        help="Time integrator (default: RK4)")
+    parser.add_argument(
+        "--T", type=float, default=0.1, help="Final time (default: 0.1)"
+    )
+    parser.add_argument(
+        "--method",
+        type=str,
+        default="RK4",
+        choices=["RK3", "RK4"],
+        help="Time integrator (default: RK4)",
+    )
     args = parser.parse_args()
 
     N = args.N
@@ -39,7 +48,7 @@ def main():
     n_steps = int(np.round(T_FINAL / dt))
     dt = T_FINAL / n_steps  # Adjust to hit T_FINAL exactly
 
-    print(f"Profiling KdV Solver")
+    print("Profiling KdV Solver")
     print(f"N = {N}, dx = {dx:.6f}, dt = {dt:.6e}")
     print(f"T_FINAL = {T_FINAL}, n_steps = {n_steps}")
     print(f"Method: {args.method}")
@@ -55,9 +64,11 @@ def main():
     # Select integrator
     if args.method == "RK4":
         from spectral.tdp import RK4
+
         integrator = RK4()
     else:
         from spectral.tdp import RK3
+
         integrator = RK3()
 
     # Time integration

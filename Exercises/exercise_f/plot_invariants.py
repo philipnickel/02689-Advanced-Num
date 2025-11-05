@@ -78,7 +78,9 @@ df_abs = (
     .reset_index()
 )
 
-df_abs["Treatment"] = pd.Categorical(df_abs["Treatment"], categories=TREATMENT_ORDER, ordered=True)
+df_abs["Treatment"] = pd.Categorical(
+    df_abs["Treatment"], categories=TREATMENT_ORDER, ordered=True
+)
 
 df_rel = df_abs.copy()
 grouped_rel = df_rel.groupby("Treatment", sort=False, observed=True)
@@ -93,7 +95,9 @@ df_rel_long = df_rel.melt(
     var_name="Quantity",
     value_name="Relative drift",
 )
-df_rel_long["Quantity"] = pd.Categorical(df_rel_long["Quantity"], categories=QUANTITY_ORDER, ordered=True)
+df_rel_long["Quantity"] = pd.Categorical(
+    df_rel_long["Quantity"], categories=QUANTITY_ORDER, ordered=True
+)
 
 # %% Plot --------------------------------------------------------------------
 fig, axs = plt.subplots(
@@ -128,8 +132,9 @@ c1 = metadata.get("c1", "?")
 c2 = metadata.get("c2", "?")
 dt_latex = format_dt_latex(dt)
 fig.suptitle(
-    "KdV Two-Soliton Conserved Quantities" + "\n" +
-    rf"\tiny $N = {N}$, $L = {L}$, $\Delta t = {dt_latex}$, $c_1 = {c1}$, $c_2 = {c2}$",
+    "KdV Two-Soliton Conserved Quantities"
+    + "\n"
+    + rf"\tiny $N = {N}$, $L = {L}$, $\Delta t = {dt_latex}$, $c_1 = {c1}$, $c_2 = {c2}$",
     y=0.98,
 )
 

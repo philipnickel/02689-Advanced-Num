@@ -21,7 +21,7 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 L = 30.0
 c = 0.5
 x0 = 0.0
-N_VALUES = 2**np.arange(6, 10)  # Powers of 2: [64, 128, ..., 8192]
+N_VALUES = 2 ** np.arange(6, 10)  # Powers of 2: [64, 128, ..., 8192]
 METHODS = {"RK4": RK4, "RK3": RK3}
 MIN_STEPS = 200
 MAX_STEPS = 2000
@@ -49,7 +49,9 @@ for method_name, method_class in METHODS.items():
 
         # Estimate stable timestep
         u_max = float(np.max(np.abs(u0)))
-        dt_stable = KdVSolver.stable_dt(N, L, u_max, integrator_name=method_name.lower())
+        dt_stable = KdVSolver.stable_dt(
+            N, L, u_max, integrator_name=method_name.lower()
+        )
         if not np.isfinite(dt_stable) or dt_stable <= 0.0:
             dt_stable = 1e-3
 
@@ -82,20 +84,24 @@ for method_name, method_class in METHODS.items():
             timing_results.append(time_per_step)
 
             # Store result for this trial
-            results.append({
-                "method": method_name,
-                "N": N,
-                "trial": trial,
-                "time_per_step": time_per_step,
-                "wall_time": wall_elapsed,
-                "n_steps": n_steps,
-            })
+            results.append(
+                {
+                    "method": method_name,
+                    "N": N,
+                    "trial": trial,
+                    "time_per_step": time_per_step,
+                    "wall_time": wall_elapsed,
+                    "n_steps": n_steps,
+                }
+            )
 
         # Print with mean timing across trials
         mean_time = np.mean(timing_results)
         std_time = np.std(timing_results)
-        print(f"  N={N:5d}  time/step={mean_time:.6f}±{std_time:.6f}s  "
-              f"(across {N_TRIALS} trials)")
+        print(
+            f"  N={N:5d}  time/step={mean_time:.6f}±{std_time:.6f}s  "
+            f"(across {N_TRIALS} trials)"
+        )
 
 # %% Save results ------------------------------------------------------------
 df = pd.DataFrame(results)

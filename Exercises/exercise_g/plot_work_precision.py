@@ -56,10 +56,12 @@ for ax in g.axes.flat:
     # Annotate points with N values
     # Get unique (method, N) combinations for annotation
     for method in df["method"].unique():
-        method_data = df[df["method"] == method].groupby("N").agg({
-            "wall_time": "mean",
-            "error_l2": "first"
-        }).reset_index()
+        method_data = (
+            df[df["method"] == method]
+            .groupby("N")
+            .agg({"wall_time": "mean", "error_l2": "first"})
+            .reset_index()
+        )
 
 
 g.set_axis_labels(r"Wall Time (s)", r"$L^2$ Error")

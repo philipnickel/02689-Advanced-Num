@@ -58,9 +58,7 @@ high_band = with_power[with_power["k_norm_raw"] >= band_start]
 
 
 summary = (
-    high_band.groupby(["N", "Treatment", "t"], sort=False, observed=True)[
-        "band_power"
-    ]
+    high_band.groupby(["N", "Treatment", "t"], sort=False, observed=True)["band_power"]
     .sum()
     .reset_index()
 )
@@ -101,7 +99,9 @@ g.fig.savefig(RESULTS_DIR / "ex_e_high_band_power.pdf", bbox_inches="tight")
 
 # Get final time for each N separately (they have different saved times)
 # Each N has a different timestep so they save at different exact times
-max_t_per_N = spectra.groupby("N", as_index=False)["t"].max().rename(columns={"t": "t_max"})
+max_t_per_N = (
+    spectra.groupby("N", as_index=False)["t"].max().rename(columns={"t": "t_max"})
+)
 plot_df = spectra.merge(max_t_per_N, on="N")
 plot_df = plot_df[plot_df["t"] == plot_df["t_max"]].drop(columns=["t_max"])
 
@@ -129,7 +129,9 @@ t_final = plot_df["t"].max()
 if len(N_unique_s) > 1:
     param_text_s = rf"\tiny $N \in [{N_unique_s[0]}, {N_unique_s[-1]}]$, $L = {L_val_s:.1f}$, $t = {t_final:.1f}$"
 else:
-    param_text_s = rf"\tiny $N = {N_unique_s[0]}$, $L = {L_val_s:.1f}$, $t = {t_final:.1f}$"
+    param_text_s = (
+        rf"\tiny $N = {N_unique_s[0]}$, $L = {L_val_s:.1f}$, $t = {t_final:.1f}$"
+    )
 
 g.fig.suptitle(
     "KdV Modal Amplitudes at Final Time" + "\n" + param_text_s,
@@ -147,8 +149,8 @@ for quantity in ["mass", "momentum", "energy"]:
         mask = conservation_rel["scenario"] == scenario
         initial_val = conservation_rel.loc[mask, quantity].iloc[0]
         conservation_rel.loc[mask, f"{quantity}_rel_error"] = (
-            (conservation_rel.loc[mask, quantity] - initial_val) / abs(initial_val)
-        )
+            conservation_rel.loc[mask, quantity] - initial_val
+        ) / abs(initial_val)
 
 # Melt for facet plot
 cons_tidy = conservation_rel.melt(
@@ -159,11 +161,13 @@ cons_tidy = conservation_rel.melt(
 )
 
 # Clean up quantity names
-cons_tidy["Quantity"] = cons_tidy["quantity"].map({
-    "mass_rel_error": "Mass",
-    "momentum_rel_error": "Momentum",
-    "energy_rel_error": "Energy",
-})
+cons_tidy["Quantity"] = cons_tidy["quantity"].map(
+    {
+        "mass_rel_error": "Mass",
+        "momentum_rel_error": "Momentum",
+        "energy_rel_error": "Energy",
+    }
+)
 
 g_cons = sns.relplot(
     data=cons_tidy,

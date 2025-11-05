@@ -9,7 +9,6 @@ compiled ``line_profiler`` wheels are unavailable in the current environment.
 
 from __future__ import annotations
 
-import inspect
 import linecache
 import sys
 import time
@@ -113,7 +112,9 @@ class LineProfiler:
         for code, timings in self._code_map.items():
             filename = code.co_filename
             func_name = code.co_name
-            header = f"File: {filename}\nFunction: {func_name} at line {code.co_firstlineno}"
+            header = (
+                f"File: {filename}\nFunction: {func_name} at line {code.co_firstlineno}"
+            )
             emitter(header)
             emitter("-" * len(header))
 
@@ -125,7 +126,9 @@ class LineProfiler:
             total_time = sum(ordered.values())
 
             line_number_width = max(len(str(line)) for line in ordered)
-            emitter(f"{'Line':>{line_number_width}}    Time (s)    % Time    Line Contents")
+            emitter(
+                f"{'Line':>{line_number_width}}    Time (s)    % Time    Line Contents"
+            )
             emitter("-" * (line_number_width + 44))
 
             for line_no, elapsed in ordered.items():

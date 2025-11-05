@@ -115,26 +115,30 @@ for method_name, method_class in METHODS.items():
 
         # Store one result per trial (for error bar visualization)
         for trial, wall_time in enumerate(timing_trials):
-            results.append({
-                "method": method_name,
-                "N": N,
-                "L": L,
-                "dt": dt,
-                "T_FINAL": t_final,
-                "n_steps": n_steps,
-                "trial": trial,
-                "wall_time": wall_time,
-                "rhs_evaluations": total_rhs_evals,
-                "error_l2": error_l2,
-                "error_linf": error_linf,
-            })
+            results.append(
+                {
+                    "method": method_name,
+                    "N": N,
+                    "L": L,
+                    "dt": dt,
+                    "T_FINAL": t_final,
+                    "n_steps": n_steps,
+                    "trial": trial,
+                    "wall_time": wall_time,
+                    "rhs_evaluations": total_rhs_evals,
+                    "error_l2": error_l2,
+                    "error_linf": error_linf,
+                }
+            )
 
         # Print with mean timing
         mean_time = np.mean(timing_trials)
         std_time = np.std(timing_trials)
-        print(f"  N = {N:4d}, dt = {dt:.3e} ({n_steps:4d} steps)  "
-              f"L2 err = {error_l2:.3e}  L∞ err = {error_linf:.3e}  "
-              f"time = {mean_time:.4f}±{std_time:.4f}s")
+        print(
+            f"  N = {N:4d}, dt = {dt:.3e} ({n_steps:4d} steps)  "
+            f"L2 err = {error_l2:.3e}  L∞ err = {error_linf:.3e}  "
+            f"time = {mean_time:.4f}±{std_time:.4f}s"
+        )
 
 # %% Save results ------------------------------------------------------------
 df = pd.DataFrame(results)

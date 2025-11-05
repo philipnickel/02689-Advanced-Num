@@ -102,9 +102,7 @@ L_stab = (
     stability_df_finite["L"].iloc[0] if "L" in stability_df_finite.columns else 30.0
 )
 g.fig.suptitle(r"KdV Stability", y=1.05)
-g.set_titles(
-    r"$c$ = {col_name}" + "\n" + rf"\tiny $N = {N_stab}$, $L = {L_stab:.1f}$"
-)
+g.set_titles(r"$c$ = {col_name}" + "\n" + rf"\tiny $N = {N_stab}$, $L = {L_stab:.1f}$")
 
 output = save_dir / "eigenvalue_stability.pdf"
 g.savefig(output, bbox_inches="tight")
@@ -151,7 +149,9 @@ N_max_s = scaling_df["N"].max()
 L_s = scaling_df["L"].iloc[0] if "L" in scaling_df.columns else 30.0
 g1.fig.suptitle(r"KdV Eigenvalue Scaling", y=1.05)
 g1.set_titles(
-    r"$c$ = {col_name}" + "\n" + rf"\tiny $N \in [{N_min_s}, {N_max_s}]$, $L = {L_s:.1f}$"
+    r"$c$ = {col_name}"
+    + "\n"
+    + rf"\tiny $N \in [{N_min_s}, {N_max_s}]$, $L = {L_s:.1f}$"
 )
 
 output = save_dir / "eigenvalue_max_scaling.pdf"
@@ -168,9 +168,9 @@ g2 = sns.relplot(
     col="c",
     kind="line",
     markers=True,
-    #height=4,
-    #aspect=1.2,
-    #facet_kws={"sharex": True, "sharey": False},
+    # height=4,
+    # aspect=1.2,
+    # facet_kws={"sharex": True, "sharey": False},
 )
 
 # Add O(N^-3) reference line to each facet
@@ -193,7 +193,9 @@ g2.set(xscale="log", yscale="log")
 g2.set_axis_labels(r"Grid points $N$", r"Stable $\Delta t$")
 g2.fig.suptitle(r"KdV Timestep Scaling", y=1.05)
 g2.set_titles(
-    r"$c$ = {col_name}" + "\n" + rf"\tiny $N \in [{N_min_s}, {N_max_s}]$, $L = {L_s:.1f}$"
+    r"$c$ = {col_name}"
+    + "\n"
+    + rf"\tiny $N \in [{N_min_s}, {N_max_s}]$, $L = {L_s:.1f}$"
 )
 
 output = save_dir / "eigenvalue_scaling.pdf"

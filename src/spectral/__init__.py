@@ -4,6 +4,7 @@
 import matplotlib.pyplot as plt
 from importlib.resources import files
 import seaborn as sns
+
 sns.set_style("darkgrid")
 
 style_path = files("spectral").joinpath("styles/ana.mplstyle")

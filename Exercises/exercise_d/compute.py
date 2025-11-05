@@ -12,7 +12,8 @@ For each configuration, computes:
 - L2 and Linf errors over time
 - Conservation quantities (M, V, E) over time
 """
-#TODO: Review how the quantities are calculated!!!!!!!!!!!
+
+# TODO: Review how the quantities are calculated!!!!!!!!!!!
 # %% Imports and setup
 import os
 from pathlib import Path
@@ -89,9 +90,7 @@ def solve_single_case(
     u0 = soliton(x, 0.0, c, x0)
 
     # Estimate stable dt
-    dt = estimate_stable_dt(
-        N, L, method, c, dealias=dealias, safety_factor=0.1
-    )
+    dt = estimate_stable_dt(N, L, method, c, dealias=dealias, safety_factor=0.1)
 
     # Clear history for multi-step methods
     if hasattr(integ, "u_history"):

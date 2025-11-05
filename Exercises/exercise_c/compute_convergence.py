@@ -14,7 +14,6 @@ The script generates two Parquet tables:
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -38,11 +37,11 @@ INTEGRATORS = [RK4, RK3]
 
 WAVE_SPEED = 1.00
 
-T_SPATIAL = 0.01#2.0e-2
+T_SPATIAL = 0.01  # 2.0e-2
 DT_SPATIAL = 1.0e-6  # sufficiently small to suppress temporal error
 
 N_VALUES_SPATIAL = 2 * np.logspace(np.log10(5), np.log10(175), num=20, dtype=int)
-#N_VALUES_SPATIAL = 2 * np.logspace(np.log10(5), np.log10(20), num=5, dtype=int)
+# N_VALUES_SPATIAL = 2 * np.logspace(np.log10(5), np.log10(20), num=5, dtype=int)
 # Round and force evenness
 
 
@@ -53,8 +52,8 @@ U_MAX_TEMPORAL = 0.5 * WAVE_SPEED  # Peak amplitude of single soliton
 # Temporal dt sampling: start from larger dt (aim for min dt ~ 0.01)
 # Skip tiny dt values that just hit spatial error floor
 DT_FRACTION_MIN = 0.01  # Start from 1% of dt_stable
-DT_FRACTION_MAX = 0.90   # Go to 80% of stability limit
-N_DT_SUBCRITICAL = 30   # Good sampling to see power law
+DT_FRACTION_MAX = 0.90  # Go to 80% of stability limit
+N_DT_SUBCRITICAL = 30  # Good sampling to see power law
 N_DT_SUPERCRITICAL = 0  # Don't test supercritical (that's just blowup)
 
 
@@ -95,7 +94,7 @@ def _compute_temporal_dt_table() -> dict[tuple[bool, str], tuple[np.ndarray, flo
                     DT_FRACTION_MIN,
                     min(DT_FRACTION_MAX, 1.0),
                     num=N_DT_SUBCRITICAL,
-                    dtype=float
+                    dtype=float,
                 )
             table[(dealias, method_name)] = (dt_stable * fractions, float(dt_stable))
 
@@ -104,8 +103,6 @@ def _compute_temporal_dt_table() -> dict[tuple[bool, str], tuple[np.ndarray, flo
 
 TEMPORAL_DT_TABLE = _compute_temporal_dt_table()
 TOTAL_TEMPORAL_CASES = sum(len(info[0]) for info in TEMPORAL_DT_TABLE.values())
-
-
 
 
 # //----------------------------------------------------------------------- #
@@ -211,7 +208,7 @@ df_spatial["method"] = df_spatial["method"].astype("category")
 spatial_path = DATA_DIR / "kdv_spatial_convergence.parquet"
 df_spatial.to_parquet(spatial_path, index=False)
 
-print(f"\nSaved spatial convergence data")
+print("\nSaved spatial convergence data")
 
 
 # //----------------------------------------------------------------------- #
@@ -265,9 +262,7 @@ for dealias in DEALIAS_OPTIONS:
                     continue
 
             except Exception as exc:  # pragma: no cover - diagnostic output
-                print(
-                    f"  [{dt_idx:2d}/{len(dt_values)}] dt={dt:.3e}: FAILED ({exc})"
-                )
+                print(f"  [{dt_idx:2d}/{len(dt_values)}] dt={dt:.3e}: FAILED ({exc})")
                 continue
 
             n_timesteps = int(np.round(T_TEMPORAL / dt))
@@ -296,12 +291,11 @@ for dealias in DEALIAS_OPTIONS:
         )
 
 
-
 df_temporal = pd.DataFrame(temporal_rows)
 df_temporal["method"] = df_temporal["method"].astype("category")
 
 temporal_path = DATA_DIR / "kdv_temporal_convergence.parquet"
 df_temporal.to_parquet(temporal_path, index=False)
 
-print(f"\nSaved temporal convergence data")
+print("\nSaved temporal convergence data")
 print("\nConvergence studies completed.")

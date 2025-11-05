@@ -23,7 +23,8 @@ author = "Louis Kamp Eskildsen, Aske Funch Schrøder Nielsen, Philip Korsager Ni
 
 # Detect LaTeX build from marker file (set by main.py)
 import os
-_marker_file = os.path.join(os.path.dirname(__file__), '.building_latex')
+
+_marker_file = os.path.join(os.path.dirname(__file__), ".building_latex")
 _is_latex_build = os.path.exists(_marker_file)
 
 # Extensions - conditionally exclude gallery for LaTeX

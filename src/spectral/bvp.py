@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from typing import Iterable
 
 import numpy as np
-from numpy.polynomial.legendre import leggauss
 
 from .polynomial import legendre_gauss_lobatto_nodes, vandermonde
 from .spectral import (

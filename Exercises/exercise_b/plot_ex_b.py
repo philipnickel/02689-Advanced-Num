@@ -61,8 +61,7 @@ ax.legend()
 Nr_min = convergence_df["Nr"].min()
 Nr_max = convergence_df["Nr"].max()
 ax.set_title(
-    "Polar BVP" + "\n" +
-    rf"\tiny $N_r \in [{Nr_min}, {Nr_max}] $, $N_{{\theta}} = 50$",
+    "Polar BVP" + "\n" + rf"\tiny $N_r \in [{Nr_min}, {Nr_max}] $, $N_{{\theta}} = 50$",
 )
 
 fig.savefig(save_dir / "convergence_r.pdf", bbox_inches="tight")
@@ -112,9 +111,10 @@ ax.set(
 Ntheta_min = convergence_df["Ntheta"].min()
 Ntheta_max = convergence_df["Ntheta"].max()
 ax.set_title(
-    "Polar BVP" + "\n" +
-    rf"\tiny $N_{{\theta}} \in [{Ntheta_min}, {Ntheta_max}]$, $N_r = 20$",
-    fontsize=14
+    "Polar BVP"
+    + "\n"
+    + rf"\tiny $N_{{\theta}} \in [{Ntheta_min}, {Ntheta_max}]$, $N_r = 20$",
+    fontsize=14,
 )
 
 fig.savefig(save_dir / "convergence_theta.pdf", bbox_inches="tight")
@@ -165,8 +165,9 @@ cbar = fig.colorbar(con, ax=ax)
 cbar.set_label(r"$\Phi$")
 ax.set_ylim(0, r2)
 ax.set_title(
-    "Polar BVP - Numerical Solution" + "\n" +
-    rf"\tiny $N_r = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)",
+    "Polar BVP - Numerical Solution"
+    + "\n"
+    + rf"\tiny $N_r = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)",
 )
 
 fig.savefig(save_dir / "solution.pdf", bbox_inches="tight")
@@ -183,12 +184,12 @@ cbar = fig.colorbar(con, ax=ax)
 cbar.set_label(r"$\Phi_{\rm num} - \Phi_{\rm exact}$")
 ax.set_ylim(0, r2)
 ax.set_title(
-    "Polar BVP - Error" + "\n" +
-    rf"\tiny $N_r = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)",
+    "Polar BVP - Error"
+    + "\n"
+    + rf"\tiny $N_r = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)",
 )
 
 fig.savefig(save_dir / "error.pdf", bbox_inches="tight")
 print(f"Saved: {save_dir}/error.pdf")
 
 print(f"\nAll plots saved to {save_dir}")
-

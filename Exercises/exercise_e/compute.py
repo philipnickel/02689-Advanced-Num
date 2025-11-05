@@ -74,7 +74,10 @@ for N in N_VALUES:
     for use_dealias in DEALIAS_OPTIONS:
         label = f"N{N}_{'dealias' if use_dealias else 'alias'}"
         treatment = "dealiased (3/2-rule)" if use_dealias else "aliased"
-        print(f"\nRunning {label:>12s} | N={N:3d}, dealias={use_dealias}, dt={dt:.6e}", flush=True)
+        print(
+            f"\nRunning {label:>12s} | N={N:3d}, dealias={use_dealias}, dt={dt:.6e}",
+            flush=True,
+        )
 
         solver = KdVSolver(N, L, dealias=use_dealias)
         integrator = get_time_integrator(INTEGRATOR_NAME)
@@ -102,16 +105,18 @@ for N in N_VALUES:
             energy[i] = np.sum(u**3 - ux**2) * dx
 
         # Store conservation data
-        conservation_df = pd.DataFrame({
-            "t": t_saved,
-            "mass": mass,
-            "momentum": momentum,
-            "energy": energy,
-            "scenario": label,
-            "N": N,
-            "dealias": use_dealias,
-            "Treatment": treatment,
-        })
+        conservation_df = pd.DataFrame(
+            {
+                "t": t_saved,
+                "mass": mass,
+                "momentum": momentum,
+                "energy": energy,
+                "scenario": label,
+                "N": N,
+                "dealias": use_dealias,
+                "Treatment": treatment,
+            }
+        )
         conservation_frames.append(conservation_df)
 
         idx = np.arange(N // 2 + 1, dtype=int)
@@ -122,7 +127,9 @@ for N in N_VALUES:
 
         df = pd.DataFrame(magnitudes, columns=idx)
         df["t"] = t_saved
-        tidy = df.melt(id_vars="t", var_name="mode_index", value_name="abs_u_hat").assign(
+        tidy = df.melt(
+            id_vars="t", var_name="mode_index", value_name="abs_u_hat"
+        ).assign(
             scenario=label,
             N=N,
             dealias=use_dealias,

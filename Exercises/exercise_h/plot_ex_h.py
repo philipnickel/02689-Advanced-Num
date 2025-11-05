@@ -56,12 +56,20 @@ vmin = min(Phi.min(), Phi_hat.min())
 vmax = max(Phi.max(), Phi_hat.max())
 errmax = np.abs(error).max()
 
-im0 = axs[0].matshow(Phi, vmin=vmin, vmax=vmax, aspect="auto",
-                     extent=[ts[0], ts[-1], xs[-1], xs[0]])
-im1 = axs[1].matshow(Phi_hat, vmin=vmin, vmax=vmax, aspect="auto",
-                     extent=[ts[0], ts[-1], xs[-1], xs[0]])
-im2 = axs[2].matshow(error, cmap="viridis", vmin=-errmax, vmax=errmax, aspect="auto",
-                     extent=[ts[0], ts[-1], xs[-1], xs[0]])
+im0 = axs[0].matshow(
+    Phi, vmin=vmin, vmax=vmax, aspect="auto", extent=[ts[0], ts[-1], xs[-1], xs[0]]
+)
+im1 = axs[1].matshow(
+    Phi_hat, vmin=vmin, vmax=vmax, aspect="auto", extent=[ts[0], ts[-1], xs[-1], xs[0]]
+)
+im2 = axs[2].matshow(
+    error,
+    cmap="viridis",
+    vmin=-errmax,
+    vmax=errmax,
+    aspect="auto",
+    extent=[ts[0], ts[-1], xs[-1], xs[0]],
+)
 
 # Colorbars
 fig.colorbar(im0, ax=[axs[0], axs[1]], orientation="horizontal", label="Amplitude")
@@ -81,7 +89,7 @@ Nt = df["Nt"].iloc[0] if "Nt" in df.columns else len(ts)
 axs[2].set_title(
     f"Error (L2: {error_l2:.2e})" + "\n" + rf"\tiny $N_x = {Nx}$, $N_t = {Nt}$",
     pad=20,
-    fontsize=12
+    fontsize=12,
 )
 
 output_path = save_dir / "solution.pdf"
@@ -136,9 +144,10 @@ Nx_min_sp = df_spatial["Nx"].min()
 Nx_max_sp = df_spatial["Nx"].max()
 Nt_sp = df_spatial["Nt"].iloc[0] if "Nt" in df_spatial.columns else 100
 ax.set_title(
-    "Transport Equation - Spatial Convergence" + "\n" +
-    rf"$N_x \in [{Nx_min_sp}, {Nx_max_sp}]$, $N_t = {Nt_sp}$",
-    fontsize=14
+    "Transport Equation - Spatial Convergence"
+    + "\n"
+    + rf"$N_x \in [{Nx_min_sp}, {Nx_max_sp}]$, $N_t = {Nt_sp}$",
+    fontsize=14,
 )
 
 plt.tight_layout()
@@ -194,9 +203,10 @@ Nt_min_t = df_temporal["Nt"].min()
 Nt_max_t = df_temporal["Nt"].max()
 Nx_t = df_temporal["Nx"].iloc[0] if "Nx" in df_temporal.columns else 100
 ax.set_title(
-    "Transport Equation - Temporal Convergence" + "\n" +
-    rf"$N_t \in [{Nt_min_t}, {Nt_max_t}]$, $N_x = {Nx_t}$",
-    fontsize=14
+    "Transport Equation - Temporal Convergence"
+    + "\n"
+    + rf"$N_t \in [{Nt_min_t}, {Nt_max_t}]$, $N_x = {Nx_t}$",
+    fontsize=14,
 )
 
 plt.tight_layout()

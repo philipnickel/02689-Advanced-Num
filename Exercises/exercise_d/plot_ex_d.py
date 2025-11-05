@@ -13,7 +13,7 @@ Creates 6 plots per method (12 total):
 
 Each plot uses FacetGrid with c in columns and parameter (L or N) in rows.
 """
-#TODO: Compared aliased to non-aliased methods
+# TODO: Compared aliased to non-aliased methods
 # %%
 # Single soliton diagnostics
 # Analyze errors and conservation properties for single soliton solutions.
@@ -23,7 +23,6 @@ import seaborn as sns
 
 from spectral.utils.plotting import get_repo_root
 from spectral.utils.formatting import format_dt_latex
-import numpy as np
 
 repo_root = get_repo_root()
 data_dir = repo_root / "data/A2/ex_d"
@@ -75,7 +74,9 @@ def plot_errors(df_errors, method, investigation_type, param_name):
     df_err["error_type"] = df_err["error_type"].map(
         {"l2": r"$L^2$ error", "linf": r"$L^\infty$ error"}
     )
-    df_err["error_type"] = pd.Categorical(df_err["error_type"], categories=ERROR_ORDER, ordered=True)
+    df_err["error_type"] = pd.Categorical(
+        df_err["error_type"], categories=ERROR_ORDER, ordered=True
+    )
 
     if hasattr(df_err["Treatment"], "cat"):
         df_err["Treatment"] = df_err["Treatment"].cat.reorder_categories(
@@ -119,7 +120,9 @@ def plot_errors(df_errors, method, investigation_type, param_name):
             dt_val = dt_map.get((row_val, col_val))
             if dt_val is not None:
                 dt_latex = format_dt_latex(dt_val)
-                ax.set_title(rf"${param_name}={row_val}$, $c={col_val}$, $\Delta t={dt_latex}$")
+                ax.set_title(
+                    rf"${param_name}={row_val}$, $c={col_val}$, $\Delta t={dt_latex}$"
+                )
 
     # Title will be set in the main plotting loop with parameters
     return g.fig
@@ -183,7 +186,9 @@ def plot_conservation(df_quantities, method, investigation_type, param_name):
             dt_val = dt_map.get((row_val, col_val))
             if dt_val is not None:
                 dt_latex = format_dt_latex(dt_val)
-                ax.set_title(rf"${param_name}={row_val}$, $c={col_val}$, $\Delta t={dt_latex}$")
+                ax.set_title(
+                    rf"${param_name}={row_val}$, $c={col_val}$, $\Delta t={dt_latex}$"
+                )
 
     # Title will be set in the main plotting loop with parameters
     return g.fig
@@ -243,7 +248,9 @@ def plot_quantities(df_quantities, method, investigation_type, param_name):
             dt_val = dt_map.get((row_val, col_val))
             if dt_val is not None:
                 dt_latex = format_dt_latex(dt_val)
-                ax.set_title(rf"${param_name}={row_val}$, $c={col_val}$, $\Delta t={dt_latex}$")
+                ax.set_title(
+                    rf"${param_name}={row_val}$, $c={col_val}$, $\Delta t={dt_latex}$"
+                )
 
     # Title will be set in the main plotting loop with parameters
     return g.fig
@@ -264,8 +271,9 @@ for method in methods:
     N_val = df_method_domain["N"].iloc[0]
     T_val = df_method_domain["t"].max()
     fig.suptitle(
-        f"{method} - Domain Investigation" + "\n" +
-        rf"$N = {N_val}$, $L \in [{L_vals[0]:.1f}, {L_vals[-1]:.1f}]$, $T = {T_val:.0f}$",
+        f"{method} - Domain Investigation"
+        + "\n"
+        + rf"$N = {N_val}$, $L \in [{L_vals[0]:.1f}, {L_vals[-1]:.1f}]$, $T = {T_val:.0f}$",
         y=1.03,
     )
     output = save_dir / f"{method.lower()}_domain_errors.pdf"
@@ -275,8 +283,9 @@ for method in methods:
     # Domain investigation - conservation (relative errors)
     fig = plot_conservation(df_domain_quantities, method, "domain", "L")
     fig.suptitle(
-        f"{method} - Domain Conservation" + "\n" +
-        rf"$N = {N_val}$, $L \in [{L_vals[0]:.1f}, {L_vals[-1]:.1f}]$, $T = {T_val:.0f}$",
+        f"{method} - Domain Conservation"
+        + "\n"
+        + rf"$N = {N_val}$, $L \in [{L_vals[0]:.1f}, {L_vals[-1]:.1f}]$, $T = {T_val:.0f}$",
         y=1.03,
     )
     output = save_dir / f"{method.lower()}_domain_conservation.pdf"
@@ -286,8 +295,9 @@ for method in methods:
     # Domain investigation - quantities (actual values)
     fig = plot_quantities(df_domain_quantities, method, "domain", "L")
     fig.suptitle(
-        f"{method} - Domain Quantities" + "\n" +
-        rf"$N = {N_val}$, $L \in [{L_vals[0]:.1f}, {L_vals[-1]:.1f}]$, $T = {T_val:.0f}$",
+        f"{method} - Domain Quantities"
+        + "\n"
+        + rf"$N = {N_val}$, $L \in [{L_vals[0]:.1f}, {L_vals[-1]:.1f}]$, $T = {T_val:.0f}$",
         y=1.03,
     )
     output = save_dir / f"{method.lower()}_domain_quantities.pdf"
@@ -301,8 +311,9 @@ for method in methods:
     L_val_nodes = df_method_nodes["L"].iloc[0]
     T_val_nodes = df_method_nodes["t"].max()
     fig.suptitle(
-        f"{method} - Nodes Investigation" + "\n" +
-        rf"$L = {L_val_nodes:.1f}$, $N \in [{N_vals[0]}, {N_vals[-1]}]$, $T = {T_val_nodes:.0f}$",
+        f"{method} - Nodes Investigation"
+        + "\n"
+        + rf"$L = {L_val_nodes:.1f}$, $N \in [{N_vals[0]}, {N_vals[-1]}]$, $T = {T_val_nodes:.0f}$",
         y=1.03,
     )
     output = save_dir / f"{method.lower()}_nodes_errors.pdf"
@@ -312,8 +323,9 @@ for method in methods:
     # Node investigation - conservation (relative errors)
     fig = plot_conservation(df_nodes_quantities, method, "nodes", "N")
     fig.suptitle(
-        f"{method} - Nodes Conservation" + "\n" +
-        rf"$L = {L_val_nodes:.1f}$, $N \in [{N_vals[0]}, {N_vals[-1]}]$, $T = {T_val_nodes:.0f}$",
+        f"{method} - Nodes Conservation"
+        + "\n"
+        + rf"$L = {L_val_nodes:.1f}$, $N \in [{N_vals[0]}, {N_vals[-1]}]$, $T = {T_val_nodes:.0f}$",
         y=1.03,
     )
     output = save_dir / f"{method.lower()}_nodes_conservation.pdf"
@@ -323,8 +335,9 @@ for method in methods:
     # Node investigation - quantities (actual values)
     fig = plot_quantities(df_nodes_quantities, method, "nodes", "N")
     fig.suptitle(
-        f"{method} - Nodes Quantities" + "\n" +
-        rf"$L = {L_val_nodes:.1f}$, $N \in [{N_vals[0]}, {N_vals[-1]}]$, $T = {T_val_nodes:.0f}$",
+        f"{method} - Nodes Quantities"
+        + "\n"
+        + rf"$L = {L_val_nodes:.1f}$, $N \in [{N_vals[0]}, {N_vals[-1]}]$, $T = {T_val_nodes:.0f}$",
         y=1.03,
     )
     output = save_dir / f"{method.lower()}_nodes_quantities.pdf"
