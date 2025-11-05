@@ -29,24 +29,24 @@ from spectral.tdp import KdVSolver, soliton, RK4, RK3
 DATA_DIR = Path("data/A2/ex_c")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-L_SPATIAL = 20.0
-L_TEMPORAL = 20.0
+L_SPATIAL = 40.0
+L_TEMPORAL = 40.0
 X0 = 0.0
 
 DEALIAS_OPTIONS = [False, True]
+INTEGRATORS = [RK4, RK3]
 
-INTEGRATOR_FACTORIES: dict[str, Callable[[], object]] = {
-    "RK4": RK4,
-    "RK3": RK3,
-}
-TEMPORAL_METHODS: tuple[str, ...] = ("RK4", "RK3")
+WAVE_SPEED = 0.5
 
-WAVE_SPEED = 1.0
-
-T_SPATIAL = 0.01#2.0e-2
+T_SPATIAL = 0.005#2.0e-2
 DT_SPATIAL = 1.0e-6  # sufficiently small to suppress temporal error
 # Logarithmic spacing with 20 values from 16 to 256, ensuring even numbers
-N_VALUES_SPATIAL = (np.geomspace(10, 350, num=20, dtype=int) // 2) * 2
+#N_VALUES_SPATIAL = 2 * np.logspace(1, 2, num=20, dtype=int)#(np.geomspace(10, 350, num=20, dtype=int) // 2) * 2
+
+# Logarithmically spaced floats from 16 to 250
+N_VALUES_SPATIAL = 2 * np.logspace(np.log10(10), np.log10(125), num=20, dtype=int)
+# Round and force evenness
+
 
 N_TEMPORAL = 100
 # Logarithmic spacing using arange with powers of 0.5 (halving each step)
@@ -73,7 +73,7 @@ def _solve_case(
     *,
     dt: float,
     T: float,
-    method_name: str,
+    integrator_class: type,
     wave_speed: float,
     dealias: bool,
     half_length: float,
@@ -84,7 +84,7 @@ def _solve_case(
     dx = solver.dx
 
     u0 = soliton(x, 0.0, wave_speed, X0)
-    integrator = INTEGRATOR_FACTORIES[method_name]()
+    integrator = integrator_class()
     _reset_multistep_state(integrator)
 
     save_every = max(1, int(np.ceil(T / dt)))
@@ -110,7 +110,7 @@ def _stability_limited_dt(
     N: int,
     wave_speed: float,
     *,
-    method_name: str,
+    integrator_class: type,
     dealias: bool,
     half_length: float,
 ) -> float:
@@ -122,7 +122,7 @@ def _stability_limited_dt(
         N,
         half_length,
         u_max,
-        integrator_name=method_name.lower(),
+        integrator_name=integrator_class.__name__.lower(),
         dealiased=dealias,
     )
     if not np.isfinite(dt_est) or dt_est <= 0.0:
@@ -140,7 +140,8 @@ for dealias in DEALIAS_OPTIONS:
     dealias_label = "De-aliased" if dealias else "Aliased"
     print(f"\n--- {dealias_label} ---")
 
-    for method_name in INTEGRATOR_FACTORIES:
+    for integrator_class in INTEGRATORS:
+        method_name = integrator_class.__name__
         print(f"  Method: {method_name}")
 
         for N in N_VALUES_SPATIAL:
@@ -149,7 +150,7 @@ for dealias in DEALIAS_OPTIONS:
                 N,
                 dt=DT_SPATIAL,
                 T=T_SPATIAL,
-                method_name=method_name,
+                integrator_class=integrator_class,
                 wave_speed=WAVE_SPEED,
                 dealias=dealias,
                 half_length=current_half_length,
@@ -190,11 +191,12 @@ print(f"\nSaved spatial convergence data")
 
 temporal_rows: list[dict[str, object]] = []
 
-for method_name in TEMPORAL_METHODS:
+for integrator_class in INTEGRATORS:
+    method_name = integrator_class.__name__
     dt_stable = _stability_limited_dt(
         N_TEMPORAL,
         WAVE_SPEED,
-        method_name=method_name,
+        integrator_class=integrator_class,
         dealias=DEALIAS_OPTIONS[1],  # dealiased
         half_length=L_TEMPORAL,
     )
@@ -211,7 +213,7 @@ for method_name in TEMPORAL_METHODS:
                 N_TEMPORAL,
                 dt=float(dt),
                 T=target_T,
-                method_name=method_name,
+                integrator_class=integrator_class,
                 wave_speed=WAVE_SPEED,
                 dealias=DEALIAS_OPTIONS[1],  # dealiased
                 half_length=current_half_length,
