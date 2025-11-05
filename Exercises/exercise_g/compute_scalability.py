@@ -29,8 +29,10 @@ x0 = 0.0
 T_timing = 1.0  # Very short simulation for timing
 METHODS = ("RK4", "RK3")
 
-# Sequential timing: vary N (extended range to see asymptotic behavior)
-N_values = [32, 64, 128, 256, 512, 1024, 2048, 4096]
+# Sequential timing: vary N to see proper scaling behavior
+# Larger N values needed to observe N log N scaling from FFT
+# Extended to 8K, 16K, 32K to show N log N term becoming more dominant
+N_values = [64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768]
 # Ensure enough steps per run for reliable timing while keeping runtimes manageable
 MIN_STEPS = 200
 MAX_STEPS = 2000
@@ -78,10 +80,6 @@ def time_single_case(method: str, N: int, L: float, c: float, T: float):
     for _ in range(RHS_REPEATS):
         solver.rhs(u0_hat, 0.0)
     rhs_time = (time.perf_counter() - rhs_start) / RHS_REPEATS
-
-    # Clear history for multi-step methods
-    if hasattr(integ, "u_history"):
-        integ.u_history, integ.f_history = [], []
 
     # Time the solve (use performance measurement)
     start_time = time.perf_counter()
@@ -136,8 +134,13 @@ if __name__ == "__main__":
     df_timing = pd.DataFrame(timing_results)
     df_timing["method"] = df_timing["method"].astype("category")
     out_timing = DATA_DIR / "scalability_timing.parquet"
-    df_timing.to_parquet(out_timing, index=False)
-    print(f"\nSaved timing data to {out_timing}")
+    try:
+        df_timing.to_parquet(out_timing, index=False)
+        print(f"\nSaved timing data to {out_timing}")
+    except ImportError:
+        out_timing = out_timing.with_suffix(".csv")
+        df_timing.to_csv(out_timing, index=False)
+        print(f"\nParquet support missing; saved timing data to {out_timing}")
     print(f"  Shape: {df_timing.shape}")
 
     print("\n" + "=" * 60)

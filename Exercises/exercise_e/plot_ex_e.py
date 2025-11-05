@@ -28,15 +28,15 @@ RESULTS_DIR = repo_root / "figures/A2/ex_e"
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
 SPECTRA_PATH = DATA_DIR / "spectra.parquet"
+CONSERVATION_PATH = DATA_DIR / "conservation.parquet"
 
 # Load data
 
 print("Loading spectra for exercise e)...")
 
 spectra = pd.read_parquet(SPECTRA_PATH)
+conservation = pd.read_parquet(CONSERVATION_PATH)
 
-if spectra.empty:
-    raise RuntimeError("Spectra dataframe is empty – run ex_e.py first.")
 
 # Derived columns
 spectra["k_norm_raw"] = spectra["k_abs"] / (np.pi * spectra["N"] / (2.0 * spectra["L"]))
@@ -50,138 +50,141 @@ for _, row in spectra[["scenario", "N", "dealias"]].drop_duplicates().iterrows()
     )
 
 spectra["scenario_pretty"] = spectra["scenario"].map(scenario_names)
-spectra["dealias_label"] = np.where(
-    spectra["dealias"], "dealiased (3/2-rule)", "aliased"
+
+
+band_start = 2.0 / 3.0  # focus on the dealiasing cutoff (2/3 rule)
+with_power = spectra.assign(band_power=spectra["abs_u_hat"] ** 2)
+high_band = with_power[with_power["k_norm_raw"] >= band_start]
+
+
+summary = (
+    high_band.groupby(["N", "Treatment", "t"], sort=False, observed=True)[
+        "band_power"
+    ]
+    .sum()
+    .reset_index()
 )
-spectra["N_label"] = "N=" + spectra["N"].astype(str)
 
-# Helper functions
+g = sns.relplot(
+    data=summary,
+    x="t",
+    y="band_power",
+    hue="Treatment",
+    col="N",
+    kind="line",
+    facet_kws={"sharex": True, "sharey": True},
+    markers=True,
+)
 
+for ax in g.axes.flat:
+    ax.set_yscale("log")
+    ax.set_xlabel(r"Time $t$")
+    ax.set_ylabel(r"Energy above $2/3 \, k_{\max}$")
 
-def _select_snapshot_times(df: pd.DataFrame, count: int = 4) -> np.ndarray:
-    """Pick `count` evenly spaced snapshot times present in the dataframe."""
-    unique_times = np.sort(df["t"].unique())
-    if unique_times.size <= count:
-        return unique_times
-    indices = np.linspace(0, unique_times.size - 1, count, dtype=int)
-    return unique_times[indices]
+# Add parameter information to title
+N_unique = sorted(spectra["N"].unique())
+L_val = spectra["L"].iloc[0] if "L" in spectra.columns else None
+if L_val and len(N_unique) > 1:
+    param_text = rf"$N \in [{N_unique[0]}, {N_unique[-1]}]$, $L = {L_val:.1f}$"
+elif L_val:
+    param_text = rf"$N = {N_unique[0]}$, $L = {L_val:.1f}$"
+else:
+    param_text = ""
 
-
-def plot_high_band_power(df: pd.DataFrame) -> None:
-    """Line plot of upper-band energy vs time for each resolution."""
-    band_start = 2.0 / 3.0  # focus on the dealiasing cutoff (2/3 rule)
-    with_power = df.assign(band_power=df["abs_u_hat"] ** 2)
-    high_band = with_power[with_power["k_norm_raw"] >= band_start]
-
-    if high_band.empty:
-        return
-
-    summary = (
-        high_band.groupby(["N_label", "dealias_label", "t"], sort=False, observed=True)[
-            "band_power"
-        ]
-        .sum()
-        .reset_index()
+if param_text:
+    g.fig.suptitle(
+        "KdV Aliasing Diagnostic" + "\n" + param_text,
+        y=1.02,
+        fontsize=14
     )
+else:
+    g.fig.suptitle("KdV Aliasing Diagnostic", y=1.02)
 
-    g = sns.relplot(
-        data=summary,
-        x="t",
-        y="band_power",
-        hue="dealias_label",
-        col="N_label",
-        kind="line",
-        height=3.5,
-        aspect=1.3,
-        facet_kws={"sharex": True, "sharey": True},
-        markers=True,
-    )
+g.fig.savefig(RESULTS_DIR / "ex_e_high_band_power.pdf")
 
-    for ax in g.axes.flat:
-        ax.set_yscale("log")
-        ax.set_xlabel(r"Time $t$")
-        ax.set_ylabel(r"Energy above $2/3 \, k_{\max}$")
 
-    g._legend.set_title("spectral treatment")
+# Get final time for each N separately (they have different saved times)
+# Each N has a different timestep so they save at different exact times
+max_t_per_N = spectra.groupby("N", as_index=False)["t"].max().rename(columns={"t": "t_max"})
+plot_df = spectra.merge(max_t_per_N, on="N")
+plot_df = plot_df[plot_df["t"] == plot_df["t_max"]].drop(columns=["t_max"])
 
-    # Add parameter information to title
-    N_unique = sorted(df["N"].unique())
-    L_val = df["L"].iloc[0] if "L" in df.columns else None
-    if L_val and len(N_unique) > 1:
-        param_text = rf"$N \in [{N_unique[0]}, {N_unique[-1]}]$, $L = {L_val:.1f}$"
-    elif L_val:
-        param_text = rf"$N = {N_unique[0]}$, $L = {L_val:.1f}$"
-    else:
-        param_text = ""
 
-    if param_text:
-        g.fig.suptitle(
-            "High-wavenumber energy (aliasing diagnostic)" + "\n" + param_text,
-            y=1.02
+g = sns.relplot(
+    data=plot_df,
+    x="k_abs",
+    y="abs_u_hat_clipped",
+    hue="Treatment",
+    col="N",
+    kind="scatter",
+    alpha=0.6,
+)
+
+for ax in g.axes.flat:
+    ax.set_yscale("log")
+    ax.set_xlabel(r"$|k|$")
+    ax.set_ylabel(r"$|\hat{u}_k|$")
+
+# Add parameter information to title
+N_unique_s = sorted(spectra["N"].unique())
+L_val_s = spectra["L"].iloc[0] if "L" in spectra.columns else None
+t_final_rounded = int(round(plot_df["t"].max()))
+
+g.figure.suptitle(r"KdV Modal Amplitudes", y=1.05)
+g.set_titles(
+    r"$N={col_name:g}$" + "\n" + rf"\tiny , L = {L_val_s:.1f}, t = {t_final_rounded}")
+
+g.fig.savefig(RESULTS_DIR / "ex_e_final_spectra.pdf")
+
+
+# Conservation plot
+# Normalize by initial values to show relative error
+conservation_rel = conservation.copy()
+for quantity in ["mass", "momentum", "energy"]:
+    for scenario in conservation["scenario"].unique():
+        mask = conservation_rel["scenario"] == scenario
+        initial_val = conservation_rel.loc[mask, quantity].iloc[0]
+        conservation_rel.loc[mask, f"{quantity}_rel_error"] = (
+            (conservation_rel.loc[mask, quantity] - initial_val) / abs(initial_val)
         )
-    else:
-        g.fig.suptitle("High-wavenumber energy (aliasing diagnostic)", y=1.02)
 
-    g.fig.savefig(RESULTS_DIR / "ex_e_high_band_power.pdf", bbox_inches="tight")
+# Melt for facet plot
+cons_tidy = conservation_rel.melt(
+    id_vars=["t", "scenario", "N", "Treatment"],
+    value_vars=["mass_rel_error", "momentum_rel_error", "energy_rel_error"],
+    var_name="quantity",
+    value_name="relative_error",
+)
 
+# Clean up quantity names
+cons_tidy["Quantity"] = cons_tidy["quantity"].map({
+    "mass_rel_error": "Mass",
+    "momentum_rel_error": "Momentum",
+    "energy_rel_error": "Energy",
+})
 
-def plot_spectrum_scatter(df: pd.DataFrame) -> None:
-    """Scatter |û_k| vs k/k_max for representative times in each run."""
-    records: list[pd.DataFrame] = []
-    for scen, sub in df.groupby("scenario", sort=False):
-        times = _select_snapshot_times(sub, count=4)
-        subset = sub[sub["t"].isin(times)].copy()
-        subset["time_label"] = subset["t"].map(lambda t_val: f"t = {t_val:.2f}")
-        records.append(subset)
+g_cons = sns.relplot(
+    data=cons_tidy,
+    x="t",
+    y="relative_error",
+    hue="Treatment",
+    col="N",
+    row="Quantity",
+    kind="line",
+    facet_kws={"sharex": True, "sharey": False},
+    markers=True,
+    alpha=0.8,
+)
 
-    if not records:
-        return
+for ax in g_cons.axes.flat:
+    ax.set_xlabel(r"Time $t$")
+    ax.set_ylabel(r"Relative Error $(Q(t) - Q_0)/|Q_0|$")
+    ax.axhline(0, color="gray", linestyle="--", linewidth=0.5)
 
-    plot_df = pd.concat(records, ignore_index=True)
+L_val_cons = conservation["L"].iloc[0] if "L" in conservation.columns else None
+g_cons.figure.suptitle("KdV Conservation Errors", fontsize=16, y=0.995)
 
-    g = sns.relplot(
-        data=plot_df,
-        x="k_norm",
-        y="abs_u_hat_clipped",
-        hue="time_label",
-        col="scenario_pretty",
-        kind="scatter",
-        height=3.5,
-        aspect=1.3,
-        facet_kws={"sharex": True, "sharey": True},
-    )
+g_cons.fig.savefig(RESULTS_DIR / "ex_e_conservation.pdf", bbox_inches="tight")
 
-    for ax in g.axes.flat:
-        ax.set_yscale("log")
-        ax.set_xlabel(r"$|k| / k_{\max}$")
-        ax.set_ylabel(r"$|\hat{u}_k|$")
-
-    g._legend.set_title("snapshot time")
-
-    # Add parameter information to title
-    N_unique_s = sorted(df["N"].unique())
-    L_val_s = df["L"].iloc[0] if "L" in df.columns else None
-    if L_val_s and len(N_unique_s) > 1:
-        param_text_s = rf"$N \in [{N_unique_s[0]}, {N_unique_s[-1]}]$, $L = {L_val_s:.1f}$"
-    elif L_val_s:
-        param_text_s = rf"$N = {N_unique_s[0]}$, $L = {L_val_s:.1f}$"
-    else:
-        param_text_s = ""
-
-    if param_text_s:
-        g.fig.suptitle(
-            "Modal amplitudes at representative times" + "\n" + param_text_s,
-            y=1.02
-        )
-    else:
-        g.fig.suptitle("Modal amplitudes at representative times", y=1.02)
-
-    g.fig.savefig(RESULTS_DIR / "ex_e_spectrum_snapshots.pdf", bbox_inches="tight")
-
-
-# Generate figures
-
-plot_high_band_power(spectra)
-plot_spectrum_scatter(spectra)
 
 print(f"Figures saved in {RESULTS_DIR}")

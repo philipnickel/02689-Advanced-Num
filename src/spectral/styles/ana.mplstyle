@@ -1,55 +1,67 @@
-# Matplotlib style 
+# ======================================================
+# Matplotlib style for LaTeX scientific reports
+# ======================================================
 
+# Figure layout
+figure.figsize       : 4.0, 3.0       # ~single-column figure
+figure.dpi           : 300
+savefig.dpi          : 300
+savefig.bbox         : tight
+savefig.pad_inches   : 0.05
 
-# Set default figure size
-figure.figsize : 4, 3 
+# Optional colormap
+# image.cmap          : coolwarm
 
-# colormap
-#image.cmap : coolwarm
+# ======================================================
+# Axis ticks
+# ======================================================
+xtick.direction      : in
+xtick.major.size     : 3
+xtick.major.width    : 0.5
+xtick.minor.size     : 1.5
+xtick.minor.width    : 0.5
+xtick.minor.visible  : True
+xtick.top            : True
 
-# Set x axis
-xtick.direction : in
-xtick.major.size : 3
-xtick.major.width : 0.5
-xtick.minor.size : 1.5
-xtick.minor.width : 0.5
-xtick.minor.visible : True
-xtick.top : True
+ytick.direction      : in
+ytick.major.size     : 3
+ytick.major.width    : 0.5
+ytick.minor.size     : 1.5
+ytick.minor.width    : 0.5
+ytick.minor.visible  : True
+ytick.right          : True
 
-# Set y axis
-ytick.direction : in
-ytick.major.size : 3
-ytick.major.width : 0.5
-ytick.minor.size : 1.5
-ytick.minor.width : 0.5
-ytick.minor.visible : True
-ytick.right : True
-
+# ======================================================
 # Gridlines
-axes.grid : True               # draw grid by default on all Axes
-axes.grid.axis : both          # grid on both x and y axes
-axes.grid.which : both         # apply to both major and minor ticks
-grid.color : 0.85              # light gray (can use hex or rgb)
-grid.linestyle : -             # solid lines (use '--' for dashed)
-grid.alpha : 0.6               # transparency of gridlines
+# ======================================================
+axes.grid            : True
+axes.grid.axis       : both
+axes.grid.which      : both
+grid.color           : 0.85
+grid.linestyle       : -
+grid.alpha           : 0.6
+grid.linewidth       : 0.5
 
-
-# Set line widths
-axes.linewidth : 0.5
-grid.linewidth : 0.5
-lines.linewidth : 1.
-
-# Remove legend frame
-legend.frameon : False
-
-# Always save as 'tight'
-savefig.bbox : tight
-savefig.pad_inches : 0.05
-
-# Use serif fonts
-# font.serif : Times
-font.family : serif
+# ======================================================
+# Font and text settings
+# ======================================================
+font.family          : serif
+font.size            : 9.5     # Base text size (matches 10pt LaTeX body)
+axes.labelsize       : 10.5    # Axis labels
+axes.titlesize       : 11.5    # Axes titles
+figure.titlesize     : 16      # Figure suptitle
+legend.fontsize      : 9       # Legend
+xtick.labelsize      : 9       # Tick labels
+ytick.labelsize      : 9       # Tick labels
 
 # Use LaTeX for math formatting
-text.usetex : True
+text.usetex          : True
+
 text.latex.preamble : \usepackage[T1]{fontenc} \usepackage{amsmath} \usepackage{amssymb} \usepackage{bm} \usepackage{siunitx}
+
+# ======================================================
+# Lines and legends
+# ======================================================
+axes.linewidth       : 0.5
+lines.linewidth      : 1.0
+legend.frameon       : False

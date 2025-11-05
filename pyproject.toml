@@ -34,6 +34,7 @@ dependencies = [
   "pytest-cov>=5.0.0",
   "interrogate>=1.7.0",
   "pydocstyle>=6.3.0",
+  "line-profiler>=5.0.0",
 ]
 
 [tool.setuptools]

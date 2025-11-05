@@ -97,15 +97,13 @@ for (c_val, method), ax in zip(
     ax.set_ylim(ymin, ymax)
 
 g.set_axis_labels(r"Re($\lambda \cdot \Delta t$)", r"Im($\lambda \cdot \Delta t$)")
-g.set_titles(r"$c$ = {col_name}")
 N_stab = stability_df_finite["N"].iloc[0] if "N" in stability_df_finite.columns else 80
 L_stab = (
     stability_df_finite["L"].iloc[0] if "L" in stability_df_finite.columns else 30.0
 )
-g.fig.suptitle(
-    "Eigenvalues in Stability Plane" + "\n" +
-    rf"$N = {N_stab}$, $L = {L_stab:.1f}$",
-    y=1.02
+g.fig.suptitle(r"KdV Stability", y=1.05)
+g.set_titles(
+    r"$c$ = {col_name}" + "\n" + rf"\tiny $N = {N_stab}$, $L = {L_stab:.1f}$"
 )
 
 output = save_dir / "eigenvalue_stability.pdf"
@@ -148,14 +146,12 @@ for c_val, ax in zip(sorted(scaling_df["c"].unique()), g1.axes.flat):
 
 g1.set(xscale="log", yscale="log")
 g1.set_axis_labels(r"Grid points $N$", r"Maximum $|\lambda|$")
-g1.set_titles(r"$c$ = {col_name}")
 N_min_s = scaling_df["N"].min()
 N_max_s = scaling_df["N"].max()
 L_s = scaling_df["L"].iloc[0] if "L" in scaling_df.columns else 30.0
-g1.fig.suptitle(
-    "Eigenvalue Scaling with Resolution" + "\n" +
-    rf"$N \in [{N_min_s}, {N_max_s}]$, $L = {L_s:.1f}$",
-    y=1.02
+g1.fig.suptitle(r"KdV Eigenvalue Scaling", y=1.05)
+g1.set_titles(
+    r"$c$ = {col_name}" + "\n" + rf"\tiny $N \in [{N_min_s}, {N_max_s}]$, $L = {L_s:.1f}$"
 )
 
 output = save_dir / "eigenvalue_max_scaling.pdf"
@@ -195,10 +191,9 @@ for c_val, ax in zip(sorted(scaling_df["c"].unique()), g2.axes.flat):
 
 g2.set(xscale="log", yscale="log")
 g2.set_axis_labels(r"Grid points $N$", r"Stable $\Delta t$")
-g2.set_titles(r"$c$ = {col_name}")
-g2.fig.suptitle(
-    'Timestep Scaling with Resolution' + "\n" +
-    rf"$N \in [{N_min_s}, {N_max_s}]$, $L = {L_s:.1f}$", y=1.02
+g2.fig.suptitle(r"KdV Timestep Scaling", y=1.05)
+g2.set_titles(
+    r"$c$ = {col_name}" + "\n" + rf"\tiny $N \in [{N_min_s}, {N_max_s}]$, $L = {L_s:.1f}$"
 )
 
 output = save_dir / "eigenvalue_scaling.pdf"

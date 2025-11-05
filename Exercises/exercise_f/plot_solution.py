@@ -109,8 +109,9 @@ c1 = metadata.get("c1", "?")
 c2 = metadata.get("c2", "?")
 dt_latex = format_dt_latex(dt)
 ax.set_title(
-    "KdV two-soliton collision" + "\n" +
-    rf"$N = {N}$, $L = {L}$, $\Delta t = {dt_latex}$, $c_1 = {c1}$, $c_2 = {c2}$"
+    "KdV Two-Soliton Collision" + "\n" +
+    rf"$N = {N}$, $L = {L}$, $\Delta t = {dt_latex}$, $c_1 = {c1}$, $c_2 = {c2}$",
+    fontsize=14
 )
 
 output_path = save_dir / "spacetime.pdf"

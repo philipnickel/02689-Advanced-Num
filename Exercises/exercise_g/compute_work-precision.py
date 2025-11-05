@@ -43,13 +43,6 @@ INTEGRATORS: dict[str, Callable[[], object]] = {
 # Helpers
 # --------------------------------------------------------------------------- #
 
-def _reset_integrator(integrator: object) -> None:
-    if hasattr(integrator, "u_history"):
-        integrator.u_history = []
-    if hasattr(integrator, "f_history"):
-        integrator.f_history = []
-
-
 def _stable_dt(method: str) -> float:
     solver = KdVSolver(N, L, dealias=False)
     u0 = soliton(solver.x, 0.0, SOLITON_SPEED, SOLITON_X0)
@@ -72,7 +65,6 @@ def _run_case(method: str, dt: float, factory: Callable[[], object]) -> dict:
     dx = solver.dx
     u0 = soliton(x, 0.0, SOLITON_SPEED, SOLITON_X0)
     integrator = factory()
-    _reset_integrator(integrator)
 
     save_every = max(1, int(np.ceil(T_FINAL / dt)))
 
@@ -105,7 +97,6 @@ def _run_case(method: str, dt: float, factory: Callable[[], object]) -> dict:
         "n_steps": performance["nsteps"],
         "wall_time_s": performance["wall_time_s"],
         "mean_step_time_s": performance["mean_step_time_ms"] / 1000.0,
-        "std_step_time_s": performance["std_step_time_ms"] / 1000.0,
         "error_l2": error_l2,
         "error_linf": error_linf,
         "t_end": t_end,
@@ -143,7 +134,11 @@ if __name__ == "__main__":
     df = pd.DataFrame(rows)
     df.sort_values(["method", "dt"], inplace=True)
     output_path = DATA_DIR / "work_precision.parquet"
-    df.to_parquet(output_path, index=False)
+    try:
+        df.to_parquet(output_path, index=False)
+    except ImportError:
+        output_path = output_path.with_suffix(".csv")
+        df.to_csv(output_path, index=False)
 
     print("\nSaved work-precision data →", output_path)
     print("Done.")

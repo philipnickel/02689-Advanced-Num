@@ -30,7 +30,7 @@ print("Creating spatial convergence plot...")
 spatial_path = DATA_DIR / "kdv_spatial_convergence.parquet"
 df_spatial = pd.read_parquet(spatial_path)
 
-fig, ax = plt.subplots(figsize=(6.5, 4.5))
+fig, ax = plt.subplots()
 
 sns.lineplot(
     data=df_spatial,
@@ -40,8 +40,6 @@ sns.lineplot(
     style="dealias",
     markers=True,
     dashes=False,
-    linewidth=2,
-    markersize=7,
     ax=ax,
 )
 
@@ -50,8 +48,6 @@ ax.set_xscale("log")
 ax.set_xlabel(r"Number of modes ($N$)")
 ax.set_ylabel(r"$L^2$ error")
 
-ax.grid(True, alpha=0.3)
-ax.legend(fontsize=8)
 
 # Add parameter information to title
 N_min_sp = df_spatial["N"].min()
@@ -71,8 +67,7 @@ else:
     param_text = rf"$N \in [{N_min_sp}, {N_max_sp}]$"
 
 ax.set_title(
-    "Spatial Convergence (Fourier spectral solver)" + "\n" + param_text,
-    fontweight="bold"
+    "KdV Spatial Convergence" + "\n" + param_text,
 )
 
 #plt.tight_layout()
@@ -90,7 +85,7 @@ print("Creating temporal convergence plot...")
 temporal_path = DATA_DIR / "kdv_temporal_convergence.parquet"
 df_temporal = pd.read_parquet(temporal_path)
 
-fig, ax = plt.subplots(figsize=(6.5, 4.5))
+fig, ax = plt.subplots()
 
 sns.lineplot(
     data=df_temporal,
@@ -100,8 +95,6 @@ sns.lineplot(
     style="dealias",
     markers=True,
     dashes=False,
-    linewidth=2,
-    markersize=7,
     ax=ax,
 )
 
@@ -111,8 +104,6 @@ ax.invert_xaxis()
 ax.set_xlabel(r"Time step $\Delta t$")
 ax.set_ylabel(r"$L^2$ error")
 
-ax.grid(True, alpha=0.3)
-ax.legend(fontsize=8)
 
 # Add parameter information to title
 N_temp = df_temporal["N"].iloc[0] if "N" in df_temporal.columns else 128
@@ -133,8 +124,7 @@ else:
     param_text_temp = rf"$N = {N_temp}$, $\Delta t \in [{dt_min_latex}, {dt_max_latex}]$"
 
 ax.set_title(
-    "Temporal Convergence (N=128)" + "\n" + param_text_temp,
-    fontweight="bold"
+    "KdV Temporal Convergence" + "\n" + param_text_temp,
 )
 
 #plt.tight_layout()

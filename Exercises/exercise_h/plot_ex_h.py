@@ -71,14 +71,14 @@ for ax in axs:
     ax.set_xlabel(r"Time $t$")
     ax.set_ylabel(r"Space $x$")
 
-axs[0].set_title("True Solution", pad=20, fontweight="bold")
-axs[1].set_title("Predicted Solution", pad=20, fontweight="bold")
+axs[0].set_title("True Solution", pad=20, fontsize=12)
+axs[1].set_title("Predicted Solution", pad=20, fontsize=12)
 Nx = df["Nx"].iloc[0] if "Nx" in df.columns else len(xs)
 Nt = df["Nt"].iloc[0] if "Nt" in df.columns else len(ts)
 axs[2].set_title(
     f"Error (L2: {error_l2:.2e})" + "\n" + rf"$N_x = {Nx}$, $N_t = {Nt}$",
     pad=20,
-    fontweight="bold"
+    fontsize=12
 )
 
 output_path = save_dir / "solution.pdf"
@@ -133,9 +133,9 @@ Nx_min_sp = df_spatial["Nx"].min()
 Nx_max_sp = df_spatial["Nx"].max()
 Nt_sp = df_spatial["Nt"].iloc[0] if "Nt" in df_spatial.columns else 100
 ax.set_title(
-    r"Spatial Convergence ($N_t=100$)" + "\n" +
+    "Transport Equation - Spatial Convergence" + "\n" +
     rf"$N_x \in [{Nx_min_sp}, {Nx_max_sp}]$, $N_t = {Nt_sp}$",
-    fontweight="bold"
+    fontsize=14
 )
 
 plt.tight_layout()
@@ -191,9 +191,9 @@ Nt_min_t = df_temporal["Nt"].min()
 Nt_max_t = df_temporal["Nt"].max()
 Nx_t = df_temporal["Nx"].iloc[0] if "Nx" in df_temporal.columns else 100
 ax.set_title(
-    r"Temporal Convergence ($N_x=100$)" + "\n" +
+    "Transport Equation - Temporal Convergence" + "\n" +
     rf"$N_t \in [{Nt_min_t}, {Nt_max_t}]$, $N_x = {Nx_t}$",
-    fontweight="bold"
+    fontsize=14
 )
 
 plt.tight_layout()

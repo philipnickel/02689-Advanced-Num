@@ -55,16 +55,14 @@ ax.set(
     xlabel=r"Number of radial nodes $N_r$",
     ylabel=r"$L^\infty$ Error",
 )
-ax.set_title("Convergence Study: Polar BVP, $N_{\\theta}= 50$")
-ax.legend()
-ax.grid(True, alpha=0.3)
 
-# Add parameter footer
+# Add title with parameters
 Nr_min = convergence_df["Nr"].min()
 Nr_max = convergence_df["Nr"].max()
 ax.set_title(
-    "Convergence Study: Polar BVP" + "\n" +
-    rf"$N_r \in [{Nr_min}, {Nr_max}]$"
+    "Polar BVP" + "\n" +
+    rf"$N_r \in [{Nr_min}, {Nr_max}]$, $N_{{\theta}} = 50$",
+    fontsize=14
 )
 ax.legend()
 ax.grid(True, alpha=0.3)
@@ -108,17 +106,20 @@ err_vals = convergence_df["Linf_err"].values
 ax.set(
     # xscale="log",
     yscale="log",
-    xlabel=r"Number of radial nodes $N_{\theta}$",
+    xlabel=r"Number of angular nodes $N_{\theta}$",
     ylabel=r"$L^\infty$ Error",
 )
-ax.set_title("Convergence Study: Polar BVP, $N_r = 20$")
-ax.legend()
-ax.grid(True, alpha=0.3)
 
-# Add parameter footer
+# Add title with parameters
 Ntheta_min = convergence_df["Ntheta"].min()
 Ntheta_max = convergence_df["Ntheta"].max()
-add_parameter_footer(fig, rf"$N_{{\theta}} \in [{Ntheta_min}, {Ntheta_max}]$")
+ax.set_title(
+    "Polar BVP" + "\n" +
+    rf"$N_{{\theta}} \in [{Ntheta_min}, {Ntheta_max}]$, $N_r = 20$",
+    fontsize=14
+)
+ax.legend()
+ax.grid(True, alpha=0.3)
 
 fig.savefig(save_dir / "convergence_theta.pdf", bbox_inches="tight")
 print(f"Saved: {save_dir}/convergence_theta.pdf")
@@ -168,8 +169,9 @@ cbar = fig.colorbar(con, ax=ax)
 cbar.set_label(r"$\Phi$")
 ax.set_ylim(0, r2)
 ax.set_title(
-    "Numerical Solution (Spectral Collocation)" + "\n" +
-    rf"$N_r = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)"
+    "Polar BVP - Numerical Solution" + "\n" +
+    rf"$N_r = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)",
+    fontsize=14
 )
 
 fig.savefig(save_dir / "solution.pdf", bbox_inches="tight")
@@ -186,8 +188,9 @@ cbar = fig.colorbar(con, ax=ax)
 cbar.set_label(r"$\Phi_{\rm num} - \Phi_{\rm exact}$")
 ax.set_ylim(0, r2)
 ax.set_title(
-    "Error" + "\n" +
-    rf"$N_r = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)"
+    "Polar BVP - Error" + "\n" +
+    rf"$N_r = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)",
+    fontsize=14
 )
 
 fig.savefig(save_dir / "error.pdf", bbox_inches="tight")

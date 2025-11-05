@@ -27,6 +27,7 @@ from .tdp import (  # noqa: E402
     KdVSolver,
     soliton,
     two_soliton_initial,
+    ManufacturedSolution,
     TimeIntegrator,
     get_time_integrator,
     RK3,
@@ -54,6 +55,7 @@ __all__ = [
     "KdVSolver",
     "soliton",
     "two_soliton_initial",
+    "ManufacturedSolution",
     "RK3",
     "RK4",
     # Utilities

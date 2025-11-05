@@ -45,10 +45,12 @@ WAVE_SPEED = 1.0
 
 T_SPATIAL = 0.01#2.0e-2
 DT_SPATIAL = 1.0e-6  # sufficiently small to suppress temporal error
-N_VALUES_SPATIAL = 2 * np.linspace(start=10, stop=50, num=5, dtype=int)  
+# Logarithmic spacing with 20 values from 16 to 256, ensuring even numbers
+N_VALUES_SPATIAL = (np.geomspace(10, 300, num=20, dtype=int) // 2) * 2
 
 N_TEMPORAL = 100
-DT_SCALES = 0.4 * np.logspace(start=0, stop=10, num=5, base=0.5)  # (halving each step)
+# Logarithmic spacing using arange with powers of 0.5 (halving each step)
+DT_SCALES = 0.4 * (0.5**np.arange(1, 3))
 
 
 

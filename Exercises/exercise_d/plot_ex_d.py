@@ -188,9 +188,10 @@ for method in methods:
     df_method_domain = df_domain_errors[df_domain_errors["method"] == method]
     L_vals = sorted(df_method_domain["L"].unique())
     fig.suptitle(
-        f"{method} - Domain Investigation: Errors (varying L, N=128)" + "\n" +
+        f"{method} - Domain Investigation" + "\n" +
         rf"$N = 128$, $L \in [{L_vals[0]:.1f}, {L_vals[-1]:.1f}]$, $T = 20$",
-        y=1.02
+        y=1.02,
+        fontsize=14
     )
     output = save_dir / f"{method.lower()}_domain_errors.pdf"
     fig.savefig(output, bbox_inches="tight")
@@ -199,9 +200,10 @@ for method in methods:
     # Domain investigation - conservation (relative errors)
     fig = plot_conservation(df_domain_quantities, method, "domain", "L")
     fig.suptitle(
-        f"{method} - Domain Investigation: Conservation (varying L, N=128)" + "\n" +
+        f"{method} - Domain Conservation" + "\n" +
         rf"$N = 128$, $L \in [{L_vals[0]:.1f}, {L_vals[-1]:.1f}]$, $T = 20$",
-        y=1.02
+        y=1.02,
+        fontsize=14
     )
     output = save_dir / f"{method.lower()}_domain_conservation.pdf"
     fig.savefig(output, bbox_inches="tight")
@@ -210,9 +212,10 @@ for method in methods:
     # Domain investigation - quantities (actual values)
     fig = plot_quantities(df_domain_quantities, method, "domain", "L")
     fig.suptitle(
-        f"{method} - Domain Investigation: Quantities M, V, E (varying L, N=128)" + "\n" +
+        f"{method} - Domain Quantities" + "\n" +
         rf"$N = 128$, $L \in [{L_vals[0]:.1f}, {L_vals[-1]:.1f}]$, $T = 20$",
-        y=1.02
+        y=1.02,
+        fontsize=14
     )
     output = save_dir / f"{method.lower()}_domain_quantities.pdf"
     fig.savefig(output, bbox_inches="tight")
@@ -223,9 +226,10 @@ for method in methods:
     df_method_nodes = df_nodes_errors[df_nodes_errors["method"] == method]
     N_vals = sorted(df_method_nodes["N"].unique())
     fig.suptitle(
-        f"{method} - Nodes Investigation: Errors (varying N, L=30)" + "\n" +
+        f"{method} - Nodes Investigation" + "\n" +
         rf"$L = 30.0$, $N \in [{N_vals[0]}, {N_vals[-1]}]$, $T = 20$",
-        y=1.02
+        y=1.02,
+        fontsize=14
     )
     output = save_dir / f"{method.lower()}_nodes_errors.pdf"
     fig.savefig(output, bbox_inches="tight")
@@ -234,9 +238,10 @@ for method in methods:
     # Node investigation - conservation (relative errors)
     fig = plot_conservation(df_nodes_quantities, method, "nodes", "N")
     fig.suptitle(
-        f"{method} - Nodes Investigation: Conservation (varying N, L=30)" + "\n" +
+        f"{method} - Nodes Conservation" + "\n" +
         rf"$L = 30.0$, $N \in [{N_vals[0]}, {N_vals[-1]}]$, $T = 20$",
-        y=1.02
+        y=1.02,
+        fontsize=14
     )
     output = save_dir / f"{method.lower()}_nodes_conservation.pdf"
     fig.savefig(output, bbox_inches="tight")
@@ -245,9 +250,10 @@ for method in methods:
     # Node investigation - quantities (actual values)
     fig = plot_quantities(df_nodes_quantities, method, "nodes", "N")
     fig.suptitle(
-        f"{method} - Nodes Investigation: Quantities M, V, E (varying N, L=30)" + "\n" +
+        f"{method} - Nodes Quantities" + "\n" +
         rf"$L = 30.0$, $N \in [{N_vals[0]}, {N_vals[-1]}]$, $T = 20$",
-        y=1.02
+        y=1.02,
+        fontsize=14
     )
     output = save_dir / f"{method.lower()}_nodes_quantities.pdf"
     fig.savefig(output, bbox_inches="tight")

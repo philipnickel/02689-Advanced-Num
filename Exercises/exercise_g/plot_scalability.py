@@ -15,7 +15,11 @@ Creates plot showing computational complexity:
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
+
+try:
+    import seaborn as sns  # type: ignore
+except ModuleNotFoundError:
+    sns = None
 
 from spectral.utils.plotting import get_repo_root
 
@@ -26,7 +30,16 @@ save_dir.mkdir(parents=True, exist_ok=True)
 
 # %% Load data
 print("Loading scalability data...")
-df_timing = pd.read_parquet(data_dir / "scalability_timing.parquet")
+timing_path = data_dir / "scalability_timing.parquet"
+if timing_path.exists():
+    try:
+        df_timing = pd.read_parquet(timing_path)
+    except ImportError:
+        timing_path = timing_path.with_suffix(".csv")
+        df_timing = pd.read_csv(timing_path)
+else:
+    timing_path = timing_path.with_suffix(".csv")
+    df_timing = pd.read_csv(timing_path)
 
 print(f"  Timing data: {df_timing.shape}")
 
@@ -37,16 +50,26 @@ fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
 
 # ===== Panel 1: Absolute performance (log-log) =====
 # Plot data for each method
-sns.lineplot(
-    data=df_timing,
-    x="N",
-    y="time_per_step",
-    hue="method",
-    style="method",
-    markers=True,
-    markersize=8,
-    ax=ax1,
-)
+if sns:
+    sns.lineplot(
+        data=df_timing,
+        x="N",
+        y="time_per_step",
+        hue="method",
+        style="method",
+        markers=True,
+        markersize=8,
+        ax=ax1,
+    )
+else:
+    for method, subset in df_timing.groupby("method"):
+        subset = subset.sort_values("N")
+        ax1.plot(
+            subset["N"],
+            subset["time_per_step"],
+            marker="o",
+            label=method,
+        )
 
 # Add reference line: N log N scaling
 N_ref = df_timing["N"].unique()
@@ -78,7 +101,12 @@ ax1.grid(True, alpha=0.3)
 
 # ===== Panel 2: Normalized efficiency =====
 # Compare full step timing vs direct RHS evaluations
-colors = dict(zip(df_timing["method"].unique(), sns.color_palette("deep")))
+methods = df_timing["method"].unique()
+if sns:
+    palette = sns.color_palette("deep", n_colors=len(methods))
+else:
+    palette = [plt.cm.tab10(i) for i in range(len(methods))]
+colors = dict(zip(methods, palette))
 
 for method in df_timing["method"].unique():
     subset = df_timing[df_timing["method"] == method].sort_values("N")
@@ -125,12 +153,13 @@ L_val = df_timing["L"].iloc[0] if "L" in df_timing.columns else None
 T_val = df_timing["T"].iloc[0] if "T" in df_timing.columns else None
 if L_val and T_val:
     fig.suptitle(
-        "KdV Solver Scalability Analysis" + "\n" +
+        "KdV Scalability" + "\n" +
         rf"$L = {L_val:.1f}$, $T = {T_val:.1f}$",
+        fontsize=14,
         y=1.02
     )
 else:
-    fig.suptitle("KdV Solver Scalability Analysis", fontsize=14, y=1.02)
+    fig.suptitle("KdV Scalability", fontsize=14, y=1.02)
 
 output = save_dir / "scalability_analysis.pdf"
 fig.savefig(output, bbox_inches="tight")

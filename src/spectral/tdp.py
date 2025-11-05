@@ -4,6 +4,75 @@ from __future__ import annotations
 
 import numpy as np
 from typing import Callable
+from numba import njit
+
+# Use numpy.fft directly (minimal overhead)
+fft_backend = np.fft
+
+# Numba JIT kernels to eliminate Python overhead in element-wise operations
+@njit(cache=True)
+def _jit_nonlinear_term(u: np.ndarray, ux: np.ndarray) -> np.ndarray:
+    """Compute u * ux with Numba JIT."""
+    return u * ux
+
+
+@njit(cache=True)
+def _jit_combine_rhs(nonlinear: np.ndarray, uxxx: np.ndarray) -> np.ndarray:
+    """Compute -6*nonlinear - uxxx with Numba JIT."""
+    result = np.empty_like(nonlinear)
+    for i in range(nonlinear.size):
+        result[i] = -6.0 * nonlinear[i] - uxxx[i]
+    return result
+
+
+@njit(cache=True, inline='always')
+def _jit_rk4_combine(u: np.ndarray, k1: np.ndarray, k2: np.ndarray,
+                     k3: np.ndarray, k4: np.ndarray, dt: float) -> np.ndarray:
+    """Fused RK4 final combination."""
+    result = np.empty_like(u)
+    dt6 = dt / 6.0
+    for i in range(u.size):
+        result[i] = u[i] + dt6 * (k1[i] + 2.0 * k2[i] + 2.0 * k3[i] + k4[i])
+    return result
+
+
+@njit(cache=True, inline='always')
+def _jit_rk4_stage(u: np.ndarray, k: np.ndarray, factor: float) -> np.ndarray:
+    """Compute u + factor * k for RK4 stages."""
+    result = np.empty_like(u)
+    for i in range(u.size):
+        result[i] = u[i] + factor * k[i]
+    return result
+
+
+
+
+@njit(cache=True, inline='always')
+def _jit_rk3_stage1(u: np.ndarray, k1: np.ndarray, dt: float) -> np.ndarray:
+    """RK3 first stage: u + dt*k1."""
+    result = np.empty_like(u)
+    for i in range(u.size):
+        result[i] = u[i] + dt * k1[i]
+    return result
+
+
+@njit(cache=True, inline='always')
+def _jit_rk3_stage2(u: np.ndarray, u1: np.ndarray, k2: np.ndarray, dt: float) -> np.ndarray:
+    """RK3 second stage: 0.75*u + 0.25*u1 + 0.25*dt*k2."""
+    result = np.empty_like(u)
+    for i in range(u.size):
+        result[i] = 0.75 * u[i] + 0.25 * u1[i] + 0.25 * dt * k2[i]
+    return result
+
+
+@njit(cache=True, inline='always')
+def _jit_rk3_stage3(u: np.ndarray, u2: np.ndarray, k3: np.ndarray, dt: float) -> np.ndarray:
+    """RK3 third stage: (1/3)*u + (2/3)*u2 + (2/3)*dt*k3."""
+    result = np.empty_like(u)
+    for i in range(u.size):
+        result[i] = (1.0/3.0) * u[i] + (2.0/3.0) * u2[i] + (2.0/3.0) * dt * k3[i]
+    return result
+
 
 
 # =============================================================================
@@ -81,14 +150,25 @@ class RK3(TimeIntegrator):
         super().__init__("RK3", order=3, stages=3)
 
     def step(self, rhs: Callable, u: np.ndarray, t: float, dt: float) -> np.ndarray:
-        u1 = u + dt * rhs(u, t)
-        u2 = 0.75 * u + 0.25 * u1 + 0.25 * dt * rhs(u1, t + dt)
-        u3 = (
-            (1.0 / 3.0) * u
-            + (2.0 / 3.0) * u2
-            + (2.0 / 3.0) * dt * rhs(u2, t + 0.5 * dt)
-        )
-        return u3
+        # Pre-allocate temp arrays to reduce allocations
+        temp = np.empty_like(u)
+        u_stage = np.empty_like(u)
+
+        k1 = rhs(u, t)
+        np.multiply(dt, k1, out=u_stage)
+        u_stage += u
+
+        k2 = rhs(u_stage, t + dt)
+        np.multiply(0.75, u, out=temp)
+        temp += 0.25 * u_stage
+        temp += 0.25 * dt * k2
+
+        k3 = rhs(temp, t + 0.5 * dt)
+        np.multiply(1.0/3.0, u, out=u_stage)
+        u_stage += (2.0/3.0) * temp
+        u_stage += (2.0/3.0) * dt * k3
+
+        return u_stage
 
 
 class RK4(TimeIntegrator):
@@ -114,11 +194,14 @@ class RK4(TimeIntegrator):
         super().__init__("RK4", order=4, stages=4)
 
     def step(self, rhs: Callable, u: np.ndarray, t: float, dt: float) -> np.ndarray:
+        # Use JIT kernels for all stages
         k1 = rhs(u, t)
-        k2 = rhs(u + 0.5 * dt * k1, t + 0.5 * dt)
-        k3 = rhs(u + 0.5 * dt * k2, t + 0.5 * dt)
-        k4 = rhs(u + dt * k3, t + dt)
-        return u + (dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
+        k2 = rhs(_jit_rk4_stage(u, k1, 0.5 * dt), t + 0.5 * dt)
+        k3 = rhs(_jit_rk4_stage(u, k2, 0.5 * dt), t + 0.5 * dt)
+        k4 = rhs(_jit_rk4_stage(u, k3, dt), t + dt)
+
+        # Use JIT kernel for final combination
+        return _jit_rk4_combine(u, k1, k2, k3, k4, dt)
 
 
 def get_time_integrator(name: str, **kwargs) -> TimeIntegrator:
@@ -153,8 +236,8 @@ def get_time_integrator(name: str, **kwargs) -> TimeIntegrator:
 
 
 def soliton(x: np.ndarray, t: float, c: float, x0: float = 0.0) -> np.ndarray:
-    r"""
-    Compute KdV soliton solution :math:`u(x,t) = \frac{c/2}{\cosh^2(\sqrt{c}/2 \cdot \xi)}`.
+    """
+    Compute KdV soliton solution.
 
     Parameters
     ----------
@@ -171,10 +254,6 @@ def soliton(x: np.ndarray, t: float, c: float, x0: float = 0.0) -> np.ndarray:
     -------
     np.ndarray
         Soliton amplitude at each spatial point
-
-    Notes
-    -----
-    The traveling wave coordinate is :math:`\xi = x - ct - x_0`.
     """
     xi = x - c * t - x0
     return 0.5 * c / np.cosh(0.5 * np.sqrt(c) * xi) ** 2
@@ -186,7 +265,7 @@ def two_soliton_initial(
     """
     Initial condition for two-soliton collision simulation.
 
-    Superposition of two solitons at :math:`t=0`.
+    Superposition of two solitons at t=0.
 
     Parameters
     ----------
@@ -209,37 +288,122 @@ def two_soliton_initial(
     return soliton(x, 0.0, c1, x01) + soliton(x, 0.0, c2, x02)
 
 
+class ManufacturedSolution:
+    """
+    Manufactured solution for convergence testing.
+
+    Provides an exact solution u_exact(x,t) and computes the source term
+    f(x,t) needed to satisfy the modified KdV equation:
+        u_t + 6*u*u_x + u_xxx = f(x,t)
+
+    The source term is computed symbolically as:
+        f(x,t) = u_t + 6*u*u_x + u_xxx
+    evaluated at the exact solution.
+
+    Parameters
+    ----------
+    amplitude : float
+        Amplitude of the solution
+    wavenumber : float
+        Spatial wavenumber (must be integer for periodicity)
+    decay_rate : float
+        Temporal decay rate (positive for decay)
+
+    Notes
+    -----
+    The manufactured solution has the form:
+        u(x,t) = A * sin(k*x) * exp(-alpha*t)
+
+    This is smooth, periodic, and decays in time, making it ideal for
+    convergence testing without shock formation or instabilities.
+    """
+
+    def __init__(self, amplitude: float = 1.0, wavenumber: float = 1.0, frequency: float = 0.1):
+        """Initialize manufactured solution parameters."""
+        self.A = amplitude
+        self.k = wavenumber
+        self.omega = frequency
+
+    def u_exact(self, x: np.ndarray, t: float) -> np.ndarray:
+        """
+        Compute exact solution at given spatial points and time.
+
+        u(x,t) = A * sin(k*x) * sin(omega*t)
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Spatial coordinates
+        t : float
+            Time
+
+        Returns
+        -------
+        np.ndarray
+            Exact solution u(x,t)
+        """
+        return self.A * np.sin(self.k * x) * np.sin(self.omega * t)
+
+    def source(self, x: np.ndarray, t: float) -> np.ndarray:
+        """
+        Compute source term f(x,t) = u_t + 6*u*u_x + u_xxx.
+
+        For u(x,t) = A * sin(k*x) * sin(omega*t):
+        - u_t = A * omega * sin(k*x) * cos(omega*t)
+        - u_x = A * k * cos(k*x) * sin(omega*t)
+        - u_xxx = -A * k^3 * cos(k*x) * sin(omega*t)
+
+        Parameters
+        ----------
+        x : np.ndarray
+            Spatial coordinates
+        t : float
+            Time
+
+        Returns
+        -------
+        np.ndarray
+            Source term f(x,t)
+        """
+        # Precompute common terms
+        sin_kx = np.sin(self.k * x)
+        cos_kx = np.cos(self.k * x)
+        sin_wt = np.sin(self.omega * t)
+        cos_wt = np.cos(self.omega * t)
+
+        # u = A * sin(kx) * sin(wt)
+        u = self.A * sin_kx * sin_wt
+
+        # u_t = A * omega * sin(kx) * cos(wt)
+        u_t = self.A * self.omega * sin_kx * cos_wt
+
+        # u_x = A * k * cos(kx) * sin(wt)
+        u_x = self.A * self.k * cos_kx * sin_wt
+
+        # u_xxx = -A * k^3 * cos(kx) * sin(wt)
+        u_xxx = -self.A * (self.k**3) * cos_kx * sin_wt
+
+        # f = u_t + 6*u*u_x + u_xxx
+        return u_t + 6.0 * u * u_x + u_xxx
+
+
 class KdVSolver:
-    r"""Korteweg-de Vries equation solver for Exercises C-G using Fourier spectral methods.
+    """Korteweg-de Vries equation solver using Fourier spectral methods.
 
-    Solves the KdV equation
-
-    .. math::
-
-        \partial_t u + 6u \partial_x u + \partial_{xxx}u = 0
-
-    on the domain :math:`-\infty < x < \infty`, :math:`t > 0` with periodic boundary
-    conditions, using Fourier collocation for spatial discretization.
+    Solves the KdV equation u_t + 6u*u_x + u_xxx = 0 on a periodic
+    domain using Fourier collocation for spatial discretization.
     The nonlinear term can optionally be dealiased using the 3/2-rule.
 
     Notes
     -----
     The Fourier spectral method provides exponential convergence for
     smooth periodic solutions. Spatial derivatives are computed in
-    Fourier space via multiplication by :math:`ik` for first derivatives and
-    :math:`(ik)^3` for third derivatives, where :math:`k` is the wavenumber.
+    Fourier space via multiplication by ik for first derivatives and
+    (ik)^3 for third derivatives, where k is the wavenumber.
 
     The 3/2-rule dealiasing prevents aliasing errors in the nonlinear
-    convolution product :math:`u u_x` by padding the Fourier coefficients to
-    3/2 times the original resolution (Exercise E).
-
-    Used in:
-
-    - **Exercise C**: Spatial and time discretization
-    - **Exercise D**: Evolution of errors and quantities of interest
-    - **Exercise E**: Dealiasing implementation
-    - **Exercise F**: Soliton solutions
-    - **Exercise G**: Two-soliton collisions
+    convolution product u*u_x by padding the Fourier coefficients to
+    3/2 times the original resolution.
     """
 
     def __init__(self, N: int, L: float, dealias: bool = False):
@@ -253,7 +417,7 @@ class KdVSolver:
         L : float
             Half-length of spatial domain [-L, L]
         dealias : bool, optional
-            Apply 3/2-rule dealiasing to nonlinear term (default: False)
+            Apply 2/3-rule dealiasing to nonlinear term (default: False)
         """
         self.N = N
         self.L = L
@@ -262,7 +426,7 @@ class KdVSolver:
         self.dx = 2 * L / N
 
         # Wave numbers for Fourier spectral method
-        self.k = np.fft.fftfreq(N, d=self.dx) * 2 * np.pi
+        self.k = fft_backend.fftfreq(N, d=self.dx) * 2 * np.pi
         self.ik = 1j * self.k
         self.ik3 = self.ik**3
 
@@ -289,27 +453,31 @@ class KdVSolver:
         N = len(u_hat)
         M = int(3 * N // 2)
 
+        # For correct frequency splitting with both even and odd N
+        n_low = (N + 1) // 2  # Number of non-negative frequencies
+        n_high = N // 2       # Number of negative frequencies
+
         # Pad with zeros in middle of frequency space
         # [low freqs, zeros, high freqs]
-        u_hat_pad = np.concatenate([u_hat[: N // 2], np.zeros(M - N), u_hat[N // 2 :]])
-        v_hat_pad = np.concatenate([v_hat[: N // 2], np.zeros(M - N), v_hat[N // 2 :]])
+        u_hat_pad = np.concatenate([u_hat[:n_low], np.zeros(M - N), u_hat[n_low:]])
+        v_hat_pad = np.concatenate([v_hat[:n_low], np.zeros(M - N), v_hat[n_low:]])
 
         # Multiply in physical space (on finer grid)
-        u_pad = np.fft.ifft(u_hat_pad)
-        v_pad = np.fft.ifft(v_hat_pad)
+        u_pad = fft_backend.ifft(u_hat_pad)
+        v_pad = fft_backend.ifft(v_hat_pad)
         w_pad = u_pad * v_pad
 
         # Transform back and truncate (keep low and high freqs, discard padded region)
-        w_pad_hat = np.fft.fft(w_pad)
-        w_hat = (3 / 2) * np.concatenate([w_pad_hat[: N // 2], w_pad_hat[M - N // 2 :]])
+        w_pad_hat = fft_backend.fft(w_pad)
+        w_hat = (3 / 2) * np.concatenate([w_pad_hat[:n_low], w_pad_hat[M - n_high:]])
 
         return w_hat
 
-    def rhs(self, u: np.ndarray, t: float) -> np.ndarray:
+    def rhs(self, u: np.ndarray, t: float, source_term: Callable | None = None) -> np.ndarray:
         """
         Compute right-hand side of semi-discrete KdV equation.
 
-        RHS = :math:`-6u u_x - u_{xxx}`
+        RHS = :math:`-6u u_x - u_{xxx} + f(x,t)`
 
         Parameters
         ----------
@@ -317,31 +485,40 @@ class KdVSolver:
             Solution at current time
         t : float
             Current time
+        source_term : Callable[[np.ndarray, float], np.ndarray] | None, optional
+            Optional source term function f(x, t) for manufactured solutions
 
         Returns
         -------
         np.ndarray
             Time derivative du/dt
         """
-        # Compute derivatives in Fourier space
-        u_hat = np.fft.fft(u)
-        ux_hat = self.ik * u_hat
-        uxxx_hat = self.ik3 * u_hat
+        # Compute FFT once
+        u_hat = fft_backend.fft(u)
 
-        # Compute nonlinear term with optional dealiasing
+        # Compute nonlinear term: u * u_x
+        ux_hat = self.ik * u_hat
         if self.dealias:
-            # Use 3/2-rule for proper dealiasing of nonlinear product u * u_x
             nonlinear_hat = self._dealias_product(u_hat, ux_hat)
-            nonlinear = np.fft.ifft(nonlinear_hat).real
+            nonlinear = fft_backend.ifft(nonlinear_hat).real
         else:
-            # Standard (aliased) computation
-            ux = np.fft.ifft(ux_hat).real
+            ux = fft_backend.ifft(ux_hat).real
             nonlinear = u * ux
 
-        # Linear term (third derivative)
-        uxxx = np.fft.ifft(uxxx_hat).real
+        # Compute linear term and combine
+        uxxx_hat = self.ik3 * u_hat
+        uxxx = fft_backend.ifft(uxxx_hat).real
 
-        return -6 * nonlinear - uxxx
+        # Combine in-place
+        dudt = nonlinear
+        dudt *= -6.0
+        dudt -= uxxx
+
+        # Add source term if provided
+        if source_term is not None:
+            dudt += source_term(self.x, t)
+
+        return dudt
 
     def get_spectrum(self, u: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
@@ -361,7 +538,7 @@ class KdVSolver:
         phase : np.ndarray
             Phase angle of Fourier coefficients
         """
-        u_hat = np.fft.fft(u)
+        u_hat = fft_backend.fft(u)
         return self.k, np.abs(u_hat), np.angle(u_hat)
 
     def compute_eigenvalues(self, u_max: float) -> np.ndarray:
@@ -491,9 +668,9 @@ class KdVSolver:
         """
         Compute conserved quantities for KdV equation.
 
-        Mass:     
-        Momentum: 
-        Energy:   
+        Mass:     M = ∫ u dx
+        Momentum: V = ∫ u² dx
+        Energy:   E = ∫ (½u_x² - u³) dx
 
         Parameters
         ----------
@@ -512,13 +689,13 @@ class KdVSolver:
             Energy
         """
         N = len(u)
-        k = np.fft.fftfreq(N, d=dx) * 2 * np.pi
+        k = fft_backend.fftfreq(N, d=dx) * 2 * np.pi
         ik = 1j * k
 
         # Compute derivative in Fourier space
-        u_hat = np.fft.fft(u)
+        u_hat = fft_backend.fft(u)
         ux_hat = ik * u_hat
-        ux = np.fft.ifft(ux_hat).real
+        ux = fft_backend.ifft(ux_hat).real
 
         M = np.sum(u) * dx
         V = np.sum(u**2) * dx

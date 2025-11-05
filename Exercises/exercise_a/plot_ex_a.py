@@ -48,11 +48,10 @@ g = sns.relplot(
     height=4,
     aspect=1.2,
 )
-#g.set_titles(r"$\varepsilon={col_name:g}$")
 g.set_axis_labels(r"$x$", r"$u(x)$")
-g.figure.suptitle(
-    r"Tau vs Collocation", fontsize=20, y=1.1)
-g.set_titles(r"$\varepsilon={col_name:g}$" + rf", $N = {N}$, ({n_eval_points} Eval. points)", fontsize=10, y=1.05)
+g.figure.suptitle(r"Tau vs Collocation", y=1.05)
+g.set_titles(
+    r"$\varepsilon={col_name:g}$" + "\n" + rf"\tiny $N = {N}$, ({n_eval_points} Eval. points)")
 
 output = save_dir / "solutions_facet.pdf"
 g.figure.savefig(output, bbox_inches="tight")
@@ -86,11 +85,9 @@ g2 = sns.relplot(
     aspect=1.2,
 )
 g2.set(xscale="log", yscale="log", xlabel=r"Legendre mode $n$", ylabel=r"$|c_n|$")
-g2.set_titles(r"$\varepsilon={col_name:g}$")
-g2.figure.suptitle(
-    "Coefficient Decay: Tau vs Collocation" + "\n" +
-    rf"$N = {N}$ ({n_eval_points} Evaluation points)",
-    y=1.02
+g2.figure.suptitle(r"Tau vs Collocation", y=1.05)
+g2.set_titles(
+    r"$\varepsilon={col_name:g}$" + "\n" + rf"\tiny $N = {N}$, ({n_eval_points} Eval. points)"
 )
 
 output = save_dir / "coefficients_facet.pdf"
@@ -120,11 +117,9 @@ g3 = sns.relplot(
     aspect=1.2,
 )
 g3.set(yscale="log", xlabel=r"$x$", ylabel=r"$|u_{\rm num}-u_{\rm exact}|$")
-g3.set_titles(r"$\varepsilon={col_name:g}$")
-g3.figure.suptitle(
-    "Error Profiles: Tau vs Collocation" + "\n" +
-    rf"$N = {N}$ ({n_eval_points} Evaluation points)",
-    y=1.02
+g3.figure.suptitle(r"Tau vs Collocation", y=1.05)
+g3.set_titles(
+    r"$\varepsilon={col_name:g}$" + "\n" + rf"\tiny $N = {N}$, ({n_eval_points} Eval. points)"
 )
 
 output = save_dir / "errors_facet.pdf"
@@ -160,16 +155,15 @@ g4.set(
     xlabel=r"Number of modes $N$",
     ylabel=r"$L^\infty$ Error",
 )
-g4.set_titles(r"$\varepsilon={col_name:g}$")
 
 # Add parameter info (N range varies for convergence study)
 N_min = convergence_df["N"].min()
 N_max = convergence_df["N"].max()
-# Note: convergence data doesn't have x values, use main data for eval points
-g4.figure.suptitle(
-    "Convergence Study: Tau vs Collocation" + "\n" +
-    rf"$N \in [{N_min}, {N_max}]$ ({n_eval_points} Evaluation points)",
-    y=1.02
+
+# Title hierarchy: main title and column titles with parameters
+g4.figure.suptitle(r"Tau vs Collocation", y=1.05)
+g4.set_titles(
+    r"$\varepsilon={col_name:g}$" + "\n" + rf"\tiny $N \in [{N_min}, {N_max}]$, ({n_eval_points} Eval. points)"
 )
 
 # Add reference lines to each subplot
