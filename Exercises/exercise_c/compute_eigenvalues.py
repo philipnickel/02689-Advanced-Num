@@ -21,7 +21,7 @@ data_dir = Path("data/A2/ex_c")
 data_dir.mkdir(parents=True, exist_ok=True)
 
 # %% Parameters
-N = 80
+N = 40
 L = 30.0
 c_values = [0.25, 0.5, 1.0]
 x0 = 0.0

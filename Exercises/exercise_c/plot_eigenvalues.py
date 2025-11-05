@@ -168,9 +168,9 @@ g2 = sns.relplot(
     col="c",
     kind="line",
     markers=True,
-    height=4,
-    aspect=1.2,
-    facet_kws={"sharex": True, "sharey": False},
+    #height=4,
+    #aspect=1.2,
+    #facet_kws={"sharex": True, "sharey": False},
 )
 
 # Add O(N^-3) reference line to each facet

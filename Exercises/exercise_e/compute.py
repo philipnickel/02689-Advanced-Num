@@ -26,7 +26,7 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_SPECTRA = DATA_DIR / "spectra.parquet"
 OUTPUT_CONSERVATION = DATA_DIR / "conservation.parquet"
 
-L = 10.0  # half domain length (x ∈ [-L, L)) - smaller domain
+L = 20.0  # half domain length (x ∈ [-L, L)) - smaller domain
 T_FINAL = 25.0  # longer time to show aliasing error accumulation
 SAVE_EVERY = 60  # store every N solver steps
 SAFETY = 0.3  # CFL safety factor
@@ -34,7 +34,7 @@ INTEGRATOR_NAME = "rk3"
 
 # Resolution / dealias combinations to explore
 # Use moderate resolution where aliasing becomes significant
-N_VALUES = [64, 96]
+N_VALUES = [70, 100]
 DEALIAS_OPTIONS = [False, True]
 
 # Two-soliton collision seed: produces spectral activity near the Nyquist limit

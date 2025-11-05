@@ -102,8 +102,10 @@ for method in sorted(df["method"].unique()):
     dt_min = df_method["dt"].min()
     dt_latex = format_dt_latex(dt_min)
     g.fig.suptitle(f"KdV Solitons - {method}", y=1.05)
+    # Escape curly braces in dt_latex for format string
+    dt_latex_escaped = dt_latex.replace("{", "{{").replace("}", "}}")
     g.set_titles(
-        col_template=r"$c$ = {col_name}" + "\n" + rf"\tiny $N = {largest_N}$, $L = {L:.1f}$, $\Delta t = {dt_latex}$"
+        col_template=r"$c$ = {col_name}" + "\n" + rf"\tiny $N = {largest_N}$, $L = {L:.1f}$, $\Delta t = {dt_latex_escaped}$"
     )
 
     # Save

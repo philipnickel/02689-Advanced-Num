@@ -42,6 +42,16 @@ print(f"  Nodes quantities: {df_nodes_quantities.shape}")
 
 
 # %% Helper functions to create plots
+TREATMENT_ORDER = ["Aliased", "De-aliased (3/2-rule)"]
+
+TREATMENT_DASHES = {
+    "Aliased": (4, 2.0),
+    "De-aliased (3/2-rule)": (7, 2.5),
+}
+
+ERROR_ORDER = [r"$L^2$ error", r"$L^\infty$ error"]
+
+
 def plot_errors(df_errors, method, investigation_type, param_name):
     """Create error plot using FacetGrid.
 
@@ -63,6 +73,16 @@ def plot_errors(df_errors, method, investigation_type, param_name):
     df_err["error_type"] = df_err["error_type"].map(
         {"l2": r"$L^2$ error", "linf": r"$L^\infty$ error"}
     )
+    df_err["error_type"] = pd.Categorical(df_err["error_type"], categories=ERROR_ORDER, ordered=True)
+
+    if hasattr(df_err["Treatment"], "cat"):
+        df_err["Treatment"] = df_err["Treatment"].cat.reorder_categories(
+            TREATMENT_ORDER, ordered=True
+        )
+    else:
+        df_err["Treatment"] = pd.Categorical(
+            df_err["Treatment"], categories=TREATMENT_ORDER, ordered=True
+        )
 
     # Create relplot with param_name in rows, c in columns
     g = sns.relplot(
@@ -70,12 +90,18 @@ def plot_errors(df_errors, method, investigation_type, param_name):
         x="t",
         y="error",
         hue="error_type",
+        hue_order=ERROR_ORDER,
+        style="Treatment",
+        style_order=TREATMENT_ORDER,
+        markers=False,
+        dashes=True,
         row=param_name,
         col="c",
         kind="line",
-        height=3.5,
-        aspect=1.3,
-        facet_kws={"sharex": True, "sharey": False},
+        #height=3.5,
+        #aspect=1.3,
+        #facet_kws={"sharex": True, "sharey": False},
+        #linewidth=1.8,
     )
 
     # Set log scale for y-axis
@@ -108,18 +134,32 @@ def plot_conservation(df_quantities, method, investigation_type, param_name):
     # Filter for this method
     df_cons = df_quantities[df_quantities["method"] == method].copy()
 
+    if hasattr(df_cons["Treatment"], "cat"):
+        df_cons["Treatment"] = df_cons["Treatment"].cat.reorder_categories(
+            TREATMENT_ORDER, ordered=True
+        )
+    else:
+        df_cons["Treatment"] = pd.Categorical(
+            df_cons["Treatment"], categories=TREATMENT_ORDER, ordered=True
+        )
+
     # Create relplot with param_name in rows, c in columns
     g = sns.relplot(
         data=df_cons,
         x="t",
         y="rel_error",
         hue="quantity",
+        style="Treatment",
+        style_order=TREATMENT_ORDER,
+        markers=False,
         row=param_name,
         col="c",
         kind="line",
-        height=3.5,
-        aspect=1.3,
-        facet_kws={"sharex": True, "sharey": False},
+        #height=3.5,
+        #aspect=1.3,
+        #facet_kws={"sharex": True, "sharey": False},
+        #linewidth=1.8,
+        dashes=True,
     )
 
     # Add horizontal line at y=0
@@ -152,18 +192,32 @@ def plot_quantities(df_quantities, method, investigation_type, param_name):
     # Filter for this method
     df_qty = df_quantities[df_quantities["method"] == method].copy()
 
+    if hasattr(df_qty["Treatment"], "cat"):
+        df_qty["Treatment"] = df_qty["Treatment"].cat.reorder_categories(
+            TREATMENT_ORDER, ordered=True
+        )
+    else:
+        df_qty["Treatment"] = pd.Categorical(
+            df_qty["Treatment"], categories=TREATMENT_ORDER, ordered=True
+        )
+
     # Create relplot with param_name in rows, c in columns
     g = sns.relplot(
         data=df_qty,
         x="t",
         y="value",
         hue="quantity",
+        style="Treatment",
+        style_order=TREATMENT_ORDER,
+        markers=False,
         row=param_name,
         col="c",
         kind="line",
-        height=3.5,
-        aspect=1.3,
-        facet_kws={"sharex": True, "sharey": False},
+        #height=3.5,
+        #aspect=1.3,
+        #facet_kws={"sharex": True, "sharey": False},
+        #linewidth=1.8,
+        dashes=True,
     )
 
     g.set_axis_labels(r"Time $t$", r"Value")

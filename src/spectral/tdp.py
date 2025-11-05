@@ -725,7 +725,8 @@ class KdVSolver:
         N, L      : grid size and half-domain for [-L, L]
         u_max     : max :math:`|u|` expected (for 1-soliton with parameter c, use u_max = c/2)
         integrator_name : one of {"rk4", "rk3"}
-        dealiased : set True if using 2/3-rule (k_max = N/3 instead of N/2)
+        dealiased : retained for API compatibility; the returned Δt is conservative
+            across both aliased and de-aliased configurations.
 
         Returns
         -------
@@ -742,16 +743,24 @@ class KdVSolver:
         }.get(name, 2.828 if "rk4" in name else 1.732 if "rk3" in name else 0.0)
 
         # k_max from Fourier grid
-        kmax = (np.pi / L) * (N // (3 if dealiased else 2))
+        def _lam_max(k_max: float) -> float:
+            return k_max * abs(k_max**2 - 6.0 * abs(u_max))
 
-        # worst-case |λ| from frozen coefficient analysis: |λ_k| = |k| * |k² - 6u_max|
-        lam_max = kmax * abs(kmax**2 - 6.0 * abs(u_max))
+        kmax_alias = (np.pi / L) * (N // 2)
+        kmax_dealias = (np.pi / L) * (N // 3)
 
-        if lam_max == 0.0:
-            return np.inf  # trivial case
+        lam_alias = _lam_max(kmax_alias)
+        lam_dealias = _lam_max(kmax_dealias)
 
-        if imag_axis_radius == 0.0:
-            # Warn the caller by returning an ultra-conservative estimate
-            return 1e-12 / lam_max
+        # Guard against degenerate configurations
+        def _dt(lam: float) -> float:
+            if lam == 0.0:
+                return np.inf
+            if imag_axis_radius == 0.0:
+                return 1e-12 / lam
+            return imag_axis_radius / lam
 
-        return imag_axis_radius / lam_max
+        dt_alias = _dt(lam_alias)
+        dt_dealias = _dt(lam_dealias)
+
+        return min(dt_alias, dt_dealias)

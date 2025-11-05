@@ -33,46 +33,65 @@ c_vals = [0.25, 0.5, 1.0]
 x0 = 0.0
 T = 20.0
 METHODS = ("RK4", "RK3")
+DEALIAS_OPTIONS = (False, True)
 save_every_steps = 50  # Save every 50 steps
 
 # Domain investigation: varying L, fixed N
-DOMAIN_N = 64
-DOMAIN_L_vals = [20.0, 30.0, 40.0]
+DOMAIN_N = 200
+DOMAIN_L_vals = [30.0, 40.0, 50.0]
 
 # Node investigation: varying N, fixed L
-NODES_L = 30.0
-NODES_N_vals = [32, 64, 128]
+NODES_L = 40.0
+NODES_N_vals = [70, 100,150]
 
 max_workers = os.cpu_count() or 4
 
 
 # %% Helper: compute stable timestep with safety factor
 def estimate_stable_dt(
-    N: int, L: float, method_name: str, c: float, safety_factor=0.1
+    N: int,
+    L: float,
+    method_name: str,
+    c: float,
+    *,
+    dealias: bool,
+    safety_factor: float = 0.1,
 ) -> float:
     """Estimate stable dt with safety factor."""
-    s = KdVSolver(N, L, dealias=True)
+    s = KdVSolver(N, L, dealias=dealias)
     u_max = float(np.max(np.abs(soliton(s.x, 0.0, c, x0))))
-    dt_est = KdVSolver.stable_dt(N, L, u_max, integrator_name=method_name.lower())
+    dt_est = KdVSolver.stable_dt(
+        N, L, u_max, integrator_name=method_name.lower(), dealiased=dealias
+    )
     dt_safe = safety_factor * dt_est if np.isfinite(dt_est) else 1e-3
     return float(dt_safe)
 
 
 # %% Single case solver
-def solve_single_case(method: str, N: int, L: float, c: float, investigation_type: str):
+def solve_single_case(
+    method: str,
+    N: int,
+    L: float,
+    c: float,
+    investigation_type: str,
+    *,
+    dealias: bool,
+):
     """Solve one case and compute errors + conservation quantities in long format."""
     # Setup integrator
     integrator_map = {"RK4": RK4, "RK3": RK3}
     integ = integrator_map[method]()
 
     # Setup solver
-    solver = KdVSolver(N, L)
+    solver = KdVSolver(N, L, dealias=dealias)
     x = solver.x
     dx = solver.dx
     u0 = soliton(x, 0.0, c, x0)
 
     # Estimate stable dt
-    dt = estimate_stable_dt(N, L, method, c, safety_factor=0.1)
+    dt = estimate_stable_dt(
+        N, L, method, c, dealias=dealias, safety_factor=0.1
+    )
 
     # Clear history for multi-step methods
     if hasattr(integ, "u_history"):
@@ -109,6 +128,8 @@ def solve_single_case(method: str, N: int, L: float, c: float, investigation_typ
             "c": c,
             "dt": dt,
             "investigation": investigation_type,
+            "dealias": dealias,
+            "Treatment": "De-aliased (3/2-rule)" if dealias else "Aliased",
         }
 
         # Store errors in LONG format (one row per error type)
@@ -151,13 +172,15 @@ if __name__ == "__main__":
     for method in METHODS:
         for c in c_vals:
             for L in DOMAIN_L_vals:
-                tasks.append((method, DOMAIN_N, L, c, "domain"))
+                for dealias in DEALIAS_OPTIONS:
+                    tasks.append((method, DOMAIN_N, L, c, "domain", dealias))
 
     # Node investigation tasks
     for method in METHODS:
         for c in c_vals:
             for N in NODES_N_vals:
-                tasks.append((method, N, NODES_L, c, "nodes"))
+                for dealias in DEALIAS_OPTIONS:
+                    tasks.append((method, N, NODES_L, c, "nodes", dealias))
 
     print(f"Total tasks: {len(tasks)}")
     print(
@@ -173,19 +196,21 @@ if __name__ == "__main__":
 
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         futures = {
-            executor.submit(solve_single_case, m, N, L, c, inv_type): (
+            executor.submit(
+                solve_single_case,
                 m,
                 N,
                 L,
                 c,
                 inv_type,
-            )
-            for (m, N, L, c, inv_type) in tasks
+                dealias=dealias,
+            ): (m, N, L, c, inv_type, dealias)
+            for (m, N, L, c, inv_type, dealias) in tasks
         }
 
         completed = 0
         for future in as_completed(futures):
-            m, N, L, c, inv_type = futures[future]
+            m, N, L, c, inv_type, dealias = futures[future]
             try:
                 error_rows, quantity_rows = future.result()
                 all_error_rows.extend(error_rows)
@@ -195,7 +220,9 @@ if __name__ == "__main__":
                     print(f"Completed {completed}/{len(tasks)} tasks...")
             except Exception as e:
                 print(
-                    f"[warn] Task failed: method={m}, N={N}, L={L}, c={c}, type={inv_type} -> {e}"
+                    "[warn] Task failed:"
+                    f" method={m}, N={N}, L={L}, c={c},"
+                    f" type={inv_type}, dealias={dealias} -> {e}"
                 )
 
     # %% Create DataFrames and save
@@ -206,12 +233,14 @@ if __name__ == "__main__":
     df_errors["method"] = df_errors["method"].astype("category")
     df_errors["investigation"] = df_errors["investigation"].astype("category")
     df_errors["error_type"] = df_errors["error_type"].astype("category")
+    df_errors["Treatment"] = df_errors["Treatment"].astype("category")
 
     # Quantity data (already in long format)
     df_quantities = pd.DataFrame(all_quantity_rows)
     df_quantities["method"] = df_quantities["method"].astype("category")
     df_quantities["investigation"] = df_quantities["investigation"].astype("category")
     df_quantities["quantity"] = df_quantities["quantity"].astype("category")
+    df_quantities["Treatment"] = df_quantities["Treatment"].astype("category")
 
     # Save domain investigation data
     df_domain_errors = df_errors[df_errors["investigation"] == "domain"].copy()

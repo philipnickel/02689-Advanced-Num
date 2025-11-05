@@ -94,9 +94,11 @@ t_plot = df_down.columns.to_numpy()
 # that occurs during the interaction.
 
 fig, ax = plt.subplots()
-im = ax.matshow(
+im = ax.imshow(
     df_down.values,
     aspect="auto",
+    origin="lower",
+    extent=[t_plot[0], t_plot[-1], x_plot[0], x_plot[-1]],
 )
 fig.colorbar(im, ax=ax, label=r"$u(x, t)$")
 
@@ -110,8 +112,7 @@ c2 = metadata.get("c2", "?")
 dt_latex = format_dt_latex(dt)
 ax.set_title(
     "KdV Two-Soliton Collision" + "\n" +
-    rf"$N = {N}$, $L = {L}$, $\Delta t = {dt_latex}$, $c_1 = {c1}$, $c_2 = {c2}$",
-    fontsize=14
+    rf"\tiny $N = {N}$, $L = {L}$, $\Delta t = {dt_latex}$, $c_1 = {c1}$, $c_2 = {c2}$",
 )
 
 output_path = save_dir / "spacetime.pdf"

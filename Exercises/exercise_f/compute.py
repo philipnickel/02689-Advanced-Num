@@ -18,7 +18,7 @@ DATA_DIR = Path("data/A2/ex_f")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 L = 80.0  # half-domain [-L, L]
-N = 512  # grid points (high resolution)
+N = 300  # grid points (high resolution)
 t_final = 120.0
 save_every = 200  # save every N steps to control file size
 dt_scale = 0.2  # safety factor on stability bound
@@ -34,7 +34,7 @@ print(f"Initial solitons: (x0, c) = ({x01}, {c1}) and ({x02}, {c2})")
 print(f"Target time interval: t ∈ [0, {t_final}]")
 
 # %% Solver setup -----------------------------------------------------------
-solver = KdVSolver(N, L, dealias=True)
+solver = KdVSolver(N, L, dealias=False)
 x = solver.x
 dx = solver.dx
 

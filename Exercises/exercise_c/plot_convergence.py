@@ -42,33 +42,32 @@ dt_latex = format_dt_latex(dt_sp)
 param_text = rf"\tiny $N \in [{N_min_sp}, {N_max_sp}]$, $\Delta t = {dt_latex}$, $L = {L_sp:.1f}$, $T = {T_sp:.2f}$"
 
 # 1. Log-log plot with reference line
-fig, ax = plt.subplots()
+plt.figure()
 
 sns.lineplot(
     data=df_spatial,
     x="N",
     y="Error",
-    hue="method",
-    style="dealias",
+    hue="dealias",
+    style="method",
     markers=True,
-    dashes=False,
-    ax=ax,
+    dashes=True,
 )
 
-ax.set_yscale("log")
-ax.set_xscale("log")
-ax.set_xlabel(r"Number of modes ($N$)")
-ax.set_ylabel(r"$L^2$ error")
+plt.yscale("log")
+plt.xscale("log")
+plt.xlabel(r"Number of modes ($N$)")
+plt.ylabel(r"$L^2$ error")
 
 # Add O(N^-2) reference line
 N_ref = np.array([N_min_sp, N_max_sp])
 # Scale the reference line to match the data
 error_ref_base = df_spatial["Error"].max() * 10  # Position reference line near the data
 error_ref = error_ref_base * (N_ref / N_min_sp) ** (-2)
-ax.plot(N_ref, error_ref, 'k--', linewidth=1, alpha=0.5, label=r'$\mathcal{O}(N^{-2})$')
-ax.legend()
+plt.plot(N_ref, error_ref, 'k--', linewidth=1, alpha=0.5, label=r'$\mathcal{O}(N^{-2})$')
+plt.legend(title="")
 
-ax.set_title(
+plt.title(
     "KdV Spatial Convergence" + "\n" + param_text,
 )
 
@@ -77,24 +76,24 @@ plt.savefig(spatial_fig_loglog, dpi=300, bbox_inches="tight")
 print(f"Saved: {spatial_fig_loglog}")
 
 # 2. Semi-log plot
-fig, ax = plt.subplots()
+plt.figure()
 
 sns.lineplot(
     data=df_spatial,
     x="N",
     y="Error",
-    hue="method",
-    style="dealias",
+    hue="dealias",
+    style="method",
     markers=True,
-    dashes=False,
-    ax=ax,
+    dashes=True,
 )
 
-ax.set_yscale("log")
-ax.set_xlabel(r"Number of modes ($N$)")
-ax.set_ylabel(r"$L^2$ error")
+plt.yscale("log")
+plt.xlabel(r"Number of modes ($N$)")
+plt.ylabel(r"$L^2$ error")
+plt.legend(title="")
 
-ax.set_title(
+plt.title(
     "KdV Spatial Convergence" + "\n" + param_text,
 )
 
@@ -112,24 +111,22 @@ print("Creating temporal convergence plot...")
 temporal_path = DATA_DIR / "kdv_temporal_convergence.parquet"
 df_temporal = pd.read_parquet(temporal_path)
 
-fig, ax = plt.subplots()
+plt.figure()
 
 sns.lineplot(
     data=df_temporal,
     x="dt",
     y="Error",
-    hue="method",
-    style="dealias",
+    hue="dealias",
+    style="method",
     markers=True,
-    dashes=False,
-    ax=ax,
+    dashes=True,
 )
 
-ax.set_xscale("log")
-ax.set_yscale("log")
-ax.invert_xaxis()
-ax.set_xlabel(r"Time step $\Delta t$")
-ax.set_ylabel(r"$L^2$ error")
+plt.xscale("log")
+plt.yscale("log")
+plt.xlabel(r"Time step $\Delta t$")
+plt.ylabel(r"$L^2$ error")
 
 # Add parameter information to title
 N_temp = df_temporal["N"].iloc[0]
@@ -146,23 +143,23 @@ error_ref_base = df_temporal["Error"].max() * 100  # Position reference lines ne
 
 # O(dt^3) reference line for RK3
 error_ref_3 = error_ref_base * (dt_ref / dt_max_t) ** 3
-ax.plot(dt_ref, error_ref_3, 'k:', linewidth=1.5, alpha=0.6, label=r'$\mathcal{O}(\Delta t^3)$')
+plt.plot(dt_ref, error_ref_3, 'k:', linewidth=1.5, alpha=0.6, label=r'$\mathcal{O}(\Delta t^3)$')
 
 # O(dt^4) reference line for RK4
 error_ref_4 = error_ref_base * (dt_ref / dt_max_t) ** 4
-ax.plot(dt_ref, error_ref_4, 'k--', linewidth=1.5, alpha=0.6, label=r'$\mathcal{O}(\Delta t^4)$')
+plt.plot(dt_ref, error_ref_4, 'k--', linewidth=1.5, alpha=0.6, label=r'$\mathcal{O}(\Delta t^4)$')
 
-ax.legend()
+plt.legend(title="")
 
 param_text_temp = rf"\tiny $N = {N_temp}$, $\Delta t \in [{dt_min_latex}, {dt_max_latex}]$, $L = {L_temp:.1f}$, $T = {T_temp:.2f}$"
 
-ax.set_title(
+plt.title(
     "KdV Temporal Convergence" + "\n" + param_text_temp,
 )
 
-#plt.tight_layout()
 temporal_fig = OUTPUT_DIR / "temporal_convergence.pdf"
-plt.savefig(temporal_fig, dpi=300)
+plt.savefig(temporal_fig, dpi=300, bbox_inches="tight")
 print(f"Saved: {temporal_fig}")
+plt.close()
 
 print("\nAll plots created successfully!")

@@ -4,6 +4,7 @@ Work-Precision Plot: Error vs Computational Cost
 
 Creates a work-precision diagram showing L² error vs wall time,
 demonstrating which integrator is more efficient for given accuracy.
+Uses KdV soliton solutions (same problem as exercise_c).
 """
 
 # %% Imports and setup -------------------------------------------------------

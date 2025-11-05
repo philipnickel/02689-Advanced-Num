@@ -26,7 +26,7 @@ save_dir.mkdir(parents=True, exist_ok=True)
 convergence_df = pd.read_parquet(data_dir / "convergence_r.parquet")
 print(f"Loaded convergence data: {convergence_df.shape}")
 
-fig, ax = plt.subplots(figsize=(8, 6))
+fig, ax = plt.subplots()
 sns.lineplot(
     data=convergence_df,
     x="Nr",
@@ -55,17 +55,15 @@ ax.set(
     xlabel=r"Number of radial nodes $N_r$",
     ylabel=r"$L^\infty$ Error",
 )
+ax.legend()
 
 # Add title with parameters
 Nr_min = convergence_df["Nr"].min()
 Nr_max = convergence_df["Nr"].max()
 ax.set_title(
     "Polar BVP" + "\n" +
-    rf"$N_r \in [{Nr_min}, {Nr_max}]$, $N_{{\theta}} = 50$",
-    fontsize=14
+    rf"\tiny $N_r \in [{Nr_min}, {Nr_max}] $, $N_{{\theta}} = 50$",
 )
-ax.legend()
-ax.grid(True, alpha=0.3)
 
 fig.savefig(save_dir / "convergence_r.pdf", bbox_inches="tight")
 print(f"Saved: {save_dir}/convergence_r.pdf")
@@ -75,7 +73,7 @@ print(f"Saved: {save_dir}/convergence_r.pdf")
 convergence_df = pd.read_parquet(data_dir / "convergence_theta.parquet")
 print(f"Loaded convergence data: {convergence_df.shape}")
 
-fig, ax = plt.subplots(figsize=(8, 6))
+fig, ax = plt.subplots()
 sns.lineplot(
     data=convergence_df,
     x="Ntheta",
@@ -115,11 +113,9 @@ Ntheta_min = convergence_df["Ntheta"].min()
 Ntheta_max = convergence_df["Ntheta"].max()
 ax.set_title(
     "Polar BVP" + "\n" +
-    rf"$N_{{\theta}} \in [{Ntheta_min}, {Ntheta_max}]$, $N_r = 20$",
+    rf"\tiny $N_{{\theta}} \in [{Ntheta_min}, {Ntheta_max}]$, $N_r = 20$",
     fontsize=14
 )
-ax.legend()
-ax.grid(True, alpha=0.3)
 
 fig.savefig(save_dir / "convergence_theta.pdf", bbox_inches="tight")
 print(f"Saved: {save_dir}/convergence_theta.pdf")
@@ -170,8 +166,7 @@ cbar.set_label(r"$\Phi$")
 ax.set_ylim(0, r2)
 ax.set_title(
     "Polar BVP - Numerical Solution" + "\n" +
-    rf"$N_r = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)",
-    fontsize=14
+    rf"\tiny $N_r = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)",
 )
 
 fig.savefig(save_dir / "solution.pdf", bbox_inches="tight")
@@ -189,8 +184,7 @@ cbar.set_label(r"$\Phi_{\rm num} - \Phi_{\rm exact}$")
 ax.set_ylim(0, r2)
 ax.set_title(
     "Polar BVP - Error" + "\n" +
-    rf"$N_r = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)",
-    fontsize=14
+    rf"\tiny $N_r = {Nr}$, $r \in [{r1}, {r2}]$ ({n_r}×{n_phi} grid)",
 )
 
 fig.savefig(save_dir / "error.pdf", bbox_inches="tight")
@@ -198,4 +192,3 @@ print(f"Saved: {save_dir}/error.pdf")
 
 print(f"\nAll plots saved to {save_dir}")
 
-# %%

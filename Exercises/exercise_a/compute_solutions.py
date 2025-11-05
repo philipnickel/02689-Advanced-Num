@@ -40,7 +40,7 @@ def exact_solution(x: np.ndarray, eps: float) -> np.ndarray:
 
 # %% Problem parameters
 eps_values = np.array([1e-1, 1e-2, 1e-3])  # Diffusion parameters
-N = 50  # Number of modes/nodes
+N = 60  # Number of modes/nodes
 xi = np.linspace(-1.0, 1.0, 2001)  # Evaluation points on reference domain
 x = 0.5 * (xi + 1.0)  # Physical domain [0,1]
 

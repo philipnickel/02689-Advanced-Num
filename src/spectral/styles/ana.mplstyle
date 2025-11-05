@@ -3,7 +3,7 @@
 # ======================================================
 
 # Figure layout
-figure.figsize       : 4.0, 3.0       # ~single-column figure
+figure.figsize       : 6.0, 5.0       # ~single-column figure
 figure.dpi           : 300
 savefig.dpi          : 300
 savefig.bbox         : tight
@@ -15,21 +15,22 @@ savefig.pad_inches   : 0.05
 # ======================================================
 # Axis ticks
 # ======================================================
-xtick.direction      : in
-xtick.major.size     : 3
-xtick.major.width    : 0.5
-xtick.minor.size     : 1.5
-xtick.minor.width    : 0.5
-xtick.minor.visible  : True
-xtick.top            : True
 
-ytick.direction      : in
-ytick.major.size     : 3
-ytick.major.width    : 0.5
-ytick.minor.size     : 1.5
-ytick.minor.width    : 0.5
+#xtick.direction      : in
+#xtick.major.size     : 3
+#xtick.major.width    : 0.5
+#xtick.minor.size     : 1.5
+#xtick.minor.width    : 0.5
+xtick.minor.visible  : True
+#xtick.top            : True
+
+#ytick.direction      : in
+#ytick.major.size     : 3
+#ytick.major.width    : 0.5
+#ytick.minor.size     : 1.5
+#ytick.minor.width    : 0.5
 ytick.minor.visible  : True
-ytick.right          : True
+#ytick.right          : True
 
 # ======================================================
 # Gridlines
@@ -37,10 +38,10 @@ ytick.right          : True
 axes.grid            : True
 axes.grid.axis       : both
 axes.grid.which      : both
-grid.color           : 0.85
-grid.linestyle       : -
-grid.alpha           : 0.6
-grid.linewidth       : 0.5
+#grid.color           : 0.85
+#grid.linestyle       : -
+#grid.alpha           : 0.85
+#grid.linewidth       : 1.0
 
 # ======================================================
 # Font and text settings
@@ -51,8 +52,8 @@ axes.labelsize       : 10.5    # Axis labels
 axes.titlesize       : 11.5    # Axes titles
 figure.titlesize     : 16      # Figure suptitle
 legend.fontsize      : 9       # Legend
-xtick.labelsize      : 9       # Tick labels
-ytick.labelsize      : 9       # Tick labels
+xtick.labelsize      : 7       # Tick labels
+ytick.labelsize      : 7       # Tick labels
 
 # Use LaTeX for math formatting
 text.usetex          : True
@@ -64,4 +65,14 @@ text.latex.preamble : \usepackage[T1]{fontenc} \usepackage{amsmath} \usepackage{
 # ======================================================
 axes.linewidth       : 0.5
 lines.linewidth      : 1.0
-legend.frameon       : False
+
+# Legend settings
+legend.frameon       : False       # remove box
+legend.loc           : best        # default position
+legend.title_fontsize: 12         # title size
+legend.handlelength  : 2.0         # line length in legend
+legend.handletextpad : 0.5         # space between handle and text
+legend.columnspacing : 1.0         # spacing between columns
+legend.borderaxespad : 0.2         # padding between legend and axes
+legend.borderpad     : 0.2         # padding inside legend
+legend.facecolor     : none        # transparent background
