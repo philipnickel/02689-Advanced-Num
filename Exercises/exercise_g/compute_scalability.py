@@ -1,148 +1,111 @@
 """
-Scalability Analysis for KdV Solver
-====================================
+Scalability Analysis: Time per Step vs Grid Size
+=================================================
 
-Measures sequential performance (computational complexity):
-
-- Wall time vs N for single cases
-- Compare all methods: RK4, RK3
-- Expected scaling: O(N log N) due to FFT operations
+Measures wall-clock time vs grid size N to verify O(N log N) complexity.
 """
 
-# %% Imports and setup
-from pathlib import Path
+# %% Imports and setup -------------------------------------------------------
 import time
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from spectral.tdp import KdVSolver, soliton, RK4, RK3
 
-# %% Configuration
+# %% Configuration -----------------------------------------------------------
 DATA_DIR = Path("data/A2/ex_g")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-# Timing parameters
 L = 30.0
 c = 0.5
 x0 = 0.0
-T_timing = 1.0  # Very short simulation for timing
-METHODS = ("RK4", "RK3")
-
-# Sequential timing: vary N to see proper scaling behavior
-# Larger N values needed to observe N log N scaling from FFT
-# Extended to 8K, 16K, 32K to show N log N term becoming more dominant
-N_values = [64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768]
-# Ensure enough steps per run for reliable timing while keeping runtimes manageable
+N_VALUES = 2**np.arange(6, 14)  # Powers of 2: [64, 128, ..., 8192]
+METHODS = {"RK4": RK4, "RK3": RK3}
 MIN_STEPS = 200
 MAX_STEPS = 2000
-# RHS benchmarking repetitions
-RHS_REPEATS = 200
+# Sweep over different dt scales (different tolerance/accuracy requirements)
+DT_SCALES = np.array([0.05, 0.1, 0.2, 0.3, 0.4])
 
+print("=" * 70)
+print("Scalability Analysis: KdV Solver")
+print("=" * 70)
+print(f"Testing N = {N_VALUES[0]} to {N_VALUES[-1]}")
+print(f"Sweeping dt scales: {DT_SCALES[0]:.2f}× to {DT_SCALES[-1]:.2f}× stable dt")
+print(f"Methods: {', '.join(METHODS.keys())}\n")
 
-# %% Helper: stable dt estimation
-def estimate_stable_dt(
-    N: int, L: float, method_name: str, c: float, safety_factor=0.1
-) -> float:
-    """Estimate stable dt with safety factor."""
-    s = KdVSolver(N, L)
-    u_max = float(np.max(np.abs(soliton(s.x, 0.0, c, x0))))
-    dt_est = KdVSolver.stable_dt(N, L, u_max, integrator_name=method_name.lower())
-    dt_safe = safety_factor * dt_est if np.isfinite(dt_est) else 1e-3
-    return float(dt_safe)
+# %% Run timing experiments --------------------------------------------------
+results = []
 
+for method_name, method_class in METHODS.items():
+    print(f"\n{method_name}:")
+    print("-" * 70)
 
-# %% Sequential timing function
-def time_single_case(method: str, N: int, L: float, c: float, T: float):
-    """Time a single case and return timing metrics."""
-    # Setup integrator
-    integrator_map = {"RK4": RK4, "RK3": RK3}
-    integ = integrator_map[method]()
+    for N in N_VALUES:
+        # Setup solver
+        solver = KdVSolver(N, L, dealias=False)
+        integrator = method_class()
+        u0 = soliton(solver.x, 0.0, c, x0)
 
-    # Setup solver
-    solver = KdVSolver(N, L)
-    x = solver.x
-    u0 = soliton(x, 0.0, c, x0)
+        # Estimate stable timestep
+        u_max = float(np.max(np.abs(u0)))
+        dt_stable = KdVSolver.stable_dt(N, L, u_max, integrator_name=method_name.lower())
+        if not np.isfinite(dt_stable) or dt_stable <= 0.0:
+            dt_stable = 1e-3
 
-    # Estimate stable dt
-    dt = estimate_stable_dt(N, L, method, c, safety_factor=0.1)
-    # Cap timestep to guarantee at least MIN_STEPS samples, but don't exceed stability limit
-    dt = min(dt, T / MIN_STEPS)
+        # Warm up (trigger JIT with one dt scale)
+        dt_warmup = DT_SCALES[0] * dt_stable
+        dt_warmup = min(dt_warmup, 1.0 / MIN_STEPS)
+        for _ in range(10):
+            _ = integrator.step(solver.rhs, u0, 0.0, dt_warmup)
 
-    # Determine effective simulation horizon to avoid excessive step counts
-    T_effective = min(T, MAX_STEPS * dt)
-    T_effective = max(T_effective, MIN_STEPS * dt)
+        # Sweep over different dt scales (different tolerances)
+        timing_results = []
+        for scale in DT_SCALES:
+            dt = scale * dt_stable
+            dt = min(dt, 1.0 / MIN_STEPS)
 
-    # Benchmark RHS evaluation (dominant cost)
-    u0_hat = np.fft.fft(u0)
-    solver.rhs(u0_hat, 0.0)  # Warm-up
-    rhs_start = time.perf_counter()
-    for _ in range(RHS_REPEATS):
-        solver.rhs(u0_hat, 0.0)
-    rhs_time = (time.perf_counter() - rhs_start) / RHS_REPEATS
+            # Determine number of steps
+            T_effective = min(1.0, MAX_STEPS * dt)
+            T_effective = max(T_effective, MIN_STEPS * dt)
+            n_steps = int(T_effective / dt)
 
-    # Time the solve (use performance measurement)
-    start_time = time.perf_counter()
-    t_saved, u_hist, perf_metrics = solver.solve(
-        u0.copy(),
-        T_effective,
-        dt,
-        integrator=integ,
-        save_every=1000000,  # Don't save intermediate
-        measure_performance=True,
-    )
-    end_time = time.perf_counter()
+            # Time the simulation
+            u = u0.copy()
+            t = 0.0
+            wall_start = time.perf_counter()
 
-    wall_time = end_time - start_time
-    n_steps = perf_metrics["nsteps"]
-    time_per_step = perf_metrics["mean_step_time_ms"] / 1000.0  # Convert ms to s
+            for _ in range(n_steps):
+                u = integrator.step(solver.rhs, u, t, dt)
+                t += dt
 
-    return {
-        "method": method,
-        "N": N,
-        "L": L,
-        "c": c,
-        "T_requested": T,
-        "T_effective": T_effective,
-        "dt": dt,
-        "n_steps": n_steps,
-        "wall_time": wall_time,
-        "time_per_step": time_per_step,
-        "rhs_time": rhs_time,
-    }
+            wall_elapsed = time.perf_counter() - wall_start
+            time_per_step = wall_elapsed / n_steps
+            timing_results.append(time_per_step)
 
+            # Store result for this dt scale
+            results.append({
+                "method": method_name,
+                "N": N,
+                "dt_scale": scale,
+                "time_per_step": time_per_step,
+                "wall_time": wall_elapsed,
+                "n_steps": n_steps,
+            })
 
-if __name__ == "__main__":
-    # %% Sequential performance (wall time vs N)
-    print("=" * 60)
-    print("Sequential Performance Analysis (Wall Time vs N)")
-    print("=" * 60)
+        # Print with mean timing across dt scales
+        mean_time = np.mean(timing_results)
+        std_time = np.std(timing_results)
+        print(f"  N={N:5d}  time/step={mean_time:.6f}±{std_time:.6f}s  "
+              f"(across {len(DT_SCALES)} dt scales)")
 
-    timing_results = []
+# %% Save results ------------------------------------------------------------
+df = pd.DataFrame(results)
+output_file = DATA_DIR / "scalability_timing.parquet"
+df.to_parquet(output_file, index=False)
 
-    for method in METHODS:
-        print(f"\n{method}:")
-        for N in N_values:
-            print(f"  N={N:4d}...", end=" ", flush=True)
-            result = time_single_case(method, N, L, c, T_timing)
-            timing_results.append(result)
-            print(
-                f"time/step = {result['time_per_step']:.6f}s, total = {result['wall_time']:.3f}s"
-            )
-
-    # Save sequential timing results
-    df_timing = pd.DataFrame(timing_results)
-    df_timing["method"] = df_timing["method"].astype("category")
-    out_timing = DATA_DIR / "scalability_timing.parquet"
-    try:
-        df_timing.to_parquet(out_timing, index=False)
-        print(f"\nSaved timing data to {out_timing}")
-    except ImportError:
-        out_timing = out_timing.with_suffix(".csv")
-        df_timing.to_csv(out_timing, index=False)
-        print(f"\nParquet support missing; saved timing data to {out_timing}")
-    print(f"  Shape: {df_timing.shape}")
-
-    print("\n" + "=" * 60)
-    print("Scalability analysis complete!")
-    print("=" * 60)
+print("\n" + "=" * 70)
+print(f"Results saved to: {output_file}")
+print(f"Shape: {df.shape}")
+print("=" * 70)

@@ -1,230 +1,145 @@
+#!/usr/bin/env python3
 """
-Scalability Analysis Results
-=============================
+Scalability Plot: Time per Timestep vs Grid Size
+=================================================
 
-Creates plot showing computational complexity:
-
-- Wall time vs N (comparing all methods: RK4, RK3)
-- Reference line showing expected O(N log N) scaling
+Creates a single plot showing time/step vs N for RK3 and RK4,
+demonstrating O(N log N) complexity from FFT operations.
 """
 
-# %%
-# Scalability analysis
-# Study how runtime scales with problem size.
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 
-try:
-    import seaborn as sns  # type: ignore
-except ModuleNotFoundError:
-    sns = None
+# Set seaborn theme for consistent styling
+sns.set_theme(style="darkgrid")
 
-from spectral.utils.plotting import get_repo_root
+# Configuration
+DATA_DIR = Path("data/A2/ex_g")
+FIG_DIR = Path("figures/A2/ex_g")
+FIG_DIR.mkdir(parents=True, exist_ok=True)
 
-repo_root = get_repo_root()
-data_dir = repo_root / "data/A2/ex_g"
-save_dir = repo_root / "figures/A2/ex_g"
-save_dir.mkdir(parents=True, exist_ok=True)
+# Load data
+df = pd.read_parquet(DATA_DIR / "scalability_timing.parquet")
 
-# %% Load data
-print("Loading scalability data...")
-timing_path = data_dir / "scalability_timing.parquet"
-if timing_path.exists():
-    try:
-        df_timing = pd.read_parquet(timing_path)
-    except ImportError:
-        timing_path = timing_path.with_suffix(".csv")
-        df_timing = pd.read_csv(timing_path)
-else:
-    timing_path = timing_path.with_suffix(".csv")
-    df_timing = pd.read_csv(timing_path)
 
-print(f"  Timing data: {df_timing.shape}")
+def fit_power_law(N, time):
+    """Fit time ~ N^α to estimate scaling exponent."""
+    log_N = np.log(N)
+    log_time = np.log(time)
+    coeffs = np.polyfit(log_N, log_time, 1)
+    return coeffs[0]
 
-# %% Create two-panel plot
-print("\nCreating scalability analysis plots...")
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+def create_scalability_plot():
+    """Create scalability plot: time per step vs N."""
+    fig, ax = plt.subplots(figsize=(8, 6))
 
-# ===== Panel 1: Absolute performance (log-log) =====
-# Plot data for each method
-if sns:
-    sns.lineplot(
-        data=df_timing,
-        x="N",
-        y="time_per_step",
-        hue="method",
-        style="method",
-        markers=True,
-        markersize=8,
-        ax=ax1,
-    )
-else:
-    for method, subset in df_timing.groupby("method"):
-        subset = subset.sort_values("N")
-        ax1.plot(
-            subset["N"],
-            subset["time_per_step"],
-            marker="o",
-            label=method,
-        )
+    methods = df['method'].unique()
+    colors = {'RK4': '#1f77b4', 'RK3': '#ff7f0e'}
+    markers = {'RK4': 'o', 'RK3': 's'}
 
-# Add reference line: N log N scaling
-N_ref = df_timing["N"].unique()
-N_ref = np.sort(N_ref)
-# Normalize to match first data point of RK3 (fastest method)
-first_point = df_timing[(df_timing["N"] == N_ref[0]) & (df_timing["method"] == "RK3")][
-    "time_per_step"
-].values[0]
-n_log_n = N_ref * np.log(N_ref)
-n_log_n_scaled = first_point * (n_log_n / n_log_n[0])
+    for method in methods:
+        method_data = df[df['method'] == method]
 
-ax1.plot(
-    N_ref,
-    n_log_n_scaled,
-    "--",
-    linewidth=2,
-    alpha=0.7,
-    color="gray",
-    label=r"$\mathcal{O}(N \log N)$",
-)
+        # Aggregate: compute mean and std of time_per_step for each N
+        agg_data = method_data.groupby('N').agg({
+            'time_per_step': ['mean', 'std']
+        }).reset_index()
+        agg_data.columns = ['N', 'time_mean', 'time_std']
+        agg_data = agg_data.sort_values('N')
 
-ax1.set_xscale("log")
-ax1.set_yscale("log")
-ax1.set_xlabel(r"Number of grid points $N$")
-ax1.set_ylabel("Time per timestep [s]")
-ax1.set_title("Computational Complexity")
-ax1.legend(title="Method", loc="best")
-ax1.grid(True, alpha=0.3)
+        N_vals = agg_data['N'].values
+        time_mean = agg_data['time_mean'].values
+        time_std = agg_data['time_std'].values
 
-# ===== Panel 2: Normalized efficiency =====
-# Compare full step timing vs direct RHS evaluations
-methods = df_timing["method"].unique()
-if sns:
-    palette = sns.color_palette("deep", n_colors=len(methods))
-else:
-    palette = [plt.cm.tab10(i) for i in range(len(methods))]
-colors = dict(zip(methods, palette))
+        # Compute scaling exponent
+        alpha = fit_power_law(N_vals, time_mean)
 
-for method in df_timing["method"].unique():
-    subset = df_timing[df_timing["method"] == method].sort_values("N")
-    N_vals = subset["N"].values
-    step_vals = subset["time_per_step"].values
-    rhs_vals = subset["rhs_time"].values
+        # Plot line with markers
+        ax.loglog(N_vals, time_mean,
+                  marker=markers[method],
+                  label=f'{method} (α = {alpha:.2f})',
+                  color=colors[method],
+                  linewidth=2,
+                  markersize=8,
+                  alpha=0.8)
 
-    normalized_step = step_vals / (N_vals * np.log(N_vals))
-    normalized_rhs = rhs_vals / (N_vals * np.log(N_vals))
+        # Plot shaded error band
+        ax.fill_between(N_vals, time_mean - time_std, time_mean + time_std,
+                        color=colors[method], alpha=0.2)
 
-    ax2.plot(
-        N_vals,
-        normalized_step,
-        marker="o",
-        markersize=7,
-        linewidth=2,
-        color=colors[method],
-        alpha=0.85,
-        label=f"{method} (step)",
-    )
+        # Plot O(N log N) reference line
+        N_ref = N_vals[len(N_vals)//2]
+        time_ref = time_mean[len(N_vals)//2]
+        N_theory = np.array([N_vals.min(), N_vals.max()])
+        time_theory = time_ref * (N_theory * np.log(N_theory)) / (N_ref * np.log(N_ref))
 
-    ax2.plot(
-        N_vals,
-        normalized_rhs,
-        marker="s",
-        markersize=6,
-        linewidth=1.8,
-        linestyle="--",
-        color=colors[method],
-        alpha=0.85,
-        label=f"{method} (rhs)",
-    )
+        ax.loglog(N_theory, time_theory, '--',
+                  color=colors[method],
+                  alpha=0.4,
+                  linewidth=1.5,
+                  label=f'{method} O(N log N) reference')
 
-ax2.set_xlabel(r"Number of grid points $N$")
-ax2.set_ylabel(r"Time / $(N \log N)$ [s]")
-ax2.set_title("Scaling Efficiency (step vs. rhs)")
-ax2.set_xscale("log")
-ax2.set_yscale("log")
-ax2.legend(title="Metric", fontsize=9)
-ax2.grid(True, alpha=0.3)
+    ax.set_xlabel('Grid Size N', fontsize=12)
+    ax.set_ylabel('Time per Step (s)', fontsize=12)
+    ax.set_title('Scalability Analysis: RK3 vs RK4', fontsize=14, fontweight='bold')
+    ax.legend(loc='upper left', fontsize=10)
+    ax.grid(True, alpha=0.3, which='both', linestyle='--')
 
-# Overall title with parameters
-L_val = df_timing["L"].iloc[0] if "L" in df_timing.columns else None
-T_val = df_timing["T"].iloc[0] if "T" in df_timing.columns else None
-if L_val and T_val:
-    fig.suptitle(
-        "KdV Scalability" + "\n" +
-        rf"$L = {L_val:.1f}$, $T = {T_val:.1f}$",
-        fontsize=14,
-        y=1.02
-    )
-else:
-    fig.suptitle("KdV Scalability", fontsize=14, y=1.02)
+    plt.tight_layout()
 
-output = save_dir / "scalability_analysis.pdf"
-fig.savefig(output, bbox_inches="tight")
-print(f"  Saved: {output}")
+    # Save
+    output_file = FIG_DIR / "scalability_analysis_clean.pdf"
+    plt.savefig(output_file, dpi=300, bbox_inches='tight')
+    print(f"✓ Saved: {output_file}")
 
-# %% Summary statistics
-print("\n" + "=" * 60)
-print("Summary Statistics")
-print("=" * 60)
+    plt.close()
 
-print("\nTime per step at N=128:")
-for method in df_timing["method"].unique():
-    t = df_timing[(df_timing["method"] == method) & (df_timing["N"] == 128)][
-        "time_per_step"
-    ].values
-    if len(t) > 0:
-        print(f"  {method}: {t[0]:.6f} s")
 
-print("\nScaling exponent (fit to N^α in log-log space):")
-for method in df_timing["method"].unique():
-    subset = df_timing[df_timing["method"] == method].sort_values("N")
-    subset_fit = subset[subset["N"] >= 128]
-    if len(subset_fit) >= 2:
-        subset = subset_fit
-    log_N = np.log(subset["N"].values)
-    log_t = np.log(subset["time_per_step"].values)
-    # Linear fit in log-log space
-    coef = np.polyfit(log_N, log_t, 1)
-    print(f"  {method}: α = {coef[0]:.3f} (ideal: ~1.0-1.1 for N log N)")
+def print_summary():
+    """Print summary statistics."""
+    print("\n" + "=" * 70)
+    print("Scalability Analysis Summary")
+    print("=" * 70)
 
-print("\nRHS-only exponent (direct rhs_time fit):")
-for method in df_timing["method"].unique():
-    subset = df_timing[df_timing["method"] == method].sort_values("N")
-    subset_fit = subset[subset["N"] >= 128]
-    if len(subset_fit) >= 2:
-        subset = subset_fit
-    log_N = np.log(subset["N"].values)
-    log_rhs = np.log(subset["rhs_time"].values)
-    coef = np.polyfit(log_N, log_rhs, 1)
-    print(f"  {method}: α_rhs = {coef[0]:.3f}")
+    for method in df['method'].unique():
+        data = df[df['method'] == method].sort_values('N')
+        N_vals = data['N'].values
+        time_vals = data['time_per_step'].values
 
-print("\nDecomposition: time ≈ a N log N + b N + c")
-for method in df_timing["method"].unique():
-    subset = df_timing[df_timing["method"] == method].sort_values("N")
-    subset_fit = subset[subset["N"] >= 128]
-    if len(subset_fit) < 2:
-        subset_fit = subset
-    N_vals = subset_fit["N"].values
-    time_vals = subset_fit["time_per_step"].values
-    A = np.column_stack([N_vals * np.log(N_vals), N_vals, np.ones_like(N_vals)])
-    coeff, *_ = np.linalg.lstsq(A, time_vals, rcond=None)
-    a_fft, b_linear, c_const = coeff
-    residual = time_vals - (b_linear * N_vals + c_const)
-    mask = residual > 0
-    fft_slope = (
-        np.polyfit(np.log(N_vals[mask]), np.log(residual[mask]), 1)[0]
-        if np.count_nonzero(mask) >= 2
-        else float("nan")
-    )
-    print(
-        f"  {method}: a={a_fft:.3e}, b={b_linear:.3e}, c={c_const:.3e}, "
-        f"α_fft ≈ {fft_slope:.3f}"
-    )
+        # Overall scaling
+        alpha_all = fit_power_law(N_vals, time_vals)
 
-print("\nNote: Low scaling exponents are expected for small N ranges.")
-print("The O(N log N) behavior from FFT becomes dominant at larger N.")
+        # Large N scaling (N >= 1024)
+        data_large = data[data['N'] >= 1024]
+        N_large = data_large['N'].values
+        time_large = data_large['time_per_step'].values
+        alpha_large = fit_power_law(N_large, time_large)
 
-print("\nPlot created!")
+        print(f"\n{method}:")
+        print(f"  Overall scaling exponent:       α = {alpha_all:.3f}")
+        print(f"  Large N scaling (N ≥ 1024):     α = {alpha_large:.3f}")
+        print(f"  Expected O(N log N):            α ≈ 1.00")
+        print(f"  Time/step at N=8192:            {time_vals[-1]:.6f} s")
+
+    print("=" * 70)
+
+
+def main():
+    """Generate scalability plot."""
+    print("=" * 70)
+    print("Generating Scalability Plot")
+    print("=" * 70)
+
+    create_scalability_plot()
+    print_summary()
+
+    print("\n✓ Scalability plot generated!")
+
+
+if __name__ == "__main__":
+    main()

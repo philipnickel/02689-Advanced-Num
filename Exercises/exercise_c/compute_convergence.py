@@ -30,27 +30,28 @@ DATA_DIR = Path("data/A2/ex_c")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 L_SPATIAL = 40.0
-L_TEMPORAL = 40.0
+L_TEMPORAL = 40.0  # Larger domain => larger dx => allows larger dt
 X0 = 0.0
 
 DEALIAS_OPTIONS = [False, True]
 INTEGRATORS = [RK4, RK3]
 
-WAVE_SPEED = 0.5
+WAVE_SPEED = 1.0
 
-T_SPATIAL = 0.005#2.0e-2
+T_SPATIAL = 0.01#2.0e-2
 DT_SPATIAL = 1.0e-6  # sufficiently small to suppress temporal error
 # Logarithmic spacing with 20 values from 16 to 256, ensuring even numbers
 #N_VALUES_SPATIAL = 2 * np.logspace(1, 2, num=20, dtype=int)#(np.geomspace(10, 350, num=20, dtype=int) // 2) * 2
 
 # Logarithmically spaced floats from 16 to 250
-N_VALUES_SPATIAL = 2 * np.logspace(np.log10(10), np.log10(125), num=20, dtype=int)
+N_VALUES_SPATIAL = 2 * np.logspace(np.log10(5), np.log10(175), num=20, dtype=int)
 # Round and force evenness
 
 
-N_TEMPORAL = 100
-# Logarithmic spacing using arange with powers of 0.5 (halving each step)
-DT_SCALES = 0.4 * (0.5**np.arange(1, 3))
+N_TEMPORAL = 250  # From spatial study: error ~1e-11, well below temporal errors
+T_TEMPORAL = 0.1  # Very short time to avoid accumulated nonlinear effects
+# Logarithmic spacing for timesteps - extend to larger dt to see convergence
+DT_VALUES = np.logspace(-6, -1, num=12)
 
 
 
@@ -104,30 +105,6 @@ def _solve_case(
     t_end = float(t_saved[-1])
     steps_taken = len(u_hist) - 1
     return x, dx, u_final, t_end, steps_taken
-
-
-def _stability_limited_dt(
-    N: int,
-    wave_speed: float,
-    *,
-    integrator_class: type,
-    dealias: bool,
-    half_length: float,
-) -> float:
-    """Return a conservative stable timestep for (N, method, wave)."""
-    solver = KdVSolver(N, half_length, dealias=dealias)
-    u0 = soliton(solver.x, 0.0, wave_speed, X0)
-    u_max = float(np.max(np.abs(u0)))
-    dt_est = KdVSolver.stable_dt(
-        N,
-        half_length,
-        u_max,
-        integrator_name=integrator_class.__name__.lower(),
-        dealiased=dealias,
-    )
-    if not np.isfinite(dt_est) or dt_est <= 0.0:
-        return 1e-3
-    return float(dt_est)
 
 
 # //----------------------------------------------------------------------- #
@@ -191,55 +168,54 @@ print(f"\nSaved spatial convergence data")
 
 temporal_rows: list[dict[str, object]] = []
 
+print("\n--- Temporal Convergence (De-aliased) ---")
+
 for integrator_class in INTEGRATORS:
     method_name = integrator_class.__name__
-    dt_stable = _stability_limited_dt(
-        N_TEMPORAL,
-        WAVE_SPEED,
-        integrator_class=integrator_class,
-        dealias=DEALIAS_OPTIONS[1],  # dealiased
-        half_length=L_TEMPORAL,
-    )
+    print(f"  Method: {method_name}")
 
-    dt_values = np.array(dt_stable * DT_SCALES, dtype=float)
-    dt_values = dt_values[(dt_values > 0.0) & np.isfinite(dt_values)]
-
-    for dt in dt_values:
-        target_T = float(dt)
-
+    for dt in DT_VALUES:
         try:
             current_half_length = L_TEMPORAL
             x, dx, u_num, t_end, steps_taken = _solve_case(
                 N_TEMPORAL,
                 dt=float(dt),
-                T=target_T,
+                T=T_TEMPORAL,
                 integrator_class=integrator_class,
                 wave_speed=WAVE_SPEED,
-                dealias=DEALIAS_OPTIONS[1],  # dealiased
+                dealias=True,  # Use dealiasing for stability
                 half_length=current_half_length,
             )
-            u_exact = soliton(x, target_T, WAVE_SPEED, X0)
+            u_exact = soliton(x, T_TEMPORAL, WAVE_SPEED, X0)
             diff = u_num - u_exact
             l2 = float(np.sqrt(np.sum(diff**2) * dx))
             linf = float(np.max(np.abs(diff)))
+
+            # Skip if we got NaN or inf
+            if not (np.isfinite(l2) and np.isfinite(linf)):
+                print(f"    dt={dt:.3e}: SKIPPED (unstable)")
+                continue
+
         except Exception as exc:  # pragma: no cover - diagnostic output
             print(f"    dt={dt:.3e}: FAILED ({exc})")
             continue
 
-
+        n_timesteps = int(np.round(T_TEMPORAL / dt))
         temporal_rows.append(
             {
                 "dt": float(dt),
                 "N": N_TEMPORAL,
-                "T": target_T,
-                "t_end": target_T,
-                "n_steps": steps_taken,
+                "T": T_TEMPORAL,
+                "t_end": t_end,
+                "n_steps": n_timesteps,
                 "method": method_name,
                 "dealias": "De-aliased",
                 "L": current_half_length,
                 "Error": l2,
             }
         )
+
+        print(f"    dt={dt:.3e} ({n_timesteps:4d} steps): L2={l2:.6e}, L∞={linf:.6e}")
 
 
 
