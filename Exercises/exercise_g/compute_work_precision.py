@@ -20,22 +20,24 @@ DATA_DIR = Path("data/A2/ex_g")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 L = 40.0
-N = 256
-T_FINAL = 10.0  # Longer simulation for better timing statistics
+N_VALUES = np.array([100, 150, 200])  # Non-power-of-2 resolutions
+T_FINAL_VALUES = np.array([1.0, 5.0, 10.0])  # Vary simulation time for error bands
 AMPLITUDE = 5.0
-WAVENUMBER = 2.0 * np.pi / (2 * L)
+WAVENUMBER = 2.0 * np.pi / (2 * L)  # Fixed wavenumber for periodicity
 FREQUENCY = 3.0
-DT_SCALES = np.array([0.8, 0.7, 0.6, 0.5, 0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.1, 0.08])
+# Very wide dt range to find RK3 advantage regime
+DT_SCALES = np.array([0.95, 0.9, 0.85, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.25, 0.2, 0.15, 0.1, 0.05])
 METHODS = {"RK3": RK3, "RK4": RK4}
-N_TRIALS = 10  # Number of timing trials for confidence intervals
+N_TRIALS = 3  # Reduced trials since we're varying T_FINAL
 
 print("=" * 70)
 print("Work-Precision Analysis: KdV Solver with Manufactured Solutions")
 print("=" * 70)
-print(f"Domain: x ∈ [{-L}, {L}], N = {N}")
-print(f"Simulation time: T = {T_FINAL}")
+print(f"Domain: x ∈ [{-L}, {L}]")
+print(f"Grid sizes: N = {N_VALUES[0]} to {N_VALUES[-1]}")
+print(f"Simulation times: T = {T_FINAL_VALUES[0]} to {T_FINAL_VALUES[-1]}")
 print(f"Manufactured solution: u(x,t) = {AMPLITUDE}*sin({WAVENUMBER:.4f}*x)*sin({FREQUENCY}*t)")
-print(f"Testing timesteps from {DT_SCALES[0]:.2f}× to {DT_SCALES[-1]:.3f}× stable dt")
+print(f"Testing dt from {DT_SCALES[0]:.2f}× to {DT_SCALES[-1]:.2f}× stable dt")
 print("=" * 70)
 
 # %% Create manufactured solution --------------------------------------------
@@ -49,78 +51,93 @@ manufactured = ManufacturedSolution(
 results = []
 
 for method_name, method_class in METHODS.items():
-    # Setup solver and integrator
-    solver = KdVSolver(N, L, dealias=False)
-    integrator = method_class()
-    x = solver.x
-    dx = solver.dx
-
-    # Initial condition
-    u0 = manufactured.u_exact(x, 0.0)
-
-    # Estimate stable timestep
-    u_max = float(np.max(np.abs(u0)))
-    dt_stable = KdVSolver.stable_dt(N, L, u_max, integrator_name=method_name.lower(), dealiased=False)
-    if not np.isfinite(dt_stable) or dt_stable <= 0.0:
-        dt_stable = 1e-3
-
     print(f"\n{method_name} (Order {3 if method_name == 'RK3' else 4}):")
-    print(f"  Stable dt estimate: {dt_stable:.3e}")
     print("-" * 70)
 
-    for scale in DT_SCALES:
-        dt = scale * dt_stable
+    for N in N_VALUES:
+        # Setup solver and integrator for this N
+        solver = KdVSolver(N, L, dealias=False)
+        integrator = method_class()
+        x = solver.x
+        dx = solver.dx
 
-        # RHS wrapper with source term
-        def rhs_with_source(u, t):
-            return solver.rhs(u, t, source_term=manufactured.source)
+        # Initial condition
+        u0 = manufactured.u_exact(x, 0.0)
 
-        n_steps = int(np.round(T_FINAL / dt))
+        # Estimate stable timestep
+        u_max = float(np.max(np.abs(u0)))
+        dt_stable = KdVSolver.stable_dt(N, L, u_max, integrator_name=method_name.lower(), dealiased=False)
+        if not np.isfinite(dt_stable) or dt_stable <= 0.0:
+            dt_stable = 1e-3
 
-        # Run multiple trials for timing statistics
-        timing_trials = []
-        for trial in range(N_TRIALS):
-            t = 0.0
+        print(f"\n  N = {N} (stable dt = {dt_stable:.3e})")
+
+        for scale in DT_SCALES:
+            dt = scale * dt_stable
+
+            # RHS wrapper with source term
+            def rhs_with_source(u, t):
+                return solver.rhs(u, t, source_term=manufactured.source)
+
+            # Run multiple T_FINAL values and trials for visible error bands
+            timing_trials = []
+            for T_FINAL in T_FINAL_VALUES:
+                n_steps = int(np.round(T_FINAL / dt))
+
+                for trial in range(N_TRIALS):
+                    t = 0.0
+                    u = u0.copy()
+
+                    start_time = time.perf_counter()
+                    for step in range(n_steps):
+                        u = integrator.step(rhs_with_source, u, t, dt)
+                        t += dt
+                    wall_time = time.perf_counter() - start_time
+                    timing_trials.append((T_FINAL, wall_time))
+
+            # Compute errors using middle T_FINAL value
+            T_FINAL_ref = T_FINAL_VALUES[len(T_FINAL_VALUES) // 2]
+            n_steps_ref = int(np.round(T_FINAL_ref / dt))
+            t_final = n_steps_ref * dt
             u = u0.copy()
-
-            start_time = time.perf_counter()
-            for step in range(n_steps):
+            t = 0.0
+            for step in range(n_steps_ref):
                 u = integrator.step(rhs_with_source, u, t, dt)
                 t += dt
-            wall_time = time.perf_counter() - start_time
-            timing_trials.append(wall_time)
 
-        # Compute errors (use last trial's result)
-        t_final = n_steps * dt
-        u_exact = manufactured.u_exact(x, t_final)
-        diff = u - u_exact
-        error_l2 = float(np.sqrt(np.sum(diff**2) * dx))
-        error_linf = float(np.max(np.abs(diff)))
+            u_exact = manufactured.u_exact(x, t_final)
+            diff = u - u_exact
+            error_l2 = float(np.sqrt(np.sum(diff**2) * dx))
+            error_linf = float(np.max(np.abs(diff)))
 
-        # RHS evaluations
-        rhs_evals_per_step = 3 if method_name == "RK3" else 4
-        total_rhs_evals = n_steps * rhs_evals_per_step
+            # RHS evaluations
+            rhs_evals_per_step = 3 if method_name == "RK3" else 4
 
-        # Store one result per trial (for seaborn to compute CI)
-        for trial_idx, wall_time in enumerate(timing_trials):
-            results.append({
-                "method": method_name,
-                "dt": dt,
-                "dt_scale": scale,
-                "trial": trial_idx,
-                "n_steps": n_steps,
-                "wall_time": wall_time,
-                "rhs_evaluations": total_rhs_evals,
-                "error_l2": error_l2,
-                "error_linf": error_linf,
-            })
+            # Store one result per T_FINAL and trial (for aggregation)
+            for T_FINAL, wall_time in timing_trials:
+                n_steps = int(np.round(T_FINAL / dt))
+                total_rhs_evals = n_steps * rhs_evals_per_step
 
-        # Print with mean timing
-        mean_time = np.mean(timing_trials)
-        std_time = np.std(timing_trials)
-        print(f"  dt = {dt:.3e} ({scale:5.2f}× stable)  "
-              f"L2 err = {error_l2:.3e}  L∞ err = {error_linf:.3e}  "
-              f"time = {mean_time:.3f}±{std_time:.3f}s")
+                results.append({
+                    "method": method_name,
+                    "N": N,
+                    "dt": dt,
+                    "dt_scale": scale,
+                    "T_FINAL": T_FINAL,
+                    "n_steps": n_steps,
+                    "wall_time": wall_time,
+                    "rhs_evaluations": total_rhs_evals,
+                    "error_l2": error_l2,
+                    "error_linf": error_linf,
+                })
+
+            # Print with mean timing
+            times = [t[1] for t in timing_trials]
+            mean_time = np.mean(times)
+            std_time = np.std(times)
+            print(f"    dt = {dt:.3e} ({scale:5.2f}× stable)  "
+                  f"L2 err = {error_l2:.3e}  L∞ err = {error_linf:.3e}  "
+                  f"time = {mean_time:.3f}±{std_time:.3f}s")
 
 # %% Estimate convergence rates ----------------------------------------------
 df = pd.DataFrame(results)

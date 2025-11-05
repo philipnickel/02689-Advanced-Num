@@ -117,8 +117,54 @@ def fourier_diff_matrix_cotangent(N: int) -> np.ndarray:
     return D
 
 
+def fourier_diff_matrix_complex(N: int) -> np.ndarray:
+    """
+    Construct complex-valued Fourier differentiation matrix via DFT matrices.
+
+    Parameters
+    ----------
+    N : int
+        Number of grid points
+
+    Returns
+    -------
+    np.ndarray
+        Complex Fourier differentiation matrix of shape (N, N)
+
+    Notes
+    -----
+    The matrix is assembled using the relation
+
+    .. math::
+
+        D = F^{-1} \\mathrm{diag}(ik) F,
+
+    where :math:`F` is the discrete Fourier transform matrix with equispaced
+    nodes on :math:`[0, 2\\pi)`. This corresponds to representing derivatives
+    in Fourier space using complex exponentials.
+    """
+    if N <= 0:
+        raise ValueError("Number of grid points N must be positive.")
+
+    indices = np.arange(N, dtype=float)
+    # Discrete Fourier transform matrix (consistent with numpy.fft.fft)
+    phase = -2j * np.pi * np.outer(indices, indices) / N
+    F = np.exp(phase)
+
+    dx = 2 * np.pi / N
+    wavenumbers = np.fft.fftfreq(N, d=dx) * 2 * np.pi
+    ik = 1j * wavenumbers
+
+    diag_ik_F = ik[:, None] * F
+    D = (np.conjugate(F) / N) @ diag_ik_F
+    return D.astype(np.complex128)
+
+
 def fourier_diff_matrix_on_interval(
-    N: int, a: float = -2.0, b: float = 2.0
+    N: int,
+    a: float = -2.0,
+    b: float = 2.0,
+    representation: str = "real",
 ) -> np.ndarray:
     """
     Fourier differentiation matrix rescaled to periodic interval :math:`[a, b]`.
@@ -131,6 +177,9 @@ def fourier_diff_matrix_on_interval(
         Left endpoint (default: -2.0)
     b : float, optional
         Right endpoint (default: 2.0)
+    representation : {"real", "complex"}, optional
+        Choose between the real-valued cotangent form or the complex-valued
+        DFT form. Default is "real".
 
     Returns
     -------
@@ -138,7 +187,17 @@ def fourier_diff_matrix_on_interval(
         Rescaled Fourier differentiation matrix of shape (N, N)
     """
     scale = 2 * np.pi / (b - a)
-    return scale * fourier_diff_matrix_cotangent(N)
+    rep = representation.lower()
+    if rep == "real":
+        base = fourier_diff_matrix_cotangent(N)
+    elif rep == "complex":
+        base = fourier_diff_matrix_complex(N)
+    else:
+        raise ValueError(
+            "Invalid representation. Expected 'real' or 'complex', "
+            f"got '{representation}'."
+        )
+    return scale * base
 
 
 class SpectralBasis(ABC):
@@ -257,8 +316,13 @@ class LegendreLobattoBasis(SpectralBasis):
 class FourierEquispacedBasis(SpectralBasis):
     """Equispaced Fourier basis on a periodic interval."""
 
-    def __init__(self, domain: tuple[float, float] = (0.0, 2.0 * np.pi)):
+    def __init__(
+        self,
+        domain: tuple[float, float] = (0.0, 2.0 * np.pi),
+        representation: str = "real",
+    ):
         super().__init__(domain=domain)
+        self.representation = representation
 
     def nodes(self, num_points: int) -> np.ndarray:
         """
@@ -292,7 +356,9 @@ class FourierEquispacedBasis(SpectralBasis):
             Fourier differentiation matrix of shape (N, N)
         """
         a, b = self.domain
-        return fourier_diff_matrix_on_interval(nodes.size, a=a, b=b)
+        return fourier_diff_matrix_on_interval(
+            nodes.size, a=a, b=b, representation=self.representation
+        )
 
     def mass_matrix(self, nodes: np.ndarray) -> np.ndarray:
         """

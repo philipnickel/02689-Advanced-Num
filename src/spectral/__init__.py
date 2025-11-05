@@ -19,6 +19,7 @@ from .spectral import (  # noqa: E402
     FourierEquispacedBasis,
     LegendreLobattoBasis,
     fourier_diff_matrix_cotangent,
+    fourier_diff_matrix_complex,
     fourier_diff_matrix_on_interval,
     legendre_diff_matrix,
     legendre_mass_matrix,
@@ -48,6 +49,7 @@ __all__ = [
     "legendre_diff_matrix",
     "legendre_mass_matrix",
     "fourier_diff_matrix_cotangent",
+    "fourier_diff_matrix_complex",
     "fourier_diff_matrix_on_interval",
     # Time integrators and PDE solvers
     "TimeIntegrator",

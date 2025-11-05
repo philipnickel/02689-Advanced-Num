@@ -20,65 +20,82 @@ FIG_DIR = Path("figures/A2/ex_g")
 FIG_DIR.mkdir(parents=True, exist_ok=True)
 
 # Set seaborn theme for consistent styling
-sns.set_theme(style="darkgrid")
+sns.set_theme(style="whitegrid")
 
 df = pd.read_parquet(DATA_DIR / "work_precision.parquet")
 
-# %% Create work-precision plot ----------------------------------------------
-# Compute convergence rates for labels (using unique dt values)
-methods = df['method'].unique()
-markers = {'RK3': 's', 'RK4': 'o'}
+# Filter out NaN errors (unstable runs)
+df = df[np.isfinite(df['error_l2'])]
 
-labels = {}
-for method in methods:
-    method_data = df[df['method'] == method]
-    unique_data = method_data.groupby('dt').first().reset_index()
+# %% Aggregate data manually -------------------------------------------------
+# Group by method and error_l2, compute mean and std of wall_time
+agg_data = df.groupby(['method', 'error_l2']).agg({
+    'wall_time': ['mean', 'std']
+}).reset_index()
+agg_data.columns = ['method', 'error_l2', 'wall_time_mean', 'wall_time_std']
 
-    dt_vals = unique_data['dt'].values
-    err_vals = unique_data['error_l2'].values
-    log_dt = np.log(dt_vals)
-    log_err = np.log(err_vals)
-    coeffs = np.polyfit(log_dt, log_err, 1)
-    rate = coeffs[0]
-    order = 3 if method == "RK3" else 4
+# Sort by wall_time for proper line plotting
+agg_data = agg_data.sort_values(['method', 'wall_time_mean'])
 
-    labels[method] = f'{method} (order {order}, rate={rate:.2f})'
+# %% Create single work-precision plot ---------------------------------------
+fig, ax = plt.subplots(figsize=(10, 7))
 
-# Aggregate data: compute mean and std for wall_time at each error_l2 level
-fig, ax = plt.subplots(figsize=(8, 6))
-
+# Colors for methods
 colors = {'RK3': '#ff7f0e', 'RK4': '#1f77b4'}
 
-for method in methods:
-    method_data = df[df['method'] == method]
+for method in ['RK3', 'RK4']:
+    data = agg_data[agg_data['method'] == method]
 
-    # Aggregate: compute mean and std of wall_time for each dt (same error_l2)
-    agg_data = method_data.groupby('error_l2').agg({
-        'wall_time': ['mean', 'std']
-    }).reset_index()
-    agg_data.columns = ['error_l2', 'wall_time_mean', 'wall_time_std']
-
-    # Sort by wall_time for proper line plotting
-    agg_data = agg_data.sort_values('wall_time_mean')
-
-    x = agg_data['wall_time_mean'].values
-    y = agg_data['error_l2'].values
-    x_std = agg_data['wall_time_std'].values
+    x = data['wall_time_mean'].values
+    y = data['error_l2'].values
+    x_std = data['wall_time_std'].values
 
     # Plot line
-    ax.plot(x, y, marker=markers[method], label=labels[method],
-            color=colors[method], linewidth=2, markersize=8, alpha=0.8)
+    ax.plot(x, y, '-', color=colors[method], linewidth=2.5,
+            label=method, alpha=0.9)
 
-    # Plot shaded error band
+    # Plot shaded error band (horizontal since x varies)
     ax.fill_betweenx(y, x - x_std, x + x_std,
                      color=colors[method], alpha=0.2)
 
+# Add reference lines for theoretical convergence rates
+# Reference point (use middle of RK3 data)
+rk3_data = agg_data[agg_data['method'] == 'RK3']
+idx_ref = len(rk3_data) // 2
+ref_time = rk3_data.iloc[idx_ref]['wall_time_mean']
+ref_error = rk3_data.iloc[idx_ref]['error_l2']
+
+# Create reference lines
+# For fixed spatial resolution, error ~ dt^p and time ~ 1/dt
+# So error ~ time^(-p), or log(error) = -p*log(time) + const
+
+# RK3: 3rd order
+time_ref_3 = np.array([ref_time * 0.3, ref_time * 3.0])
+error_ref_3 = ref_error * (time_ref_3 / ref_time)**(-3)
+
+# RK4: 4th order
+time_ref_4 = np.array([ref_time * 0.3, ref_time * 3.0])
+error_ref_4 = ref_error * (time_ref_4 / ref_time)**(-4)
+
+ax.plot(time_ref_3, error_ref_3, '--', color='#ff7f0e', alpha=0.4,
+        linewidth=1.5, label='O(dt³) reference')
+ax.plot(time_ref_4, error_ref_4, '--', color='#1f77b4', alpha=0.4,
+        linewidth=1.5, label='O(dt⁴) reference')
+
+# Set log scales
 ax.set_xscale('log')
 ax.set_yscale('log')
-ax.set_xlabel('Wall Time (s)', fontsize=12)
-ax.set_ylabel('L² Error', fontsize=12)
-ax.set_title('Work-Precision Diagram: RK3 vs RK4', fontsize=14, fontweight='bold')
-ax.legend(loc='upper right', fontsize=10)
+
+# Labels and title
+ax.set_xlabel('Wall Time (s)', fontsize=13)
+ax.set_ylabel('L² Error', fontsize=13)
+ax.set_title('Work-Precision Diagram: RK3 vs RK4', fontsize=15, fontweight='bold')
+
+# Grid
+ax.grid(True, alpha=0.3, which='both', linestyle='--')
+
+# Legend
+ax.legend(loc='upper right', fontsize=11, frameon=True, shadow=True)
 
 plt.tight_layout()
 
@@ -93,23 +110,21 @@ print("\n" + "=" * 70)
 print("Work-Precision Analysis Summary")
 print("=" * 70)
 
-for method in df['method'].unique():
-    data = df[df['method'] == method].sort_values('dt')
+for method in ['RK3', 'RK4']:
+    data = df[df['method'] == method]
 
     # Best accuracy
     best_idx = data['error_l2'].idxmin()
     best = data.loc[best_idx]
-    print(f"\n{method}:")
-    print(f"  Best accuracy: L² = {best['error_l2']:.3e} in {best['wall_time']:.3f}s")
 
-    # Convergence rate
-    dt_vals = data['dt'].values
-    err_vals = data['error_l2'].values
-    log_dt = np.log(dt_vals)
-    log_err = np.log(err_vals)
-    rate = np.polyfit(log_dt, log_err, 1)[0]
-    expected_rate = 3 if method == "RK3" else 4
-    print(f"  Convergence rate: {rate:.2f} (expected {expected_rate:.0f})")
+    # Worst accuracy
+    worst_idx = data['error_l2'].idxmax()
+    worst = data.loc[worst_idx]
+
+    print(f"\n{method}:")
+    print(f"  Best accuracy:  L² = {best['error_l2']:.3e} in {best['wall_time']:.3f}s")
+    print(f"  Worst accuracy: L² = {worst['error_l2']:.3e} in {worst['wall_time']:.3f}s")
+    print(f"  Total configurations: {len(data.groupby(['N', 'dt']))}")
 
 print("=" * 70)
 print("\n✓ Work-precision plot generated!")
